@@ -1,0 +1,14 @@
+# Ignore compiled class files
+build/
+
+#ignore report
+report/
+
+#Eclipse Specific:
+.settings/
+
+bin/
+
+.classpath
+
+.project
