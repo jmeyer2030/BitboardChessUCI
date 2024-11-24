@@ -1,16 +1,108 @@
 package moveGeneration;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import system.Logging;
 
 public class RookMagicBitboard extends MagicBitboard{	
+	
+	private static final Logger LOGGER = Logging.getLogger(RookMagicBitboard.class);
+	
+	public static int[] numBits = new int[] 
+			  {12, 11, 11, 11, 11, 11, 11, 12, 
+			   11, 10, 10, 10, 10, 10, 10, 11, 
+			   11, 10, 10, 10, 10, 10, 10, 11, 
+			   11, 10, 10, 10, 10, 10, 10, 11, 
+			   11, 10, 10, 10, 10, 10, 10, 11, 
+			   11, 10, 10, 10, 10, 10, 10, 11, 
+			   11, 10, 10, 10, 10, 10, 10, 11, 
+			   12, 11, 11, 11, 11, 11, 11, 12};
+	
+	public static long[] blockerMasks;
+	
+	public static List<List<Long>> blockerBoards;
+	
+	public static long[] magicNumbers;
+	
+	public static List<List<Long>> moveBoards;
+	
+	
+//Public methods
+	
 	/**
-	 * 
-	 * 
+	 * Initializes all static fields
 	 */
-	
+	public void initializeAll() {
+		LOGGER.log(Level.INFO, "RookMagicBitboard field initialization has begun.");
+		
+		LOGGER.log(Level.FINE, "Generating blocker masks...");
+		RookMagicBitboard.blockerMasks = generateBlockerMasks();
+		LOGGER.log(Level.INFO, "Generating blocker masks complete!");
+		
+		LOGGER.log(Level.FINE, "Generating blocker boards...");
+		RookMagicBitboard.blockerBoards = generateAllBlockerBoards();
+		LOGGER.log(Level.INFO, "Generating blocker boards complete!");
+		
+		LOGGER.log(Level.FINE, "Generating magic numbers...");
+		RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
+		LOGGER.log(Level.INFO, "Generating magic numbers complete!");
+		
+		LOGGER.log(Level.FINE, "Generating move boards...");
+		RookMagicBitboard.moveBoards = generateAllMoveBoards();
+		LOGGER.log(Level.INFO, "Generating move boards complete!");
+	}
 	
 	/**
-	 * This method returns a rook blocker-mask for a given square
+	 * Returns a move board given a square and occupancy board
+	 * @Param square
+	 * @Param occupancyBoard
+	 * @Return moveBoard
+	 */
+	public long getMoveBoard(int square, long occupancyBoard) {
+		//compute blockerBoard
+		long blockerBoard = occupancyBoard & blockerMasks[square];
+		
+		//compute index of the associated moveBoard
+		long index = (magicNumbers[square] * blockerBoard) >> (64 - numBits[square]);
+
+		return moveBoards.get(square).get((int) index);
+	}
+	
+//Getter methods
+	
+	protected int[] getNumBits() {
+		return numBits;
+	}
+	
+	protected long[] getBlockerMasks() {
+		return blockerMasks;
+	}
+	
+	protected List<List<Long>> getBlockerBoards() {
+		return blockerBoards;
+	}
+	
+	protected long[] getMagicNumbers() {
+		return magicNumbers;
+	}
+	
+//Protected methods
+	/**
+	 * Generates all blockerMasks for rook moves
+	 * @Return array of blockerMasks
+	 */
+	protected long[] generateBlockerMasks() {
+		long[] blockerMasks = new long[64];
+		for (int i = 0; i < 64; i++) {
+			blockerMasks[i] = generateBlockerMask(i);
+		}
+		return blockerMasks;
+	}
+	
+	/**
+	 * Generates a rook blocker-mask for a given square
 	 * Meaning that it is every place that a piece could exist that would stop it from moving further
 	 * @Param square an integer between 0 and 63
 	 * @Return a rook blockerMask if the rook were on that square
@@ -39,25 +131,6 @@ public class RookMagicBitboard extends MagicBitboard{
 		
 		return result;
 	}
-	
-	/**
-	 * Returns an array that maps a square to the number of bits required for its magic number
-	 * @Param square
-	 * @Return a int[] where arr[square] = numBits required for magic number.
-	 */
-	protected int[] generateNumBits() {
-		int[] rookNumBits = new int[] {12, 11, 11, 11, 11, 11, 11, 12, 
-									   11, 10, 10, 10, 10, 10, 10, 11, 
-									   11, 10, 10, 10, 10, 10, 10, 11, 
-									   11, 10, 10, 10, 10, 10, 10, 11, 
-									   11, 10, 10, 10, 10, 10, 10, 11, 
-									   11, 10, 10, 10, 10, 10, 10, 11, 
-									   11, 10, 10, 10, 10, 10, 10, 11, 
-									   12, 11, 11, 11, 11, 11, 11, 12};
-		return rookNumBits;
-	}
-	
-
 	
 	/**
 	 * Returns a move board for a rook blockerBoard
@@ -133,27 +206,8 @@ public class RookMagicBitboard extends MagicBitboard{
 		}
 		
 		public long generateMagicNumber(List<Long> blockerBoards) {
-			return rmb.magicNumber(blockerBoards);
+			return rmb.generateMagicNumber(blockerBoards);
 		}
 	}
 	
 }
-
-/*
-public static void main(String args[]) {
-	int square = 18;
-	RookMagicBitboard rmb = new RookMagicBitboard();
-	long blockerMask = rmb.generateBlockerMask(square);
-	rmb.printBoard(blockerMask);
-	//System.out.println(Long.bitCount(result));
-	
-	List<Long> blockerBoards = rmb.generateBlockerBoards(blockerMask);
-	//System.out.println(blockerBoards.size());
-	
-	rmb.printBoard(blockerBoards.get(483));
-	rmb.printBoard(rmb.generateMoveBoard(blockerBoards.get(483), square));
-	
-	long magicNumber = rmb.magicNumber(blockerBoards);
-	System.out.println("Magic number found: " + magicNumber);
-}
-*/

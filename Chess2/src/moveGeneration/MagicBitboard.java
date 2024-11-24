@@ -28,7 +28,6 @@ public abstract class MagicBitboard {
 		    a1, b1, c1, d1, e1, f1, g1, h1
 		}
 		
-		
 //Abstract Methods:
 	/**
 	 * Returns for its piece a blocker-mask for a given square
@@ -48,12 +47,47 @@ public abstract class MagicBitboard {
 	
 	
 	/**
-	 * Returns an array that maps a square to the number of bits required for its magic number
+	 * Retrieves the already existing array of the number potential blocker squares
 	 * @Return a int[] where arr[square] = numBits required for magic number.
 	 */
-	protected abstract int[] generateNumBits();
+	protected abstract int[] getNumBits();
+	
+	
+	/**
+	 * Retrieves the blockerMasks
+	 * @Return already generated blockerMasks
+	 */
+	protected abstract long[] getBlockerMasks();
+	
+	/**
+	 * Retrieves the already created list of blockerboards
+	 * @Return the list of blockerboards
+	 */
+	protected abstract List<List<Long>> getBlockerBoards();
+	
+	
+	/**
+	 * Retrieces the list of magic numbers
+	 * @Return the list of magic numbers
+	 * 
+	 */
+	protected abstract long[] getMagicNumbers();
+
 	
 //Implemented Methods:
+	
+	/**
+	 * Generates an array of the blockerMasks
+	 * @Return array of blockerMasks
+	 */
+	protected long[] generateBlockerMasks() {
+		long[] blockerMasks = new long[64];
+		for (int i = 0; i < 64; i++) {
+			blockerMasks[i] = generateBlockerMask(i);
+		}
+		return blockerMasks;
+	}	
+	
 	/**
 	 *This method returns all blockerBoards for a given blockerMask 
 	 * @Param blockerMask an arbitrary blocker-mask
@@ -95,9 +129,9 @@ public abstract class MagicBitboard {
 	 * @Param blockerBoards a complete list of blockerBoards
 	 * @Return a long that serves as an injective mapping from a blockerBoard to the numbers 0-blockerBoards.size
 	 */
-	protected long magicNumber(List<Long> blockerBoards) {
+	protected long generateMagicNumber(List<Long> blockerBoardList) {
 		Random random = new Random();
-		int numBoards = blockerBoards.size();
+		int numBoards = blockerBoardList.size();
 		
 		int reqNumBits = (int) (Math.log(numBoards)/Math.log(2));
 		
@@ -105,7 +139,7 @@ public abstract class MagicBitboard {
 		while(true) {
 			boolean[] foundNum = new boolean[numBoards]; 
 			long magicCandidate = random.nextLong();
-			for (Long blockerBoard : blockerBoards) {
+			for (Long blockerBoard : blockerBoardList) {
 				long product = blockerBoard * magicCandidate;
 				int index = (int) product >> (64 - reqNumBits);
 				if (foundNum[index]){
@@ -118,24 +152,72 @@ public abstract class MagicBitboard {
 	} 
 	
 	/**
-	 * This method returns a list of moveBoards from a list of blockerBoards
-	 * @Param blockerBloards list of all blockerBoards for a square
+	 * This method returns a list of moveBoards from a list of blockerBoards sorted 
+	 * s.t. the index corresponds with the magic number calculated index
 	 * @Param square the square the piece is on
 	 * @Return the List of moves for each blockerBoard
 	 */
-	protected List<Long> blockerBoardsToMoveBoards(List<Long> blockerBoards, int square) {
+	protected List<Long> generateMoveBoards(int square) {
+		//Retrieve necessary data
+		List<Long> blockerBoardList = getBlockerBoards().get(square);
+		long magicNumber = getMagicNumbers()[square];
+		int numBits = getNumBits()[square];
+		//init our result list
 		ArrayList<Long> moveBoards= new ArrayList<Long>();
-		for (Long blockerBoard : blockerBoards) {
-			moveBoards.add(generateMoveBoard(blockerBoard, square));
+		
+		//process to generate the moveBoardList
+		for (Long blockerBoard : blockerBoardList) {
+			long index = (magicNumber * blockerBoard) >> (64 - numBits);
+			moveBoards.add((int) index, generateMoveBoard(blockerBoard, square));
+		}		
+		return moveBoards;
+	}
+	
+	
+	/**
+	 * Returns an array of all blockerboards on each square
+	 * @Return List<List<Long>> blockerBoards, every blocker configuration for each square
+	 */
+	protected List<List<Long>> generateAllBlockerBoards() {
+		long[] blockerMasks = getBlockerMasks();
+		List<List<Long>> blockerBoards = new ArrayList<List<Long>>();
+		for (int i = 0; i < 64; i++) {
+			blockerBoards.add(generateBlockerBoards(blockerMasks[i]));
+		}
+		return blockerBoards;
+	}
+	
+	
+	
+	/**
+	 * generates an array of the magic numbers
+	 * @Return a long array of the magic numbers
+	 */
+	protected long[] generateAllMagicNumbers() {
+		List<List<Long>> blockerBoards = getBlockerBoards();
+		long[] magicNumbers = new long[64];
+		for (int i = 0; i < 64; i++) {
+			magicNumbers[i] = generateMagicNumber(blockerBoards.get(i));
+		}
+		return magicNumbers;
+	}
+	
+	
+	/**
+	 * 
+	 * 
+	 * 
+	 */
+	protected List<List<Long>> generateAllMoveBoards() {
+		List<List<Long>> moveBoards = new ArrayList<List<Long>>();
+		
+		for (int i = 0; i < 64; i++) {
+			moveBoards.add(i, generateMoveBoards(i));
 		}
 		
 		return moveBoards;
 	}
 	
-	/**
-	 * 
-	 * 
-	 */
 	/*
 	protected int magicNumToMagicIndex(long magicNumber, long blockerBoard) {
 		long product = blockerBoard * magicNumber;
@@ -154,8 +236,5 @@ public abstract class MagicBitboard {
 	        }
 	        System.out.println();
 	    }
-	    //System.out.println("Raw binary string: ");
-	    //String binaryString = String.format("%64s", Long.toBinaryString(mask)).replace(' ', '0');
-	    //System.out.println(binaryString);
 	}
 }

@@ -1,16 +1,99 @@
 package moveGeneration;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import system.Logging;
 
 public class BishopMagicBitboard extends MagicBitboard{
-	public static void main(String[] args) {
-		BishopMagicBitboard bmb = new BishopMagicBitboard();
-		long blockerMask1 = bmb.generateBlockerMask(0);
-		long blockerMask2 = bmb.generateBlockerMask(4);
-		long blockerMask3 = bmb.generateBlockerMask(28);
-		bmb.printBoard(blockerMask1);
-		bmb.printBoard(blockerMask2);
-		bmb.printBoard(blockerMask3);
+	
+	private static final Logger LOGGER = Logging.getLogger(BishopMagicBitboard.class);
+	
+	public static int[] numBits = new int[] 
+					{6, 5, 5, 5, 5, 5, 5, 6, 
+					 5, 5, 5, 5, 5, 5, 5, 5,
+					 5, 5, 7, 7, 7, 7, 5, 5, 
+					 5, 5, 7, 9, 9, 7, 5, 5, 
+					 5, 5, 7, 9, 9, 7, 5, 5, 
+					 5, 5, 7, 7, 7, 7, 5, 5, 
+					 5, 5, 5, 5, 5, 5, 5, 5,
+					 6, 5, 5, 5, 5, 5, 5, 6};
+	
+	public static long[] blockerMasks;
+	
+	public static List<List<Long>> blockerBoards;
+	
+	public static long[] magicNumbers;
+	
+	public static List<List<Long>> moveBoards;
+	
+	
+//Public methods
+
+	/**
+	 * Initializes all static fields
+	 */
+	public void initializeAll() {
+		LOGGER.log(Level.INFO, "BishopMagicBitboard field initialization has begun.");
+		
+		LOGGER.log(Level.FINE, "Generating blocker masks...");
+		RookMagicBitboard.blockerMasks = generateBlockerMasks();
+		LOGGER.log(Level.INFO, "Generating blocker masks complete!");
+		
+		LOGGER.log(Level.FINE, "Generating blocker boards...");
+		RookMagicBitboard.blockerBoards = generateAllBlockerBoards();
+		LOGGER.log(Level.INFO, "Generating blocker boards complete!");
+		
+		LOGGER.log(Level.FINE, "Generating magic numbers...");
+		RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
+		LOGGER.log(Level.INFO, "Generating magic numbers complete!");
+		
+		LOGGER.log(Level.FINE, "Generating move boards...");
+		RookMagicBitboard.moveBoards = generateAllMoveBoards();
+		LOGGER.log(Level.INFO, "Generating move boards complete!");
+	}
+	
+	/**
+	 * Returns a move board given a square and occupancy board
+	 * @Param square
+	 * @Param occupancyBoard
+	 * @Return moveBoard
+	 */
+	public long getMoveBoard(int square, long occupancyBoard) {
+		//compute blockerBoard
+		long blockerBoard = occupancyBoard & blockerMasks[square];
+		
+		//compute index of the associated moveBoard
+		long index = (magicNumbers[square] * blockerBoard) >> (64 - numBits[square]);
+
+		return moveBoards.get(square).get((int) index);
+	}
+//Getter methods
+	
+	protected int[] getNumBits() {
+		return numBits;
+	}
+	
+	protected long[] getBlockerMasks() {
+		return blockerMasks;
+	}
+	
+	protected List<List<Long>> getBlockerBoards() {
+		return blockerBoards;
+	}
+	
+	protected long[] getMagicNumbers() {
+		return magicNumbers;
+	}
+	
+//Protected methods
+	protected long[] generateBlockerMasks() {
+		long[] blockerMasks = new long[64];
+		for (int i = 0; i < 64; i++) {
+			blockerMasks[i] = generateBlockerMask(i);
+		}
+		return blockerMasks;
 	}
 	
 	/**
@@ -47,11 +130,9 @@ public class BishopMagicBitboard extends MagicBitboard{
 	    return result;
 	}
 	
-
-	
 	/**
-	 * Returns a move board for a rook blockerBoard
-	 * @Param blockerBoard, a rook blockerBoard
+	 * Returns a move board for a bishop blockerBoard
+	 * @Param blockerBoard, a bishop blockerBoard
 	 * @Param square, the square associated with the blockerBoard
 	 * @Return the moveBoard for that blockerBoard
 	 */
@@ -121,24 +202,8 @@ public class BishopMagicBitboard extends MagicBitboard{
 		}
 		
 		public long generateMagicNumber(List<Long> blockerBoards) {
-			return bmb.magicNumber(blockerBoards);
+			return bmb.generateMagicNumber(blockerBoards);
 		}
 	}
 
-	/**
-	 * Returns an array that maps a square to the number of bits required for its magic number
-	 * @Param square
-	 * @Return a int[] where arr[square] = numBits required for magic number.
-	 */
-	protected int[] generateNumBits() {
-		int[] bishopNumBits = new int[] {6, 5, 5, 5, 5, 5, 5, 6, 
-										 5, 5, 5, 5, 5, 5, 5, 5,
-										 5, 5, 7, 7, 7, 7, 5, 5, 
-										 5, 5, 7, 9, 9, 7, 5, 5, 
-										 5, 5, 7, 9, 9, 7, 5, 5, 
-										 5, 5, 7, 7, 7, 7, 5, 5, 
-										 5, 5, 5, 5, 5, 5, 5, 5,
-										 6, 5, 5, 5, 5, 5, 5, 6};
-		return bishopNumBits;
-	}
 }
