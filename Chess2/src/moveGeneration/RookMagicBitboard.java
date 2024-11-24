@@ -24,9 +24,11 @@ public class RookMagicBitboard extends MagicBitboard{
 	
 	public static List<List<Long>> blockerBoards;
 	
+	public static List<List<Long>> moveBoards;
+	
 	public static long[] magicNumbers;
 	
-	public static List<List<Long>> moveBoards;
+	
 	
 	
 //Public methods
@@ -45,13 +47,14 @@ public class RookMagicBitboard extends MagicBitboard{
 		RookMagicBitboard.blockerBoards = generateAllBlockerBoards();
 		LOGGER.log(Level.INFO, "Generating blocker boards complete!");
 		
-		LOGGER.log(Level.FINE, "Generating magic numbers...");
-		RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
-		LOGGER.log(Level.INFO, "Generating magic numbers complete!");
-		
 		LOGGER.log(Level.FINE, "Generating move boards...");
 		RookMagicBitboard.moveBoards = generateAllMoveBoards();
 		LOGGER.log(Level.INFO, "Generating move boards complete!");
+		
+		LOGGER.log(Level.FINE, "Generating magic numbers...");
+		//RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
+		LOGGER.log(Level.INFO, "Generating magic numbers complete!");
+
 	}
 	
 	/**
@@ -88,6 +91,14 @@ public class RookMagicBitboard extends MagicBitboard{
 		return magicNumbers;
 	}
 	
+	protected List<List<Long>> getMoveBoards() {
+		return moveBoards;
+	}
+	
+	protected List<List<Long>> getMoveboards() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 //Protected methods
 	/**
 	 * Generates all blockerMasks for rook moves
@@ -205,9 +216,11 @@ public class RookMagicBitboard extends MagicBitboard{
 			return rmb.generateBlockerBoards(blockerBoard);
 		}
 		
-		public long generateMagicNumber(List<Long> blockerBoards) {
-			return rmb.generateMagicNumber(blockerBoards);
+		public long generateMagicNumber(int square) {
+			return rmb.generateMagicNumber(square);
 		}
 	}
+
+
 	
 }

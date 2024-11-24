@@ -1,8 +1,15 @@
 package moveGeneration;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import system.Logging;
 
 public abstract class MagicBitboard {
 	
@@ -17,16 +24,7 @@ public abstract class MagicBitboard {
 		8,  9,  10, 11, 12, 13, 14, 15
 		0,  1,  2,  3,  4,  5,  6,  7
 	*/
-		enum BoardSquare {
-		    a8, b8, c8, d8, e8, f8, g8, h8,
-		    a7, b7, c7, d7, e7, f7, g7, h7,
-		    a6, b6, c6, d6, e6, f6, g6, h6,
-		    a5, b5, c5, d5, e5, f5, g5, h5,
-		    a4, b4, c4, d4, e4, f4, g4, h4,
-		    a3, b3, c3, d3, e3, f3, g3, h3,
-		    a2, b2, c2, d2, e2, f2, g2, h2,
-		    a1, b1, c1, d1, e1, f1, g1, h1
-		}
+	private static final Logger LOGGER = Logging.getLogger(MagicBitboard.class);
 		
 //Abstract Methods:
 	/**
@@ -72,6 +70,8 @@ public abstract class MagicBitboard {
 	 * 
 	 */
 	protected abstract long[] getMagicNumbers();
+	
+	protected abstract List<List<Long>> getMoveBoards();
 
 	
 //Implemented Methods:
@@ -125,52 +125,89 @@ public abstract class MagicBitboard {
 	}
 	
 	/**
-	 * This method searches for and returns a magic number for a bitboard
-	 * @Param blockerBoards a complete list of blockerBoards
+	 * This method searches for and returns a magic number for all the blockerboards of a square
+	 * @Param isBishop for choosing the correct req number of bits
+	 * @Param square that we want to generate the magic number for
+	 * @Param blockerBoards a complete list of blockerBoards for a square
 	 * @Return a long that serves as an injective mapping from a blockerBoard to the numbers 0-blockerBoards.size
 	 */
-	protected long generateMagicNumber(List<Long> blockerBoardList) {
+	protected long generateMagicNumber(int square) {
+		List<Long> blockerBoards = getBlockerBoards().get(square);
+		List<Long> moveBoards = getMoveBoards().get(square);
+		
+		
+        // Create a list of indices
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < moveBoards.size(); i++) {
+            indices.add(i);
+        }
+
+        // Sort indices based on moveBoards values
+        indices.sort(Comparator.comparingLong(moveBoards::get));
+
+        // Create sorted versions of the lists
+        List<Long> sortedBlockerBoards = new ArrayList<>();
+        List<Long> sortedMoveBoards = new ArrayList<>();
+        for (int index : indices) {
+            sortedBlockerBoards.add(blockerBoards.get(index));
+            sortedMoveBoards.add(moveBoards.get(index));
+        }
+		
 		Random random = new Random();
-		int numBoards = blockerBoardList.size();
-		
-		int reqNumBits = (int) (Math.log(numBoards)/Math.log(2));
-		
-		
+		long mask = getBlockerMasks()[square];
+		int reqNumBits = getNumBits()[square];
+		int indexMask = ((1 << reqNumBits) - 1);
+		int rightShift = 64 - reqNumBits;
 		while(true) {
-			boolean[] foundNum = new boolean[numBoards]; 
+			boolean failed = false;
+			Map<Integer, Long> indexToMoveBoard = new HashMap<Integer, Long>();
 			long magicCandidate = random.nextLong();
-			for (Long blockerBoard : blockerBoardList) {
-				long product = blockerBoard * magicCandidate;
-				int index = (int) product >> (64 - reqNumBits);
-				if (foundNum[index]){
+			long topByte = (((mask * magicCandidate) & 0xFF00000000000000L) >>> 56);
+			if (count1s(topByte) < 6)
+				continue;
+			for (int i = 0; i < sortedBlockerBoards.size(); i++) {//Long blockerBoard : blockerBoards
+				long product = sortedBlockerBoards.get(i) * magicCandidate;
+				int index = (int) (product >> rightShift) & indexMask;
+				if (indexToMoveBoard.containsKey(index) && !indexToMoveBoard.get(index).equals(sortedMoveBoards.get(i))){
+					failed = true;
 					break;
 				}
-				foundNum[index] = true;
+				indexToMoveBoard.put(index, sortedMoveBoards.get(i));
 			}
-			return magicCandidate;
+			if (!failed) {
+				return magicCandidate;
+			}
 		}
 	} 
 	
 	/**
-	 * This method returns a list of moveBoards from a list of blockerBoards sorted 
-	 * s.t. the index corresponds with the magic number calculated index
-	 * @Param square the square the piece is on
-	 * @Return the List of moves for each blockerBoard
+	 * Returns the number of 1s in the binary form of a long
+	 * @Param any long
+	 * @Return the number of 1s in its binary form
 	 */
+    private static int count1s(long value) {
+        int count = 0;
+        while (value != 0) {
+            count += (value & 1); // Add 1 if the least significant bit is set
+            value >>>= 1;        // Unsigned right shift to process the next bit
+        }
+        return count;
+    }
+    
+
+	
+    /**
+     * Generates the corresponding list of moveBoards
+     * 
+     */
 	protected List<Long> generateMoveBoards(int square) {
-		//Retrieve necessary data
-		List<Long> blockerBoardList = getBlockerBoards().get(square);
-		long magicNumber = getMagicNumbers()[square];
-		int numBits = getNumBits()[square];
-		//init our result list
-		ArrayList<Long> moveBoards= new ArrayList<Long>();
+		List<Long> blockerBoards = getBlockerBoards().get(square);
+		List<Long> moveBoardList = new ArrayList<Long>();
+		for (Long blockerBoard : blockerBoards) {
+			moveBoardList.add(generateMoveBoard(blockerBoard, square));
+		}
 		
-		//process to generate the moveBoardList
-		for (Long blockerBoard : blockerBoardList) {
-			long index = (magicNumber * blockerBoard) >> (64 - numBits);
-			moveBoards.add((int) index, generateMoveBoard(blockerBoard, square));
-		}		
-		return moveBoards;
+		return moveBoardList;
 	}
 	
 	
@@ -179,6 +216,7 @@ public abstract class MagicBitboard {
 	 * @Return List<List<Long>> blockerBoards, every blocker configuration for each square
 	 */
 	protected List<List<Long>> generateAllBlockerBoards() {
+		assert getBlockerMasks() != null;
 		long[] blockerMasks = getBlockerMasks();
 		List<List<Long>> blockerBoards = new ArrayList<List<Long>>();
 		for (int i = 0; i < 64; i++) {
@@ -194,19 +232,25 @@ public abstract class MagicBitboard {
 	 * @Return a long array of the magic numbers
 	 */
 	protected long[] generateAllMagicNumbers() {
-		List<List<Long>> blockerBoards = getBlockerBoards();
 		long[] magicNumbers = new long[64];
 		for (int i = 0; i < 64; i++) {
-			magicNumbers[i] = generateMagicNumber(blockerBoards.get(i));
+			magicNumbers[i] = generateMagicNumber(i);
+			LOGGER.log(Level.FINE, "Found a magic number for position: " + i);//should be finer
 		}
+		System.out.print("{");
+		for (int i = 0; i < 64; i++) {
+			System.out.print(magicNumbers[i] + ", ");
+			if (i % 8 == 7)
+				System.out.println();
+		}
+		System.out.print("}");
 		return magicNumbers;
 	}
 	
 	
 	/**
-	 * 
-	 * 
-	 * 
+	 * Returns a List<List<Long>> of all move boards
+	 * @Return List<List<Long>> moveBoards
 	 */
 	protected List<List<Long>> generateAllMoveBoards() {
 		List<List<Long>> moveBoards = new ArrayList<List<Long>>();
@@ -218,12 +262,7 @@ public abstract class MagicBitboard {
 		return moveBoards;
 	}
 	
-	/*
-	protected int magicNumToMagicIndex(long magicNumber, long blockerBoard) {
-		long product = blockerBoard * magicNumber;
-		int index = (int) product
-	}
-	*/
+
 //Testing help
 	/**
 	 *This method prints the board in little-endian rank-file form 
@@ -238,3 +277,200 @@ public abstract class MagicBitboard {
 	    }
 	}
 }
+/**
+ * CODE TO CONSIDER DELETING BELOW:
+ * 
+ */
+
+/**
+ * This method returns a list of moveBoards from a list of blockerBoards sorted 
+ * s.t. the index corresponds with the magic number calculated index
+ * @Param square the square the piece is on
+ * @Return the List of moves for each blockerBoard
+ *//*
+protected List<Long> generateMoveBoards(int square) {
+	//Retrieve necessary data
+	List<Long> blockerBoardList = getBlockerBoards().get(square);
+	long magicNumber = getMagicNumbers()[square];
+	int numBits = getNumBits()[square];
+	//init our result list
+	ArrayList<Long> moveBoards= new ArrayList<Long>();
+	
+	//process to generate the moveBoardList
+	for (Long blockerBoard : blockerBoardList) {
+		long index = (magicNumber * blockerBoard) >> (64 - numBits);
+		moveBoards.add((int) index, generateMoveBoard(blockerBoard, square));
+	}		
+	return moveBoards;
+}*/
+
+/*
+protected int magicNumToMagicIndex(long magicNumber, long blockerBoard) {
+	long product = blockerBoard * magicNumber;
+	int index = (int) product
+}
+*/
+/*
+ * 	protected long generateMagicNumber(List<Long> blockerBoardList, int square, boolean isBishop) {
+		Random random = new Random();
+		//int numBoards = blockerBoardList.size();
+		long mask = getBlockerMasks()[square];
+		//int reqNumBits = (int) (Math.log(numBoards)/Math.log(2));
+		int reqNumBits = isBishop ? 9 : 12;
+		//int reqNumBits = 13;
+		int indexMask = ((1 << reqNumBits) - 1);
+		int rightShift = 64 - reqNumBits;
+		while(true) {
+			boolean failed = false;
+			//boolean[] foundNum = new boolean[numBoards]; 
+			Set<Integer> foundIndices = new HashSet<>();
+			long magicCandidate = random.nextLong();
+			long topByte = (((mask * magicCandidate) & 0xFF00000000000000L) >>> 56);
+			if (count1s(topByte) < 6)
+				continue;
+			for (Long blockerBoard : blockerBoardList) {
+				long product = blockerBoard * magicCandidate;
+				int index = (int) (product >> rightShift) & indexMask;
+				if (!foundIndices.add(index)){
+					failed = true;
+					break;
+				}
+			}
+			if (!failed) {
+				return magicCandidate;
+			}
+		}
+	} 
+	
+		protected long generateMagicNumber(int square, boolean isBishop) {
+		List<Long> blockerBoards = getBlockerBoards().get(square);
+		List<Long> moveBoards = getMoveBoards().get(square);
+		Random random = new Random();
+		//int numBoards = blockerBoardList.size();
+		long mask = getBlockerMasks()[square];
+		int reqNumBits = getNumBits()[square];
+		//int reqNumBits = (int) (Math.log(numBoards)/Math.log(2));
+		//int reqNumBits = isBishop ? 9 : 12;
+		//int reqNumBits = 13;
+		int indexMask = ((1 << reqNumBits) - 1);
+		int rightShift = 64 - reqNumBits;
+		while(true) {
+			boolean failed = false;
+			Map<Integer, Long> foundIndices = new HashMap<Integer, Long>();
+			long magicCandidate = random.nextLong();
+			//long topByte = (((mask * magicCandidate) & 0xFF00000000000000L) >>> 56);
+			//if (count1s(topByte) < 6)
+			//	continue;
+			for (int i = 0; i < blockerBoards.size(); i++) {//Long blockerBoard : blockerBoards
+				long product = blockerBoards.get(i) * magicCandidate;
+				int index = (int) (product >> rightShift) & indexMask;
+				if (foundIndices.containsKey(index) && !foundIndices.get(index).equals(moveBoards.get(i))){
+					failed = true;
+					break;
+				}
+				foundIndices.put(index, moveBoards.get(i));
+			}
+			if (!failed) {
+				return magicCandidate;
+			}
+		}
+	} 
+ * 
+ * 
+ * 
+ * */
+
+/*
+protected long generateMagicNumber(List<Long> blockerBoardList, int square, boolean isBishop) {
+	Random random = new Random();
+	long mask = getBlockerMasks()[square];
+	int reqNumBits = isBishop ? 9 : 12;
+	int indexMask = ((1 << reqNumBits) - 1); //Used to retrieve the index
+	int rightShift = 64 - reqNumBits;
+	while(true) {
+		long magicCandidate = random.nextLong();
+		long topByte = (((mask * magicCandidate) & 0xFF00000000000000L) >>> 56); //gets most significant byte
+		if (count1s(topByte) < 6)
+			continue;
+		boolean failed = false;
+		Set<Integer> foundIndices = new HashSet<>();
+		for (Long blockerBoard : blockerBoardList) {
+			long product = blockerBoard * magicCandidate;
+			int index = (int) (product >> rightShift) & indexMask;
+			if (!foundIndices.add(index)){
+				failed = true;
+				break;
+			}
+		}
+		if (!failed) {
+			return magicCandidate;
+		}
+	}
+} 
+*/
+/*
+protected long generateMagicNumber(int square) {
+	List<Long> blockerBoards = getBlockerBoards().get(square);
+	List<Long> moveBoards = getMoveBoards().get(square);
+	Random random = new Random();
+	long mask = getBlockerMasks()[square];
+	int reqNumBits = getNumBits()[square];
+	int indexMask = ((1 << reqNumBits) - 1);
+	int rightShift = 64 - reqNumBits;
+	while(true) {
+		boolean failed = false;
+		Map<Integer, Long> foundIndices = new HashMap<Integer, Long>();
+		long magicCandidate = random.nextLong();
+		//long topByte = (((mask * magicCandidate) & 0xFF00000000000000L) >>> 56);
+		//if (count1s(topByte) < 6)
+		//	continue;
+		for (int i = 0; i < blockerBoards.size(); i++) {//Long blockerBoard : blockerBoards
+			long product = blockerBoards.get(i) * magicCandidate;
+			int index = (int) (product >> rightShift) & indexMask;
+			if (foundIndices.containsKey(index) && !foundIndices.get(index).equals(moveBoards.get(i))){
+				failed = true;
+				break;
+			}
+			foundIndices.put(index, moveBoards.get(i));
+		}
+		if (!failed) {
+			return magicCandidate;
+		}
+	}
+} 
+*/
+/*
+protected long generateMagicNumber(int square) {
+	List<Long> blockerBoards = getBlockerBoards().get(square);
+	List<Long> moveBoards = getMoveBoards().get(square);
+	
+
+	
+	Random random = new Random();
+	long mask = getBlockerMasks()[square];
+	int indexMask = ((1 << 8) - 1);
+	int rightShift = 56;
+	while(true) {
+		boolean failed = false;
+		Map<Integer, Long> foundIndices = new HashMap<Integer, Long>();
+		long magicCandidate = random.nextLong();
+		for (int i = 0; i < blockerBoards.size(); i++) {//Long blockerBoard : blockerBoards
+			long product = blockerBoards.get(i) * magicCandidate;
+			int index = (int) (product >> rightShift) & indexMask;
+			if (foundIndices.containsKey(index) && !foundIndices.get(index).equals(moveBoards.get(i))){
+				failed = true;
+				break;
+			}
+			foundIndices.put(index, moveBoards.get(i));
+		}
+		if (!failed) {
+			return magicCandidate;
+		}
+	}
+} 
+
+
+
+
+
+*/

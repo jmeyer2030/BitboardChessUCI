@@ -20,7 +20,11 @@ public class RookMagicBitboardTest {
 		rmb = new RookMagicBitboard();
 		hook = new RookMagicBitboard.TestHook(rmb);
 	}
-	
+//Method: initialize all
+	@Test
+	public void testInitializeAll() {
+		rmb.initializeAll();
+	}
 	
 //Method: GenerateBlockerMask
 	//Corner Blocker

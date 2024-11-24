@@ -38,20 +38,22 @@ public class BishopMagicBitboard extends MagicBitboard{
 		LOGGER.log(Level.INFO, "BishopMagicBitboard field initialization has begun.");
 		
 		LOGGER.log(Level.FINE, "Generating blocker masks...");
-		RookMagicBitboard.blockerMasks = generateBlockerMasks();
+		BishopMagicBitboard.blockerMasks = generateBlockerMasks();
 		LOGGER.log(Level.INFO, "Generating blocker masks complete!");
 		
 		LOGGER.log(Level.FINE, "Generating blocker boards...");
-		RookMagicBitboard.blockerBoards = generateAllBlockerBoards();
+		BishopMagicBitboard.blockerBoards = generateAllBlockerBoards();
 		LOGGER.log(Level.INFO, "Generating blocker boards complete!");
 		
+		LOGGER.log(Level.FINE, "Generating move boards...");
+		BishopMagicBitboard.moveBoards = generateAllMoveBoards();
+		LOGGER.log(Level.INFO, "Generating move boards complete!");
+		
 		LOGGER.log(Level.FINE, "Generating magic numbers...");
-		RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
+		BishopMagicBitboard.magicNumbers = generateAllMagicNumbers();
 		LOGGER.log(Level.INFO, "Generating magic numbers complete!");
 		
-		LOGGER.log(Level.FINE, "Generating move boards...");
-		RookMagicBitboard.moveBoards = generateAllMoveBoards();
-		LOGGER.log(Level.INFO, "Generating move boards complete!");
+
 	}
 	
 	/**
@@ -85,6 +87,10 @@ public class BishopMagicBitboard extends MagicBitboard{
 	
 	protected long[] getMagicNumbers() {
 		return magicNumbers;
+	}
+	
+	protected List<List<Long>> getMoveBoards() {
+		return moveBoards;
 	}
 	
 //Protected methods
@@ -201,8 +207,8 @@ public class BishopMagicBitboard extends MagicBitboard{
 			return bmb.generateBlockerBoards(blockerBoard);
 		}
 		
-		public long generateMagicNumber(List<Long> blockerBoards) {
-			return bmb.generateMagicNumber(blockerBoards);
+		public long generateMagicNumber(int square, boolean isBishop) {
+			return bmb.generateMagicNumber(square);
 		}
 	}
 

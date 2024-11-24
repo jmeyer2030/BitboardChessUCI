@@ -16,6 +16,11 @@ public class BishopMagicBitboardTest {
 		bmb = new BishopMagicBitboard();
 		hook = new BishopMagicBitboard.TestHook(bmb);
 	}
+//Method: initialize all
+	@Test
+	public void testInitializeAll() {
+		bmb.initializeAll();
+	}
 	
 //Method: generateBlockerMask(int square)
 	//Corner
