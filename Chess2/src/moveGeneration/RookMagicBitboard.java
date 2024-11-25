@@ -29,6 +29,7 @@ public class RookMagicBitboard extends MagicBitboard{
 	
 	public static long[] magicNumbers;
 	
+	
 //Public methods
 	/**
 	 * Initializes all static fields
@@ -52,27 +53,16 @@ public class RookMagicBitboard extends MagicBitboard{
 		LOGGER.log(Level.FINE, "Generating magic numbers...");
 		RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
 		LOGGER.log(Level.FINE, "Generating magic numbers complete!");
+		
+		sortAllMoveBoards();
+		
 		long end = System.currentTimeMillis();
 		long elapsed = end - start;
 		LOGGER.log(Level.INFO, "Rook initialization complete! Time taken: " + elapsed + " ms.");
 
 	}
 	
-	/**
-	 * Returns a move board given a square and occupancy board
-	 * @Param square
-	 * @Param occupancyBoard
-	 * @Return moveBoard
-	 */
-	public long getMoveBoard(int square, long occupancyBoard) {
-		//compute blockerBoard
-		long blockerBoard = occupancyBoard & blockerMasks[square];
-		
-		//compute index of the associated moveBoard
-		long index = (magicNumbers[square] * blockerBoard) >> (64 - numBits[square]);
 
-		return moveBoards.get(square).get((int) index);
-	}
 	
 //Getter methods
 	protected int[] getNumBits() {

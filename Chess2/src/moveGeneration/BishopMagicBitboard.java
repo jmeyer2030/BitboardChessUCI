@@ -53,27 +53,15 @@ public class BishopMagicBitboard extends MagicBitboard{
 		LOGGER.log(Level.FINE, "Generating magic numbers...");
 		BishopMagicBitboard.magicNumbers = generateAllMagicNumbers();
 		LOGGER.log(Level.FINE, "Generating magic numbers complete!");
+		
+		sortAllMoveBoards();
+		
 		long end = System.currentTimeMillis();
 		long elapsed = end - start;
 		LOGGER.log(Level.INFO, "Bishop initialization complete! Time taken: " + elapsed + " ms.");
 
 	}
 	
-	/**
-	 * Returns a move board given a square and occupancy board
-	 * @Param square
-	 * @Param occupancyBoard
-	 * @Return moveBoard
-	 */
-	public long getMoveBoard(int square, long occupancyBoard) {
-		//compute blockerBoard
-		long blockerBoard = occupancyBoard & blockerMasks[square];
-		
-		//compute index of the associated moveBoard
-		long index = (magicNumbers[square] * blockerBoard) >> (64 - numBits[square]);
-
-		return moveBoards.get(square).get((int) index);
-	}
 //Getter methods
 	
 	protected int[] getNumBits() {
@@ -152,16 +140,16 @@ public class BishopMagicBitboard extends MagicBitboard{
 		long moveBoard = 0;
 		
 	    // Diagonal (/ direction)
-	    for (int rank = rankLoc + 1, file = fileLoc + 1; rank < 7 && file < 7; rank++, file++) {
-	    	int currentLoc = 8 * rankLoc + file;
+	    for (int rank = rankLoc + 1, file = fileLoc + 1; rank < 8 && file < 8; rank++, file++) {
+	    	int currentLoc = 8 * rank + file;
 	    	moveBoard |= (1L << currentLoc);
 			long bitMask = 1L << currentLoc;
 			if ((blockerBoard & bitMask) != 0) {
 				break;
 			}
 	    }
-	    for (int rank = rankLoc - 1, file = fileLoc - 1; rank >= 1 && file >= 1; rank--, file--) {
-	    	int currentLoc = 8 * rankLoc + file;
+	    for (int rank = rankLoc - 1, file = fileLoc - 1; rank >= 0 && file >= 0; rank--, file--) {
+	    	int currentLoc = 8 * rank + file;
 	    	moveBoard |= (1L << currentLoc);
 			long bitMask = 1L << currentLoc;
 			if ((blockerBoard & bitMask) != 0) {
@@ -170,16 +158,16 @@ public class BishopMagicBitboard extends MagicBitboard{
 	    }
 
 	    // Anti-diagonal (\ direction)
-	    for (int rank = rankLoc - 1, file = fileLoc + 1; rank >= 1 && file < 7; rank--, file++) {
-	    	int currentLoc = 8 * rankLoc + file;
+	    for (int rank = rankLoc - 1, file = fileLoc + 1; rank >= 0 && file < 8; rank--, file++) {
+	    	int currentLoc = 8 * rank + file;
 	    	moveBoard |= (1L << currentLoc);
 			long bitMask = 1L << currentLoc;
 			if ((blockerBoard & bitMask) != 0) {
 				break;
 			}
 	    }
-	    for (int rank = rankLoc + 1, file = fileLoc - 1; rank < 7 && file >= 1; rank++, file--) {
-	    	int currentLoc = 8 * rankLoc + file;
+	    for (int rank = rankLoc + 1, file = fileLoc - 1; rank < 8 && file >= 0; rank++, file--) {
+	    	int currentLoc = 8 * rank + file;
 	    	moveBoard |= (1L << currentLoc);
 			long bitMask = 1L << currentLoc;
 			if ((blockerBoard & bitMask) != 0) {

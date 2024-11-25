@@ -1,6 +1,36 @@
 package moveGeneration;
 
 public class KingBitboard {
+	//public static long[] moveBoards;
+	public static long[] whiteMoveBoards;
+	public static long[] blackMoveBoards;
+	
+	public void initializeAll() {
+		KingBitboard.whiteMoveBoards = generateWhiteMoveBoards();
+		KingBitboard.blackMoveBoards = generateBlackMoveBoards();
+	}
+	
+	private long[] generateBlackMoveBoards() {
+		long[] blackMoveBoards = new long[64];
+		for (int i = 0; i < 64; i++) {
+			blackMoveBoards[i] = generateMoveBoard(i);
+		}
+		//add both king/queen side castling
+		blackMoveBoards[4] |= 0b01000100_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
+		
+		return blackMoveBoards;
+	}
+	
+	private long[] generateWhiteMoveBoards() {
+		long[] whiteMoveBoards = new long[64];
+		for (int i = 0; i < 64; i++) {
+			whiteMoveBoards[i] = generateMoveBoard(i);
+		}
+		//add both king/queen side castling
+		whiteMoveBoards[4] |= 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00100010L;
+		
+		return whiteMoveBoards;
+	}
 	
 	/**
 	 * Returns a bitboard of squares that the king attacks at a given position
@@ -62,7 +92,8 @@ public class KingBitboard {
 	
 //Testing help
 	/**
-	 *This method prints the board in little-endian rank-file form 
+	 *This method prints the board in little-endian rank-file form
+	 *@Param long bitboard 
 	 */
 	protected void printBoard(long mask) {
 		System.out.println("Little-endian rank-file board representation: ");
@@ -72,9 +103,6 @@ public class KingBitboard {
 	        }
 	        System.out.println();
 	    }
-	    //System.out.println("Raw binary string: ");
-	    //String binaryString = String.format("%64s", Long.toBinaryString(mask)).replace(' ', '0');
-	    //System.out.println(binaryString);
 	}
 }
 /*
@@ -83,4 +111,12 @@ public static void main(String[] args) {
 	kb.printBoard(kb.generateMoveBoard(35));
 	
 }
+
+	private long[] generateMoveBoards() {
+		long[] moveBoards = new long[64];
+		for (int i = 0; i < 64; i++) {
+			moveBoards[i] = generateMoveBoard(i);
+		}
+		return moveBoards;
+	}
 */

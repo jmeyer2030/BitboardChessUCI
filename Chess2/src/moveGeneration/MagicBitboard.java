@@ -1,6 +1,7 @@
 package moveGeneration;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,8 +140,6 @@ public abstract class MagicBitboard {
 	 * @Return a long that serves as an surjective mapping from a blockerBoard to the index associated with its moveBoard
 	 */
 	protected long generateMagicNumber(int square) {
-		
-		
 		//Retrieve pre-initialized data
 		List<Long> blockerBoards = getBlockerBoards().get(square);
 		List<Long> moveBoards = getMoveBoards().get(square);
@@ -173,6 +172,78 @@ public abstract class MagicBitboard {
 			}
 		}
 	} 
+	
+	/**
+	 * Returns a move board given a square and occupancy board
+	 * @Param square
+	 * @Param occupancyBoard
+	 * @Return moveBoard
+	 */
+	public long getMoveBoard(int square, long occupancyBoard) {
+		//compute blockerBoard
+		long blockerBoard = occupancyBoard & getBlockerMasks()[square];
+		
+		//create mask to get the numBits most significant bits
+		int indexMask = ((1 << getNumBits()[square]) - 1);
+		
+		//compute index of the associated moveBoard
+		long index = (getMagicNumbers()[square] * blockerBoard) >> (64 - getNumBits()[square]) & indexMask;
+
+		return getMoveBoards().get(square).get((int) index);
+	}
+	
+	//Get 
+    protected int getIndexForBlocker(long blockerBoard, int square) {
+        // Function to get the index
+        return (int) ((getMagicNumbers()[square] * blockerBoard) >> (64 - getNumBits()[square]) 
+                & ((1 << getNumBits()[square]) - 1));
+    }
+
+    protected List<Long> sortMoveBoards(int square) {
+    	List<Long> moveBoards = getMoveBoards().get(square);
+    	List<Long> blockerBoards = getBlockerBoards().get(square);
+    	
+    	
+        // Combine moveBoards and blockerBoards into pairs
+        List<Pair> combinedList = new ArrayList<>();
+        for (int i = 0; i < moveBoards.size(); i++) {
+            long moveBoard = moveBoards.get(i);
+            long blockerBoard = blockerBoards.get(i);
+            int index = getIndexForBlocker(blockerBoard, square);  // Get the corresponding index
+            combinedList.add(new Pair(moveBoard, index));
+        }
+
+        // Sort the combined list by the index (second element of the pair)
+        Collections.sort(combinedList, (a, b) -> Integer.compare(a.index, b.index));
+
+        // Extract the sorted moveBoards
+        List<Long> sortedMoveBoards = new ArrayList<>();
+        for (Pair pair : combinedList) {
+            sortedMoveBoards.add(pair.moveBoard);
+        }
+
+        return sortedMoveBoards;
+    }
+
+    // Pair class to hold the moveBoard and its associated index
+    private static class Pair {
+        long moveBoard;
+        int index;
+
+        Pair(long moveBoard, int index) {
+            this.moveBoard = moveBoard;
+            this.index = index;
+        }
+    }
+    
+    protected List<List<Long>> sortAllMoveBoards() {
+    	List<List<Long>> moveBoards = new ArrayList<List<Long>>();
+    	for (int i = 0; i < 64; i++) {
+    		moveBoards.add(sortMoveBoards(i));
+    	}
+    	return moveBoards;
+    }
+	
 	
 	/**
 	 * Returns the number of 1s in the binary form of a long
