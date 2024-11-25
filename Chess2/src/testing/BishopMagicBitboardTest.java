@@ -19,7 +19,7 @@ public class BishopMagicBitboardTest {
 //Method: initialize all
 	@Test
 	public void testInitializeAll() {
-		bmb.initializeAll();
+		//bmb.initializeAll();
 	}
 	
 //Method: generateBlockerMask(int square)

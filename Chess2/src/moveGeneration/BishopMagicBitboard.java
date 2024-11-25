@@ -35,24 +35,27 @@ public class BishopMagicBitboard extends MagicBitboard{
 	 * Initializes all static fields
 	 */
 	public void initializeAll() {
+		long start = System.currentTimeMillis();
 		LOGGER.log(Level.INFO, "BishopMagicBitboard field initialization has begun.");
 		
 		LOGGER.log(Level.FINE, "Generating blocker masks...");
 		BishopMagicBitboard.blockerMasks = generateBlockerMasks();
-		LOGGER.log(Level.INFO, "Generating blocker masks complete!");
+		LOGGER.log(Level.FINE, "Generating blocker masks complete!");
 		
 		LOGGER.log(Level.FINE, "Generating blocker boards...");
 		BishopMagicBitboard.blockerBoards = generateAllBlockerBoards();
-		LOGGER.log(Level.INFO, "Generating blocker boards complete!");
+		LOGGER.log(Level.FINE, "Generating blocker boards complete!");
 		
 		LOGGER.log(Level.FINE, "Generating move boards...");
 		BishopMagicBitboard.moveBoards = generateAllMoveBoards();
-		LOGGER.log(Level.INFO, "Generating move boards complete!");
+		LOGGER.log(Level.FINE, "Generating move boards complete!");
 		
 		LOGGER.log(Level.FINE, "Generating magic numbers...");
 		BishopMagicBitboard.magicNumbers = generateAllMagicNumbers();
-		LOGGER.log(Level.INFO, "Generating magic numbers complete!");
-		
+		LOGGER.log(Level.FINE, "Generating magic numbers complete!");
+		long end = System.currentTimeMillis();
+		long elapsed = end - start;
+		LOGGER.log(Level.INFO, "Bishop initialization complete! Time taken: " + elapsed + " ms.");
 
 	}
 	

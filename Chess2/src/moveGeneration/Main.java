@@ -8,7 +8,6 @@ public class Main {
 		BishopMagicBitboard bmb = new BishopMagicBitboard();
 		bmb.initializeAll();
 		rmb.initializeAll();
-		System.out.println(rmb.generateMagicNumber(1));
 		
 		
 	}

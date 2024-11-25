@@ -11,7 +11,7 @@ public class Logging {
 	
 	static {
 		//consoleHandler.setFormatter(format);
-		consoleHandler.setLevel(Level.ALL);
+		consoleHandler.setLevel(Level.INFO);
 	}
 	
 	public static Logger getLogger(Class<?> clazz) {

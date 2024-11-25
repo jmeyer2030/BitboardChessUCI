@@ -8,6 +8,7 @@ import system.Logging;
 
 public class RookMagicBitboard extends MagicBitboard{	
 	
+//Static fields
 	private static final Logger LOGGER = Logging.getLogger(RookMagicBitboard.class);
 	
 	public static int[] numBits = new int[] 
@@ -28,32 +29,32 @@ public class RookMagicBitboard extends MagicBitboard{
 	
 	public static long[] magicNumbers;
 	
-	
-	
-	
 //Public methods
-	
 	/**
 	 * Initializes all static fields
 	 */
 	public void initializeAll() {
+		long start = System.currentTimeMillis();
 		LOGGER.log(Level.INFO, "RookMagicBitboard field initialization has begun.");
 		
 		LOGGER.log(Level.FINE, "Generating blocker masks...");
 		RookMagicBitboard.blockerMasks = generateBlockerMasks();
-		LOGGER.log(Level.INFO, "Generating blocker masks complete!");
+		LOGGER.log(Level.FINE, "Generating blocker masks complete!");
 		
 		LOGGER.log(Level.FINE, "Generating blocker boards...");
 		RookMagicBitboard.blockerBoards = generateAllBlockerBoards();
-		LOGGER.log(Level.INFO, "Generating blocker boards complete!");
+		LOGGER.log(Level.FINE, "Generating blocker boards complete!");
 		
 		LOGGER.log(Level.FINE, "Generating move boards...");
 		RookMagicBitboard.moveBoards = generateAllMoveBoards();
-		LOGGER.log(Level.INFO, "Generating move boards complete!");
+		LOGGER.log(Level.FINE, "Generating move boards complete!");
 		
 		LOGGER.log(Level.FINE, "Generating magic numbers...");
-		//RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
-		LOGGER.log(Level.INFO, "Generating magic numbers complete!");
+		RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
+		LOGGER.log(Level.FINE, "Generating magic numbers complete!");
+		long end = System.currentTimeMillis();
+		long elapsed = end - start;
+		LOGGER.log(Level.INFO, "Rook initialization complete! Time taken: " + elapsed + " ms.");
 
 	}
 	
@@ -74,16 +75,20 @@ public class RookMagicBitboard extends MagicBitboard{
 	}
 	
 //Getter methods
-	
 	protected int[] getNumBits() {
+		assert numBits != null;
+		
 		return numBits;
 	}
 	
 	protected long[] getBlockerMasks() {
+		assert blockerMasks != null;
+		
 		return blockerMasks;
 	}
 	
 	protected List<List<Long>> getBlockerBoards() {
+		assert blockerBoards != null;
 		return blockerBoards;
 	}
 	
@@ -220,7 +225,4 @@ public class RookMagicBitboard extends MagicBitboard{
 			return rmb.generateMagicNumber(square);
 		}
 	}
-
-
-	
 }
