@@ -6,10 +6,10 @@ import java.util.logging.Logger;
 
 import system.Logging;
 
-public class RookMagicBitboard extends MagicBitboard{	
+public class RookLogic extends MagicBitboard{	
 	
 //Static fields
-	private static final Logger LOGGER = Logging.getLogger(RookMagicBitboard.class);
+	private static final Logger LOGGER = Logging.getLogger(RookLogic.class);
 	
 	public static int[] numBits = new int[] 
 			  {12, 11, 11, 11, 11, 11, 11, 12, 
@@ -39,22 +39,22 @@ public class RookMagicBitboard extends MagicBitboard{
 		LOGGER.log(Level.INFO, "RookMagicBitboard field initialization has begun.");
 		
 		LOGGER.log(Level.FINE, "Generating blocker masks...");
-		RookMagicBitboard.blockerMasks = generateBlockerMasks();
+		RookLogic.blockerMasks = generateBlockerMasks();
 		LOGGER.log(Level.FINE, "Generating blocker masks complete!");
 		
 		LOGGER.log(Level.FINE, "Generating blocker boards...");
-		RookMagicBitboard.blockerBoards = generateAllBlockerBoards();
+		RookLogic.blockerBoards = generateAllBlockerBoards();
 		LOGGER.log(Level.FINE, "Generating blocker boards complete!");
 		
 		LOGGER.log(Level.FINE, "Generating move boards...");
-		RookMagicBitboard.moveBoards = generateAllMoveBoards();
+		RookLogic.moveBoards = generateAllMoveBoards();
 		LOGGER.log(Level.FINE, "Generating move boards complete!");
 		
 		LOGGER.log(Level.FINE, "Generating magic numbers...");
-		RookMagicBitboard.magicNumbers = generateAllMagicNumbers();
+		RookLogic.magicNumbers = generateAllMagicNumbers();
 		LOGGER.log(Level.FINE, "Generating magic numbers complete!");
 		
-		sortAllMoveBoards();
+		moveBoards = sortAllMoveBoards();
 		
 		long end = System.currentTimeMillis();
 		long elapsed = end - start;
@@ -193,9 +193,9 @@ public class RookMagicBitboard extends MagicBitboard{
 	
 //Testing help
 	public static class TestHook {
-		private RookMagicBitboard rmb;
+		private RookLogic rmb;
 		
-		public TestHook(RookMagicBitboard rmb) {
+		public TestHook(RookLogic rmb) {
 			this.rmb = rmb;
 		}
 		

@@ -5,16 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import moveGeneration.BishopMagicBitboard;
+import moveGeneration.BishopLogic;
 
 public class BishopMagicBitboardTest {
-	private static BishopMagicBitboard bmb;
-	private static BishopMagicBitboard.TestHook hook;
+	private static BishopLogic bmb;
+	private static BishopLogic.TestHook hook;
 	
 	@BeforeEach
 	public void setUp() {
-		bmb = new BishopMagicBitboard();
-		hook = new BishopMagicBitboard.TestHook(bmb);
+		bmb = new BishopLogic();
+		hook = new BishopLogic.TestHook(bmb);
 	}
 //Method: initialize all
 	@Test

@@ -8,17 +8,17 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import moveGeneration.RookMagicBitboard;
+import moveGeneration.RookLogic;
 
 public class RookMagicBitboardTest {
 	
-	private static RookMagicBitboard rmb;
-	private static RookMagicBitboard.TestHook hook;
+	private static RookLogic rmb;
+	private static RookLogic.TestHook hook;
 	
 	@BeforeEach
 	public void setUp() {
-		rmb = new RookMagicBitboard();
-		hook = new RookMagicBitboard.TestHook(rmb);
+		rmb = new RookLogic();
+		hook = new RookLogic.TestHook(rmb);
 	}
 //Method: initialize all
 	@Test

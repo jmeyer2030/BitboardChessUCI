@@ -9,9 +9,10 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import board.Position;
 import system.Logging;
 
-public abstract class MagicBitboard {
+public abstract class MagicBitboard implements LogicInterface{
 	
 	/*
 	 Little-Endian Rank-File Mapping:
@@ -28,64 +29,53 @@ public abstract class MagicBitboard {
 	private static final Logger LOGGER = Logging.getLogger(MagicBitboard.class);
 		
 //Abstract Methods:
-	
-	/**
-	 * Initializes all static fields
-	 */
 	public abstract void initializeAll();
-	
-	/**
-	 * Returns for its piece a blocker-mask for a given square
-	 * @Param square an integer between 0 and 63
-	 * @Return a blockerMask if the piece were on that square
-	 */
 	protected abstract long generateBlockerMask(int square);
-	
-	
-	/**
-	 * Returns for its piece a move board given a blockerBoard
-	 * @Param blockerBoard, a piece blockerBoard
-	 * @Param square, the square associated with the blockerBoard
-	 * @Return a blockerMask if the piece were on that square
-	 */
 	protected abstract long generateMoveBoard(long blockerBoard, int square);
-	
-	
-	/**
-	 * Retrieves the already existing array of the number potential blocker squares
-	 * @Return a int[] where arr[square] = numBits required for magic number.
-	 */
 	protected abstract int[] getNumBits();
-	
-	
-	/**
-	 * Retrieves the blockerMasks
-	 * @Return already generated blockerMasks
-	 */
 	protected abstract long[] getBlockerMasks();
-	
-	/**
-	 * Retrieves the already created list of blockerboards
-	 * @Return the list of blockerboards
-	 */
 	protected abstract List<List<Long>> getBlockerBoards();
-	
-	
-	/**
-	 * Retrieces the list of magic numbers
-	 * @Return the list of magic numbers
-	 */
 	protected abstract long[] getMagicNumbers();
+	protected abstract List<List<Long>> getMoveBoards();
+	
+	
+//Public Methods:
+	/**
+	 * Returns a move board given a square and position
+	 * @Param square
+	 * @Param position
+	 * @Return moveBoard of all moves
+	 */
+	public long getMoveBoard(int square, Position position) {
+		long activePlayerPieces = position.whiteToPlay ? position.whitePieces : position.blackPieces;
+		long blockerBoard = position.occupancy & getBlockerMasks()[square];
+		int index = getIndexForBlocker(blockerBoard, square);
+		return getMoveBoards().get(square).get(index) & ~activePlayerPieces;
+	}
+	
+	public long getCaptures(int square, Position position) {
+		return getMoveBoard(square, position) & position.occupancy;
+	}
+	
+	public long getQuietMoves(int square, Position position) {
+		return getMoveBoard(square, position) & ~position.occupancy;
+	}
 	
 	/**
-	 *Retrieves moveBoards
-	 *@Return moveBoards 
+	 * Returns an attack board given a square and occupancy board
+	 * @Param square
+	 * @Param occupancy of all squares
+	 * @Return attackBoard of all attacks
 	 */
-	protected abstract List<List<Long>> getMoveBoards();
+	public long getAttackBoard(int square, Position position) {
+		long blockerBoard = position.occupancy & getBlockerMasks()[square];
+		int index = getIndexForBlocker(blockerBoard, square);
+		return getMoveBoards().get(square).get(index);
+	}
+	
 
 	
 //Implemented Methods:
-	
 	/**
 	 * Generates an array of the blockerMasks
 	 * @Return array of blockerMasks
@@ -173,25 +163,7 @@ public abstract class MagicBitboard {
 		}
 	} 
 	
-	/**
-	 * Returns a move board given a square and occupancy board
-	 * @Param square
-	 * @Param occupancyBoard
-	 * @Return moveBoard
-	 */
-	public long getMoveBoard(int square, long occupancyBoard) {
-		//compute blockerBoard
-		long blockerBoard = occupancyBoard & getBlockerMasks()[square];
-		
-		//create mask to get the numBits most significant bits
-		int indexMask = ((1 << getNumBits()[square]) - 1);
-		
-		//compute index of the associated moveBoard
-		long index = (getMagicNumbers()[square] * blockerBoard) >> (64 - getNumBits()[square]) & indexMask;
 
-		return getMoveBoards().get(square).get((int) index);
-	}
-	
 	//Get 
     protected int getIndexForBlocker(long blockerBoard, int square) {
         // Function to get the index

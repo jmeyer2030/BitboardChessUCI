@@ -1,12 +1,35 @@
 package moveGeneration;
 
-public class PawnBitboard {
+import board.Position;
+import system.BBO;
+
+public class PawnLogic {
 	public static long[] whitePawnPushes;
 	public static long[] whitePawnAttacks;
 	public static long[] whitePawnEnPassants;
 	public static long[] blackPawnPushes;
 	public static long[] blackPawnAttacks;
 	public static long[] blackPawnEnPassants;
+	
+	public static long[] whitePawnPushBlockerMask;
+	public static long[] blackPawnPushBlockerMask;
+	
+	public static long thirdRankMask = 0b00000000_00000000_00000000_00000000_00000000_11111111_00000000_00000000L;
+	public static long fourthRankMask = 0b00000000_00000000_00000000_00000000_11111111_00000000_00000000_00000000L;
+	
+	public static long sixthRankMask = 0b00000000_00000000_11111111_00000000_00000000_00000000_00000000_00000000L;
+	public static long fifthRankMask = 0b00000000_00000000_00000000_11111111_00000000_00000000_00000000_00000000L;
+	
+	public static int[] numBitsWhite = new int[] 
+			{0, 0, 0, 0, 0, 0, 0, 0, 
+			 3, 4, 4, 4, 4, 4, 4, 3,
+			 2, 3, 3, 3, 3, 3, 3, 2, 
+			 2, 3, 3, 3, 3, 3, 3, 2,  
+			 3, 5, 7, 9, 9, 7, 5, 5, 
+			 2, 3, 3, 3, 3, 3, 3, 2, 
+			 2, 3, 3, 3, 3, 3, 3, 2, 
+			 0, 0, 0, 0, 0, 0, 0, 0};
+	
 	
 	public void initializeAll() {
 		whitePawnPushes = generateWhitePawnPushes();
@@ -15,6 +38,81 @@ public class PawnBitboard {
 		blackPawnPushes = generateBlackPawnPushes();
 		blackPawnAttacks = generateBlackPawnAttacks();
 		blackPawnEnPassants = generateBlackPawnEnPassants();
+		whitePawnPushBlockerMask = generateWhitePawnPushes();
+		blackPawnPushBlockerMask = generateBlackPawnPushes();
+	}
+	
+	public long getAttackBoard(int square, Position position) {
+		if (BBO.squareHasPiece(position.whitePieces, square)) {
+			return whitePawnAttacks[square];
+		}
+		return blackPawnAttacks[square];
+	}
+	
+	public long getMoveBoard(int square, Position position) {
+		return 0L;
+	}
+	
+	public long getQuietMoves(int square, Position position) {
+		if (BBO.squareHasPiece(position.whitePieces, square)) {
+			return getWhitePawnPushes(square, position.occupancy);
+		}
+		return getBlackPawnPushes(square, position.occupancy);
+	}
+	
+	public long getCaptures(int square, Position position) {
+		if (BBO.squareHasPiece(position.whitePieces, square)) {
+			return whitePawnAttacks[square] & position.blackPieces;
+		}
+		
+		return blackPawnAttacks[square] & position.whitePieces;
+	}
+	
+	public long getEnPassant(int square, Position position) {
+		if (position.priorMove == null)
+			return 0L;
+		if (!enPassantIsValid(square, position))
+			return 0L;
+		if (BBO.squareHasPiece(position.whitePieces, square)) {
+			return (1L << (position.priorMove.destination + 8));
+		}
+		return (1L << (position.priorMove.destination - 8));
+	}
+	
+	private boolean enPassantIsValid(int square, Position position) {
+		if ((square / 8 != 3 || square / 8 != 4) && //if square is on fourth or fifth rank
+			(position.priorMove.destination + 1 == square || position.priorMove.destination - 1 == square) && //priorMove ended on adjacent square
+			BBO.squareHasPiece(position.pawns, position.priorMove.destination) &&//priorMove was a pawn
+			position.priorMove.start / 8 == 1 || position.priorMove.start / 8 == 6) {//prior move started on pawn starting
+			return true;
+		}
+		return false;
+	}
+	
+	private long getWhitePawnPushes(int square, long occupancyBoard) {
+		if (square > 15) // if not on rank 2
+			return whitePawnPushBlockerMask[square] & ~occupancyBoard;
+		
+		//true if there is a piece on rank 3 of the square's file
+		boolean blockerAtRankThree = ((occupancyBoard & thirdRankMask & whitePawnPushBlockerMask[square]) != 0);
+		
+		if (blockerAtRankThree) // if its occupied we just return 0.
+			return 0L;
+		
+		return  ~occupancyBoard & whitePawnPushBlockerMask[square];
+	}
+	
+	private long getBlackPawnPushes(int square, long occupancyBoard) {
+		if (square < 48) // if not on rank 2
+			return blackPawnPushBlockerMask[square] & occupancyBoard;
+		
+		//true if there is a piece on rank 3 of the square's file
+		boolean blockerAtRankSix = ((occupancyBoard & sixthRankMask & blackPawnPushBlockerMask[square]) != 0);
+		
+		if (blockerAtRankSix) // if its occupied we just return 0.
+			return 0L;
+		
+		return  ~occupancyBoard & blackPawnPushBlockerMask[square];
 	}
 	
 	private long[] generateWhitePawnPushes() {
@@ -29,7 +127,7 @@ public class PawnBitboard {
 		long whitePawnPush = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
 		if (square < 56)
 			whitePawnPush |= (1L << (square + 8));
-		if (square < 15 && square > 7) {
+		if (square < 16 && square > 7) {
 			whitePawnPush |= (1L << (square + 16));
 		}
 		return whitePawnPush;

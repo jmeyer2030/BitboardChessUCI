@@ -3,12 +3,11 @@ package moveGeneration;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import system.Logging;
 
-public class BishopMagicBitboard extends MagicBitboard{
+public class BishopLogic extends MagicBitboard{
 	
-	private static final Logger LOGGER = Logging.getLogger(BishopMagicBitboard.class);
+	private static final Logger LOGGER = Logging.getLogger(BishopLogic.class);
 	
 	public static int[] numBits = new int[] 
 					{6, 5, 5, 5, 5, 5, 5, 6, 
@@ -35,35 +34,20 @@ public class BishopMagicBitboard extends MagicBitboard{
 	 * Initializes all static fields
 	 */
 	public void initializeAll() {
-		long start = System.currentTimeMillis();
 		LOGGER.log(Level.INFO, "BishopMagicBitboard field initialization has begun.");
 		
-		LOGGER.log(Level.FINE, "Generating blocker masks...");
-		BishopMagicBitboard.blockerMasks = generateBlockerMasks();
-		LOGGER.log(Level.FINE, "Generating blocker masks complete!");
+		long start = System.currentTimeMillis();
+		BishopLogic.blockerMasks = generateBlockerMasks();
+		BishopLogic.blockerBoards = generateAllBlockerBoards();
+		BishopLogic.moveBoards = generateAllMoveBoards();
+		BishopLogic.magicNumbers = generateAllMagicNumbers();
+		BishopLogic.moveBoards = sortAllMoveBoards();
+		long elapsed = System.currentTimeMillis() - start;
 		
-		LOGGER.log(Level.FINE, "Generating blocker boards...");
-		BishopMagicBitboard.blockerBoards = generateAllBlockerBoards();
-		LOGGER.log(Level.FINE, "Generating blocker boards complete!");
-		
-		LOGGER.log(Level.FINE, "Generating move boards...");
-		BishopMagicBitboard.moveBoards = generateAllMoveBoards();
-		LOGGER.log(Level.FINE, "Generating move boards complete!");
-		
-		LOGGER.log(Level.FINE, "Generating magic numbers...");
-		BishopMagicBitboard.magicNumbers = generateAllMagicNumbers();
-		LOGGER.log(Level.FINE, "Generating magic numbers complete!");
-		
-		sortAllMoveBoards();
-		
-		long end = System.currentTimeMillis();
-		long elapsed = end - start;
 		LOGGER.log(Level.INFO, "Bishop initialization complete! Time taken: " + elapsed + " ms.");
-
 	}
 	
 //Getter methods
-	
 	protected int[] getNumBits() {
 		return numBits;
 	}
@@ -180,9 +164,9 @@ public class BishopMagicBitboard extends MagicBitboard{
 	
 //Testing help
 	public static class TestHook {
-		private BishopMagicBitboard bmb;
+		private BishopLogic bmb;
 		
-		public TestHook(BishopMagicBitboard bmb) {
+		public TestHook(BishopLogic bmb) {
 			this.bmb = bmb;
 		}
 		
@@ -202,5 +186,4 @@ public class BishopMagicBitboard extends MagicBitboard{
 			return bmb.generateMagicNumber(square);
 		}
 	}
-
 }
