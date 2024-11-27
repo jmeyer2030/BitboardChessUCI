@@ -341,6 +341,12 @@ public class Position {
 	        if (startSquare == 56) castleRights &= ~0b0010; // Remove black queen-side
 	        if (startSquare == 63) castleRights &= ~0b0001; // Remove black king-side
 	    }
+	    if ((destinationMask & rooks) != 0) {
+	        if (destinationSquare == 0) castleRights &= ~0b1000; // Remove white queen-side
+	        if (destinationSquare == 7) castleRights &= ~0b0100; // Remove white king-side
+	        if (destinationSquare == 56) castleRights &= ~0b0010; // Remove black queen-side
+	        if (destinationSquare == 63) castleRights &= ~0b0001; // Remove black king-side
+	    }
 
 	    // Set en passant square if applicable
 	    if ((pawns & destinationMask) != 0 && Math.abs(startSquare - destinationSquare) == 16) {

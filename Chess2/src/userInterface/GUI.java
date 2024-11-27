@@ -6,6 +6,9 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -15,7 +18,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import board.Move;
 import board.Position;
+import moveGeneration.MoveGenerator;
 
 public class GUI implements ActionListener{
 	JLabel label;
@@ -25,9 +30,39 @@ public class GUI implements ActionListener{
 	JButton[] buttonArray = new JButton[64];
 	JPanel buttonPanel;
 	Position position;
+	List<Move> legalMoves;
+	List<Move> movesFromSelected;
+	int moveStart;
+	int moveDestination;
+	boolean waitingForDestination;
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
+		for (int i = 0; i < 64; i++) {
+			if (e.getSource() != buttonArray[i])
+				continue;
+			if (!waitingForDestination) {
+				moveStart = littleEndianToJPanel(i);
+				movesFromSelected = legalMoves.stream().filter(move -> {
+					if (move.start == moveStart)
+						return true;
+					return false;
+				}).collect(Collectors.toList());
+				waitingForDestination = true;
+			} else {
+				moveDestination = littleEndianToJPanel(i);
+				Optional<Move> moveToApply = movesFromSelected.stream().filter(move -> {
+					if (move.destination == moveDestination)
+						return true;
+					return false;
+				}).findFirst();
+				if (moveToApply.isEmpty())
+					continue;
+				position.applyMove(moveToApply.get());
+				updateDisplay();
+				waitingForDestination = false;
+			}
+		}
+		
 	}
 
 	private int littleEndianToJPanel(int endian) {
@@ -62,6 +97,9 @@ public class GUI implements ActionListener{
 		frame.setResizable(false);
 		frame.setVisible(true);
 		this.updateDisplay();
+		
+		waitingForDestination = false;
+		legalMoves = MoveGenerator.generateStrictlyLegal(position);
 	}
 	public void updateDisplay() {
 		Icon icon;

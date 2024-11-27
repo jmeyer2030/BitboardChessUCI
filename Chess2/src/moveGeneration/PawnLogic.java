@@ -49,10 +49,6 @@ public class PawnLogic {
 		return blackPawnAttacks[square];
 	}
 	
-	public long getMoveBoard(int square, Position position) {
-		return 0L;
-	}
-	
 	public long getQuietMoves(int square, Position position) {
 		if (BBO.squareHasPiece(position.whitePieces, square)) {
 			return getWhitePawnPushes(square, position.occupancy);
