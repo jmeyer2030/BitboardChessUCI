@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import moveGeneration.RookLogic;
 
-public class RookMagicBitboardTest {
+public class RookLogicTest {
 	
 	private static RookLogic rmb;
 	private static RookLogic.TestHook hook;

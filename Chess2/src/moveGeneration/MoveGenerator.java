@@ -158,10 +158,10 @@ public class MoveGenerator{
 	
 	private static List<Move> generatePromotions(int start, int destination) {
 		List<Move> promotions = new ArrayList<Move>();
-		promotions.add(new Move(Move.MoveType.PROMOTION, start, destination, Move.PieceType.ROOK));
-		promotions.add(new Move(Move.MoveType.PROMOTION, start, destination, Move.PieceType.BISHOP));
-		promotions.add(new Move(Move.MoveType.PROMOTION, start, destination, Move.PieceType.KNIGHT));
-		promotions.add(new Move(Move.MoveType.PROMOTION, start, destination, Move.PieceType.QUEEN));
+		promotions.add(new Move(Move.MoveType.PROMOTION, Move.PieceType.ROOK, start, destination));
+		promotions.add(new Move(Move.MoveType.PROMOTION, Move.PieceType.BISHOP, start, destination));
+		promotions.add(new Move(Move.MoveType.PROMOTION, Move.PieceType.KNIGHT, start, destination));
+		promotions.add(new Move(Move.MoveType.PROMOTION, Move.PieceType.QUEEN, start, destination));
 		return promotions;
 	}
 	

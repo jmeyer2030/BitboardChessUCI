@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import moveGeneration.BishopLogic;
 
-public class BishopMagicBitboardTest {
+public class BishopLogicTest {
 	private static BishopLogic bmb;
 	private static BishopLogic.TestHook hook;
 	

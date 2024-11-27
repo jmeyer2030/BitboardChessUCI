@@ -69,25 +69,14 @@ public class PawnLogic {
 	}
 	
 	public long getEnPassant(int square, Position position) {
-		if (position.priorMove == null)
+		if (position.enPassant == 0 || (position.enPassant + 1 != square && position.enPassant - 1 != square)) // enpassant doesn't exist or isn't next to the piece
 			return 0L;
-		if (!enPassantIsValid(square, position))
-			return 0L;
-		if (BBO.squareHasPiece(position.whitePieces, square)) {
-			return (1L << (position.priorMove.destination + 8));
+		if (position.enPassant / 8 == 3) {//if its a white pawn to be taken
+			return (1L << (position.enPassant - 8));
 		}
-		return (1L << (position.priorMove.destination - 8));
+		return (1L << (position.enPassant + 8));
 	}
 	
-	private boolean enPassantIsValid(int square, Position position) {
-		if ((square / 8 != 3 || square / 8 != 4) && //if square is on fourth or fifth rank
-			(position.priorMove.destination + 1 == square || position.priorMove.destination - 1 == square) && //priorMove ended on adjacent square
-			BBO.squareHasPiece(position.pawns, position.priorMove.destination) &&//priorMove was a pawn
-			position.priorMove.start / 8 == 1 || position.priorMove.start / 8 == 6) {//prior move started on pawn starting
-			return true;
-		}
-		return false;
-	}
 	
 	private long getWhitePawnPushes(int square, long occupancyBoard) {
 		if (square > 15) // if not on rank 2
