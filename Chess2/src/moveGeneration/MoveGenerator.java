@@ -139,7 +139,7 @@ public class MoveGenerator{
 		return generatedMoves;
 	}
 	
-	private static List<Move> generateQueenMoves(Position position) {
+	public static List<Move> generateQueenMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long queenList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.queens;
 		List<Integer> queenLocations = BBO.getSquares(queenList);

@@ -69,7 +69,8 @@ public class PawnLogic {
 	}
 	
 	public long getEnPassant(int square, Position position) {
-		if (position.enPassant == 0 || (position.enPassant + 1 != square && position.enPassant - 1 != square)) // enpassant doesn't exist or isn't next to the piece
+		if (position.enPassant == 0 || (position.enPassant + 1 != square && position.enPassant - 1 != square) ||
+				(square / 8 != 3 || square / 8 != 4)) // enpassant doesn't exist or isn't next to the piece
 			return 0L;
 		if (position.enPassant / 8 == 3) {//if its a white pawn to be taken
 			return (1L << (position.enPassant - 8));
@@ -133,9 +134,9 @@ public class PawnLogic {
 	private long generateWhitePawnAttack(int square) {
 		long whitePawnAttack = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
 		if (square < 56) { //below top rank
-			if (square / 8 != 7) //left of right file
+			if (square % 8 != 7) //left of right file
 				whitePawnAttack |= (1L << (square + 9));
-			if (square / 8 != 0) //right of left file
+			if (square % 8 != 0) //right of left file
 				whitePawnAttack |= (1L << (square + 7));
 		}
 		return whitePawnAttack;

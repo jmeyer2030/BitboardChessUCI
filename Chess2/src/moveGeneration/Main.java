@@ -9,8 +9,14 @@ public class Main {
 		
 		new MoveGenerator();
 		Position position = new Position();
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 15, 31));
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 48, 32));
 		long start = System.currentTimeMillis();
-		perft(3, position);
+		//System.out.println("queen on 3" + (0 != (position.queens & (1L << 3))));
+		//System.out.println("num d1 queen moves" + MoveGenerator.generateQueenMoves(position).size());
+		//System.out.println("piece blocking at 10" + (0 != (position.occupancy & (1L << 10))));
+		//perft(1, position);
+		perft(4, position);
 		long end = System.currentTimeMillis();
 		
 		System.out.println("Perft time: " + (end - start));

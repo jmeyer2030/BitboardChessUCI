@@ -1,0 +1,4 @@
+Correcting Move Generation:
+c2c3 generates 418 after two moves but it should be 420
+h2h3 generates 1 more
+h2h4 generates 3 more

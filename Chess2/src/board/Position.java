@@ -274,7 +274,6 @@ public class Position {
 
 	        case ENPASSANT:
 	            // Remove the pawn captured en passant
-	        	System.out.println("EnPassant?");
 	            int enPassantCaptureSquare = position.enPassant;
 	            long enPassantCaptureMask = 1L << enPassantCaptureSquare;
 
@@ -387,10 +386,10 @@ public class Position {
 	}
 	
 	public boolean selfInCheck() {
-		if (whiteToPlay) {
-			return ((blackAttackMap & kings & whitePieces) != 0L);
-		} else {
+		if (whiteToPlay) { //return if black is already in check
 			return ((whiteAttackMap & kings & blackPieces) != 0L);
+		} else {
+			return ((blackAttackMap & kings & whitePieces) != 0L);
 		}
 		
 	}
