@@ -245,7 +245,23 @@ public class MoveGenerator{
 		}
 		
 		return attackArray;
-		
+	}
+	
+	public static long getAttacks(Position position, int square) {
+		if (BBO.squareHasPiece(position.pawns, square)) {
+			return pl.getAttackBoard(square, position);
+		} else if (BBO.squareHasPiece(position.rooks, square)) {
+			return rl.getAttackBoard(square, position);
+		} else if (BBO.squareHasPiece(position.bishops, square)) {
+			return bl.getAttackBoard(square, position);
+		} else if (BBO.squareHasPiece(position.queens, square)) {
+			return rl.getAttackBoard(square, position) | bl.getAttackBoard(square, position);
+		} else if (BBO.squareHasPiece(position.kings, square)) {
+			return kl.getKingAttacks(square);
+		} else if (BBO.squareHasPiece(position.knights, square)) {
+			return nl.getAttackBoard(square, position);
+		}
+		return 0L;
 	}
 	
 

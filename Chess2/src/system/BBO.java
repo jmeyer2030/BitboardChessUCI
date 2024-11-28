@@ -21,7 +21,6 @@ public class BBO {
 	 * @Param bitboard
 	 */
 	public static void printBoard(long bitBoard) {
-		System.out.println("Little-endian rank-file board representation: ");
 	    for (int rank = 7; rank >= 0; rank--) {
 	        for (int file = 0; file < 8; file++) {
 	            System.out.print(((bitBoard & (1L << (rank * 8 + file))) != 0) ? "1 " : "0 ");

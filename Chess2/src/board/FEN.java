@@ -1,15 +1,16 @@
 package board;
 
 public class FEN {
-	public String piecePlacement;
-	public char activeColor;
-	public String castlingAvailible;
-	public String enPassant;
-	public int halfMoves;
-	public int fullMoves;
+	public final String piecePlacement;
+	public final char activeColor;
+	public final String castlingAvailible;
+	public final String enPassant;
+	public final int halfMoves;
+	public final int fullMoves;
 	
 	public FEN(String fen) {
 		String[] splitFEN = fen.split(" ");
+		assert splitFEN.length == 6;
 		this.piecePlacement = splitFEN[0];
 		this.activeColor = splitFEN[1].charAt(0);
 		this.castlingAvailible = splitFEN[2];

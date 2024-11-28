@@ -37,7 +37,12 @@ public class Position {
 	//Details
 	public final boolean whiteToPlay;
 	public final byte castleRights;//Castle Rights: 0b0000(whiteQueen)(whiteKing)(blackQueen)(blackKing)
-	public final int enPassant;//Is non-zero if that square can be captured enPassant
+	public final int enPassant;//Same as fen, is the location where the pawn would be if it advanced one square.
+	
+	//Game Progress
+	public final int gameStatus;//-1 if black win, 0, if staleMate, 1 if white win. 2 if ongoing
+	public final int halfMoveCount;
+	public final int fullMoveCount;
 	
 	//Creates a position equal to the starting position
 	public Position() {
@@ -59,6 +64,12 @@ public class Position {
 		castleRights = 0b00001111;
 		enPassant = 0;
 		
+		
+		//Game Status
+		gameStatus = 2;
+		halfMoveCount = 0;
+		fullMoveCount = 0;
+		
 		//Attacks
 		attackArray = MoveGenerator.generateAttackArray(this);
 		whiteAttackMap = generateWhiteAttackMap();
@@ -79,7 +90,7 @@ public class Position {
 
 	    // Parse piece placement
 	    String[] ranks = fen.piecePlacement.split("/");
-	    for (int rank = 0; rank < 8; rank++) { // Iterate over ranks from 8th to 1st
+	    for (int rank = 7; rank >= 0; rank--) { // Iterate over ranks from 8th to 1st
 	        String currentRank = ranks[rank];
 	        int file = 0;
 
@@ -89,7 +100,7 @@ public class Position {
 	                file += c - '0';
 	            } else {
 	                // Piece on the square
-	                int square = rank * 8 + file; // Convert rank and file to square index
+	                int square = (7 - rank) * 8 + file; // Convert rank and file to square index
 	                long squareBit = 1L << square;
 	                occupancy |= squareBit;
 
@@ -167,7 +178,11 @@ public class Position {
 	        int rank = rankChar - '1';
 	        enPassant = rank * 8 + file;
 	    }
-
+	    
+	    //Game Status
+		halfMoveCount = fen.halfMoves;
+		fullMoveCount = fen.fullMoves;
+		
 	    // Assign values to fields
 	    this.occupancy = occupancy;
 	    this.whitePieces = whitePieces;
@@ -184,6 +199,7 @@ public class Position {
 	    this.attackArray = MoveGenerator.generateAttackArray(this);
 	    this.whiteAttackMap = MoveGenerator.generateWhiteAttacks(this);
 	    this.blackAttackMap = MoveGenerator.generateBlackAttacks(this);
+	    gameStatus = this.generateGameStatus();
 	}
 	
 	
@@ -202,12 +218,20 @@ public class Position {
 	    boolean whiteToPlay = position.whiteToPlay;
 	    byte castleRights = position.castleRights;
 	    int enPassant = 0; // Reset unless updated by an en passant move
+	    
+	    int halfMoveCount = position.halfMoveCount;
+	    int fullMoveCount = position.fullMoveCount;
 
+	    long whiteAttackMap = position.whiteAttackMap;
+	    long blackAttackMap = position.blackAttackMap;
+	    long[] attackArray = position.attackArray;
+	    
 	    // Extract move details
 	    int startSquare = move.start;
 	    int destinationSquare = move.destination;
 	    long startMask = 1L << startSquare;
 	    long destinationMask = 1L << destinationSquare;
+	    
 
 	    // Toggle the moving piece's start and destination
 	    occupancy ^= (startMask | destinationMask);
@@ -238,6 +262,8 @@ public class Position {
 	            break;
 
 	        case CAPTURE:
+	        	occupancy ^= destinationMask;
+	        	
 	            // Remove the captured piece from its color's bitboard
 	            if (whiteToPlay) {
 	                blackPieces ^= destinationMask;
@@ -274,7 +300,7 @@ public class Position {
 
 	        case ENPASSANT:
 	            // Remove the pawn captured en passant
-	            int enPassantCaptureSquare = position.enPassant;
+	            int enPassantCaptureSquare = position.whiteToPlay ? position.enPassant + 8: position.enPassant - 8;
 	            long enPassantCaptureMask = 1L << enPassantCaptureSquare;
 
 	            occupancy ^= enPassantCaptureMask;
@@ -350,12 +376,31 @@ public class Position {
 
 	    // Set en passant square if applicable
 	    if ((pawns & destinationMask) != 0 && Math.abs(startSquare - destinationSquare) == 16) {
-	        enPassant = destinationSquare; //whiteToPlay ? destinationSquare - 8 : destinationSquare + 8;
+	        enPassant = whiteToPlay ? destinationSquare - 8 : destinationSquare + 8;
 	    }
+	    
+	    //Set HalfMoveCount
+	    if ((pawns & destinationMask) != 0)
+	    	halfMoveCount = 0;
 
 	    // Switch active player
 	    whiteToPlay = !whiteToPlay;
-
+	    
+	    //increment moveCounter
+	    if (!position.whiteToPlay)
+	    	fullMoveCount++;
+	    
+	    //update attack array
+	    attackArray[move.destination] = MoveGenerator.getAttacks(this, move.destination);
+	    attackArray[move.start] = 0L;
+	    BBO.getSquares(rooks | bishops | queens).stream().forEach(square -> {
+	    	attackArray[square] = MoveGenerator.getAttacks(position, square);
+	    });
+	    
+	    
+	    //whiteAttackMap = this.generateWhiteAttackMap();
+	    //blackAttackMap = this.generateBlackAttackMap();
+	    
 	    // Assign updated values to fields
 	    this.occupancy = occupancy;
 	    this.whitePieces = whitePieces;
@@ -369,9 +414,41 @@ public class Position {
 	    this.whiteToPlay = whiteToPlay;
 	    this.castleRights = castleRights;
 	    this.enPassant = enPassant;
-	    this.attackArray = MoveGenerator.generateAttackArray(this);
-	    this.whiteAttackMap = MoveGenerator.generateWhiteAttacks(this);
-	    this.blackAttackMap = MoveGenerator.generateBlackAttacks(this);
+	    this.fullMoveCount = fullMoveCount;
+	    this.halfMoveCount = halfMoveCount;
+	    this.attackArray = attackArray;
+	    this.whiteAttackMap = this.generateWhiteAttackMap();
+	    this.blackAttackMap = this.generateBlackAttackMap();
+	    this.gameStatus = generateGameStatus();
+	}
+	
+	public void printBoard() {
+		System.out.println("Occupancy: ");
+		BBO.printBoard(occupancy);
+		
+		System.out.println("White Pieces: ");
+		BBO.printBoard(whitePieces);
+		
+		System.out.println("Black Pieces: ");
+		BBO.printBoard(blackPieces);
+		
+		System.out.println("Pawns: ");
+		BBO.printBoard(pawns);
+		
+		System.out.println("Rooks: ");
+		BBO.printBoard(rooks);
+		
+		System.out.println("Bishops: ");
+		BBO.printBoard(bishops);
+		
+		System.out.println("Queens: ");
+		BBO.printBoard(queens);
+		
+		System.out.println("Kings: ");
+		BBO.printBoard(kings);
+		
+		System.out.println("Knights: ");
+		BBO.printBoard(knights);
 	}
 
 	public Position applyMove(Move move) {
@@ -415,6 +492,15 @@ public class Position {
 		}
 		return result;
 	}
+	
+	public int generateGameStatus() {
+		if (halfMoveCount >= 50)
+			return 0;
+		if (selfInCheck())
+			return whiteToPlay ? -1 : 1;
+		return 2;
+	}
+	
 
 }
 
