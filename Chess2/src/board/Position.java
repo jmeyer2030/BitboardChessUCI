@@ -1,6 +1,9 @@
 package board;
 
+import java.util.Arrays;
+
 import moveGeneration.MoveGenerator;
+import moveGeneration.Testing;
 import system.BBO;
 
 /**
@@ -222,9 +225,9 @@ public class Position {
 	    int halfMoveCount = position.halfMoveCount;
 	    int fullMoveCount = position.fullMoveCount;
 
-	    long whiteAttackMap = position.whiteAttackMap;
-	    long blackAttackMap = position.blackAttackMap;
-	    long[] attackArray = position.attackArray;
+	    //long whiteAttackMap = position.whiteAttackMap;
+	    //long blackAttackMap = position.blackAttackMap;
+	    long[] attackArray = Arrays.copyOf(position.attackArray, 64);
 	    
 	    // Extract move details
 	    int startSquare = move.start;
@@ -295,13 +298,18 @@ public class Position {
 	                bishops ^= (startMask | destinationMask);
 	            } else if ((queens & startMask) != 0) {
 	                queens ^= (startMask | destinationMask);
+	            } else if ((kings & startMask) != 0) {
+	            	kings ^= (startMask | destinationMask);
 	            }
 	            break;
 
 	        case ENPASSANT:
 	            // Remove the pawn captured en passant
-	            int enPassantCaptureSquare = position.whiteToPlay ? position.enPassant + 8: position.enPassant - 8;
+	            int enPassantCaptureSquare = position.whiteToPlay ? position.enPassant - 8: position.enPassant + 8;
 	            long enPassantCaptureMask = 1L << enPassantCaptureSquare;
+	            
+	            //update attackArray
+	            attackArray[enPassantCaptureSquare] = 0L;
 
 	            occupancy ^= enPassantCaptureMask;
 	            if (whiteToPlay) {
@@ -337,6 +345,7 @@ public class Position {
 	            // Move the rook based on which side castled
 	            if (destinationSquare == 6 || destinationSquare == 62) { // King-side castle
 	                int rookStart = whiteToPlay ? 7 : 63;
+	                attackArray[rookStart] = 0L;
 	                int rookEnd = whiteToPlay ? 5 : 61;
 	                long rookStartMask = 1L << rookStart;
 	                long rookEndMask = 1L << rookEnd;
@@ -344,6 +353,7 @@ public class Position {
 	                occupancy ^= (rookStartMask | rookEndMask);
 	            } else if (destinationSquare == 2 || destinationSquare == 58) { // Queen-side castle
 	                int rookStart = whiteToPlay ? 0 : 56;
+	                attackArray[rookStart] = 0L;
 	                int rookEnd = whiteToPlay ? 3 : 59;
 	                long rookStartMask = 1L << rookStart;
 	                long rookEndMask = 1L << rookEnd;
@@ -390,12 +400,7 @@ public class Position {
 	    if (!position.whiteToPlay)
 	    	fullMoveCount++;
 	    
-	    //update attack array
-	    attackArray[move.destination] = MoveGenerator.getAttacks(this, move.destination);
-	    attackArray[move.start] = 0L;
-	    BBO.getSquares(rooks | bishops | queens).stream().forEach(square -> {
-	    	attackArray[square] = MoveGenerator.getAttacks(position, square);
-	    });
+
 	    
 	    
 	    //whiteAttackMap = this.generateWhiteAttackMap();
@@ -416,6 +421,15 @@ public class Position {
 	    this.enPassant = enPassant;
 	    this.fullMoveCount = fullMoveCount;
 	    this.halfMoveCount = halfMoveCount;
+	    
+	    //update attack array
+	    attackArray[move.destination] = MoveGenerator.getAttacks(this, move.destination);//update at destination
+	    attackArray[move.start] = 0L;
+
+	    BBO.getSquares(rooks | bishops | queens).stream().forEach(square -> {
+	    	attackArray[square] = MoveGenerator.getAttacks(this, square);
+	    });
+	    
 	    this.attackArray = attackArray;
 	    this.whiteAttackMap = this.generateWhiteAttackMap();
 	    this.blackAttackMap = this.generateBlackAttackMap();
@@ -424,31 +438,31 @@ public class Position {
 	
 	public void printBoard() {
 		System.out.println("Occupancy: ");
-		BBO.printBoard(occupancy);
+		Testing.printBoard(occupancy);
 		
 		System.out.println("White Pieces: ");
-		BBO.printBoard(whitePieces);
+		Testing.printBoard(whitePieces);
 		
 		System.out.println("Black Pieces: ");
-		BBO.printBoard(blackPieces);
+		Testing.printBoard(blackPieces);
 		
 		System.out.println("Pawns: ");
-		BBO.printBoard(pawns);
+		Testing.printBoard(pawns);
 		
 		System.out.println("Rooks: ");
-		BBO.printBoard(rooks);
+		Testing.printBoard(rooks);
 		
 		System.out.println("Bishops: ");
-		BBO.printBoard(bishops);
+		Testing.printBoard(bishops);
 		
 		System.out.println("Queens: ");
-		BBO.printBoard(queens);
+		Testing.printBoard(queens);
 		
 		System.out.println("Kings: ");
-		BBO.printBoard(kings);
+		Testing.printBoard(kings);
 		
 		System.out.println("Knights: ");
-		BBO.printBoard(knights);
+		Testing.printBoard(knights);
 	}
 
 	public Position applyMove(Move move) {

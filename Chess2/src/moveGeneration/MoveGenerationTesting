@@ -8,6 +8,7 @@ load the position:
 generate perft from that position:
 "go perft [depth]"
 
-Perft working except mate?
-Total: 4865617
-Perft time: 80683
+Perft not working at 6
+Generatedd: 119060327
+Expected: 119060324
+

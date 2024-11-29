@@ -17,20 +17,6 @@ public class BBO {
 	}
 	
 	/**
-	 * prints the board in Little-endian rank-file representation
-	 * @Param bitboard
-	 */
-	public static void printBoard(long bitBoard) {
-	    for (int rank = 7; rank >= 0; rank--) {
-	        for (int file = 0; file < 8; file++) {
-	            System.out.print(((bitBoard & (1L << (rank * 8 + file))) != 0) ? "1 " : "0 ");
-	        }
-	        System.out.println();
-	    }
-	}
-	
-	
-	/**
 	 * Returns a list of all locations of ones in the binary representation of the long in little-Endian rank-file form.
 	 * @Param bitboard
 	 * @Return squareList
