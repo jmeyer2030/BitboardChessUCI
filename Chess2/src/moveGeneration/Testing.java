@@ -1,14 +1,20 @@
 package moveGeneration;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import board.Move;
 import board.Position;
 
 public class Testing {
+
 	/**
 	 * Runs a perft test on a position
 	 * @Param depth
@@ -17,7 +23,7 @@ public class Testing {
 	public static void perft(int depth, Position position) {
 		if (depth < 1 || position.gameStatus != 2)
 			return;
-		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
+		List<Move> initial = MoveGenerator.generateMoves(position);
 		int total = 0;
 		for (Move move : initial) {
 			long thisMove = perftRecursion(depth - 1, position.applyMove(move));
@@ -25,8 +31,17 @@ public class Testing {
 			total += thisMove;
 		}
 		System.out.println("Total: " + total);
-		
 	}
+//Private Helper Methods
+	private static long perftRecursion(int depth, Position position) {
+		if (depth == 0 || position.gameStatus != 2)
+			return 1;
+		return MoveGenerator.generateMoves(position).stream().mapToLong(move -> {
+			Position appliedMove = position.applyMove(move);
+			return perftRecursion(depth - 1, appliedMove);
+		}).sum();
+	}
+	
 	/**
 	 * Prints the differences between perft results
 	 * @Param stockfish perft result
@@ -59,15 +74,7 @@ public class Testing {
 	    }
 	}
 	
-//Private Helper Methods
-	private static long perftRecursion(int depth, Position position) {
-		if (depth == 0 || position.gameStatus != 2)
-			return 1;
-		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
-			Position appliedMove = position.applyMove(move);
-			return perftRecursion(depth - 1, appliedMove);
-		}).sum();
-	}
+
 	
 	private static String notation(int square) {
 		String[] files = new String[] {"a", "b", "c", "d", "e", "f", "g", "h"};
@@ -78,3 +85,46 @@ public class Testing {
 		
 	}
 }
+
+/*
+ * MultiThreaded perft
+public static void perft(int depth, Position position) {
+    if (depth < 1 || position.gameStatus != 2) return;
+
+    List<Move> initialMoves = MoveGenerator.generateMoves(position);
+    ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    List<Future<Long>> futures = new ArrayList<>();
+
+    for (Move move : initialMoves) {
+        Position newPosition = position.applyMove(move);
+        Callable<Long> task = () -> perftRecursion(depth - 1, newPosition);
+        futures.add(executor.submit(task));
+    }
+
+    long total = 0;
+    try {
+        for (int i = 0; i < initialMoves.size(); i++) {
+            Move move = initialMoves.get(i);
+            long thisMove = futures.get(i).get();
+            System.out.println(notation(move.start) + notation(move.destination) + ": " + thisMove);
+            total += thisMove;
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        executor.shutdown();
+    }
+
+    System.out.println("Total: " + total);
+}
+
+// Private Helper Methods
+private static long perftRecursion(int depth, Position position) {
+    if (depth == 0 || position.gameStatus != 2) return 1;
+
+    return MoveGenerator.generateMoves(position)
+            .parallelStream()
+            .mapToLong(move -> perftRecursion(depth - 1, position.applyMove(move)))
+            .sum();
+}
+*/

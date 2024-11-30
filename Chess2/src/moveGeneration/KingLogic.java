@@ -4,48 +4,33 @@ import board.Position;
 import system.BBO;
 
 public class KingLogic {
-	//public static long[] moveBoards;
-	public static long[] whiteMoveBoards;
-	public static long[] blackMoveBoards;
-	public static long[] attackBoards;
-	
-	public void initializeAll() {
-		KingLogic.whiteMoveBoards = generateWhiteMoveBoards();
-		KingLogic.blackMoveBoards = generateBlackMoveBoards();
-		KingLogic.attackBoards = generateAttackBoards();
-	}
-	
+	public static long[] moveBoards;
 
-	
-	public long getMoveBoard(int square, Position position) {
-		return position.whiteToPlay ? getWhiteKingMoves(square) : getBlackKingMoves(square);
+//Public Methods
+	public void initializeAll() {
+		KingLogic.moveBoards = generateMoveBoards();
 	}
 	
 	public long getCaptures(int square, Position position) {
 		long capturablePieces = position.whiteToPlay ? position.blackPieces : position.whitePieces;
-		return attackBoards[square] & capturablePieces;
+		long moveableSquares = position.whiteToPlay ? ~position.blackAttackMap : ~position.whiteAttackMap;
+		return moveBoards[square] & capturablePieces & moveableSquares;
 	}
 	
 	public long getQuietMoves(int square, Position position) {
-		return attackBoards[square] & ~position.occupancy;
+		long moveableSquares = position.whiteToPlay ? ~position.blackAttackMap : ~position.whiteAttackMap;
+		return moveBoards[square] & ~position.occupancy & moveableSquares;
 	}
 	
 	public long getKingAttacks(int square) {
-		return attackBoards[square];
-	}
-	
-	public long getBlackKingMoves(int square) {
-		return blackMoveBoards[square];
-	}
-	
-	public long getWhiteKingMoves(int square) {
-		return whiteMoveBoards[square];
+		return moveBoards[square];
 	}
 	
 	public long generateCastles(int square, Position position) {
 		return position.whiteToPlay ? generateWhiteCastles(square, position) : generateBlackCastles(square, position);
 	}
-	
+
+//Private Helper Methods
 	private long generateWhiteCastles(int square, Position position) {
 		long result = 0L;
 		//queenside
@@ -90,35 +75,14 @@ public class KingLogic {
 		return result;
 	}
 	
-	private long[] generateBlackMoveBoards() {
-		long[] blackMoveBoards = new long[64];
+	private long[] generateMoveBoards() {
+		long[] moveBoards = new long[64];
 		for (int i = 0; i < 64; i++) {
-			blackMoveBoards[i] = generateMoveBoard(i);
+			moveBoards[i] = generateMoveBoard(i);
 		}
-		//add both king/queen side castling
-		blackMoveBoards[59] |= 0b01000100_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
-		
-		return blackMoveBoards;
+		return moveBoards;
 	}
 	
-	private long[] generateWhiteMoveBoards() {
-		long[] whiteMoveBoards = new long[64];
-		for (int i = 0; i < 64; i++) {
-			whiteMoveBoards[i] = generateMoveBoard(i);
-		}
-		//add both king/queen side castling
-		whiteMoveBoards[4] |= 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00100010L;
-		
-		return whiteMoveBoards;
-	}
-	
-	private long[] generateAttackBoards() {
-		long[] attackBoards = new long[64];
-		for (int i = 0; i < 64; i++) {
-			attackBoards[i] = generateMoveBoard(i);
-		}
-		return attackBoards;
-	}
 	
 	/**
 	 * Returns a bitboard of squares that the king attacks at a given position
@@ -176,35 +140,16 @@ public class KingLogic {
 		return moveBoard;
 	}
 	
-	
-	
-//Testing help
-	/**
-	 *This method prints the board in little-endian rank-file form
-	 *@Param long bitboard 
-	 */
-	protected void printBoard(long mask) {
-		System.out.println("Little-endian rank-file board representation: ");
-	    for (int rank = 7; rank >= 0; rank--) {
-	        for (int file = 0; file < 8; file++) {
-	            System.out.print(((mask & (1L << (rank * 8 + file))) != 0) ? "1 " : "0 ");
-	        }
-	        System.out.println();
-	    }
-	}
-}
-/*
-public static void main(String[] args) {
-	KingBitboard kb = new KingBitboard();
-	kb.printBoard(kb.generateMoveBoard(35));
-	
 }
 
-	private long[] generateMoveBoards() {
-		long[] moveBoards = new long[64];
-		for (int i = 0; i < 64; i++) {
-			moveBoards[i] = generateMoveBoard(i);
-		}
-		return moveBoards;
-	}
-*/
+/*LEGACY CODE
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * */

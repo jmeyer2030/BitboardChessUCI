@@ -2,6 +2,7 @@ package board;
 
 import java.util.Arrays;
 
+import moveGeneration.AbsolutePins;
 import moveGeneration.MoveGenerator;
 import moveGeneration.Testing;
 import system.BBO;
@@ -10,15 +11,6 @@ import system.BBO;
  * Represents a position with Bitboards
  */
 public class Position {
-	public enum PieceType {
-		PAWN,
-		ROOK,
-		KNIGHT,
-		BISHOP,
-		QUEEN,
-		KING,
-	}
-	
 	//Board Locations
 	public final long occupancy;
 	public final long whitePieces; 
@@ -37,6 +29,12 @@ public class Position {
 	public final long whiteAttackMap;
 	public final long blackAttackMap;
 	
+	//absolute pins
+	public final long[] moveScope; //contains a bitboard representing where a piece is confined to based on absolute pins
+	
+	//Checks
+	public final long checkers;
+	
 	//Details
 	public final boolean whiteToPlay;
 	public final byte castleRights;//Castle Rights: 0b0000(whiteQueen)(whiteKing)(blackQueen)(blackKing)
@@ -49,6 +47,9 @@ public class Position {
 	
 	//Creates a position equal to the starting position
 	public Position() {
+		//checks
+		checkers = 0L;
+		
 		//Board Locations
 		occupancy = 0b11111111_11111111_00000000_00000000_00000000_00000000_11111111_11111111L;
 		whitePieces = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_11111111L;
@@ -67,7 +68,6 @@ public class Position {
 		castleRights = 0b00001111;
 		enPassant = 0;
 		
-		
 		//Game Status
 		gameStatus = 2;
 		halfMoveCount = 0;
@@ -77,6 +77,10 @@ public class Position {
 		attackArray = MoveGenerator.generateAttackArray(this);
 		whiteAttackMap = generateWhiteAttackMap();
 		blackAttackMap = generateBlackAttackMap();
+		
+		//Pinned Pieces
+		moveScope = generateMoveScope();
+		
 	}
 	
 	public Position(FEN fen) {
@@ -90,6 +94,7 @@ public class Position {
 	    long bishops = 0L;
 	    long queens = 0L;
 	    long kings = 0L;
+	    
 
 	    // Parse piece placement
 	    String[] ranks = fen.piecePlacement.split("/");
@@ -202,12 +207,15 @@ public class Position {
 	    this.attackArray = MoveGenerator.generateAttackArray(this);
 	    this.whiteAttackMap = MoveGenerator.generateWhiteAttacks(this);
 	    this.blackAttackMap = MoveGenerator.generateBlackAttacks(this);
-	    gameStatus = this.generateGameStatus();
+	    this.gameStatus = this.generateGameStatus();
+	    this.moveScope = generateMoveScope();
+	    this.checkers = generateCheckers();
+	    	
 	}
 	
 	
 	public Position(Position position, Move move) {
-	    // Copy current state
+	    // init copies
 	    long occupancy = position.occupancy;
 	    long whitePieces = position.whitePieces;
 	    long blackPieces = position.blackPieces;
@@ -225,9 +233,10 @@ public class Position {
 	    int halfMoveCount = position.halfMoveCount;
 	    int fullMoveCount = position.fullMoveCount;
 
-	    //long whiteAttackMap = position.whiteAttackMap;
-	    //long blackAttackMap = position.blackAttackMap;
+	    long checkers = 0L;
+	    
 	    long[] attackArray = Arrays.copyOf(position.attackArray, 64);
+	
 	    
 	    // Extract move details
 	    int startSquare = move.start;
@@ -425,15 +434,35 @@ public class Position {
 	    //update attack array
 	    attackArray[move.destination] = MoveGenerator.getAttacks(this, move.destination);//update at destination
 	    attackArray[move.start] = 0L;
-
+		
 	    BBO.getSquares(rooks | bishops | queens).stream().forEach(square -> {
 	    	attackArray[square] = MoveGenerator.getAttacks(this, square);
+
 	    });
+	    
+	    
+	    //updateCheckers
+		long kingMask = this.kings & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
+		long enemyPieces = this.whiteToPlay ? this.blackPieces : this.whitePieces;
+		
+		//change checkers if attacked by the destination
+		if ((attackArray[move.destination] & kingMask) != 0)
+			checkers |= (1L << move.destination);
+	    
+		//update sliding pieces
+	    for (int square : BBO.getSquares(enemyPieces & (rooks | bishops | queens))) {//covers discovered checks
+	    	if ((attackArray[square] & kingMask) != 0) {
+	    		checkers |= (1L << square);
+	    	}
+	    }
 	    
 	    this.attackArray = attackArray;
 	    this.whiteAttackMap = this.generateWhiteAttackMap();
 	    this.blackAttackMap = this.generateBlackAttackMap();
 	    this.gameStatus = generateGameStatus();
+	    
+	    this.moveScope = generateMoveScope();
+	    this.checkers = checkers;
 	}
 	
 	public void printBoard() {
@@ -515,6 +544,45 @@ public class Position {
 		return 2;
 	}
 	
-
+	
+	public long[] generateMoveScope() {
+		//init moveScope assuming no pins
+		long[] moveScope = new long[64];
+		for (int i = 0; i < 64; i++) {
+			moveScope[i] = -1L;
+		}
+		long enemyMask = this.whiteToPlay ? this.blackPieces : this.whitePieces;
+		for (int pinner : BBO.getSquares(enemyMask & (bishops | queens | rooks))) {//for each possible pinner
+			long kingMask = this.kings & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
+			long xrayAttacks = MoveGenerator.getXrayAttacks(this, pinner);
+			if ((xrayAttacks & kingMask) == 0L)//if xray doesn't hit king
+				continue;
+			int kingLoc = BBO.getSquares(kingMask).get(0);
+			
+			long possibleBlockerMask = AbsolutePins.inBetween[pinner][kingLoc];
+			long blockers = this.whiteToPlay ? this.whitePieces : this.blackPieces;
+			long blockerMask = blockers & possibleBlockerMask;
+			
+			int pinnedPieceLoc = BBO.getSquares(blockerMask).get(0);
+			moveScope[pinnedPieceLoc] = AbsolutePins.inBetween[pinner][kingLoc] | (1L << pinner);
+		}
+		return moveScope;
+	}
+	
+	public long generateCheckers() {
+		long checkers = 0L;
+		long pieceMask = this.whiteToPlay ? this.blackPieces : this.whitePieces;
+		long attackMask = this.whiteToPlay ? this.blackAttackMap : this.whiteAttackMap;
+		long kingMask = this.kings & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
+		if ((attackMask & kingMask) == 0) //if not in check
+			return checkers;
+		
+		for (int square : BBO.getSquares(pieceMask)) { //for each potential checker
+			if ((this.attackArray[square] & kingMask) != 0)
+				checkers |= (1L << square);
+		}
+		
+		return checkers;
+	}
 }
 

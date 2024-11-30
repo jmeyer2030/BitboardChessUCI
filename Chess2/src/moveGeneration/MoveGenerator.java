@@ -18,6 +18,7 @@ public class MoveGenerator{
 	private static RookLogic rl;
 	private static BishopLogic bl;
 	private static KnightLogic nl;
+	private static AbsolutePins ap;
 	
 	public MoveGenerator() {
 		pl = new PawnLogic();
@@ -25,20 +26,21 @@ public class MoveGenerator{
 		rl = new RookLogic();
 		bl = new BishopLogic();
 		nl = new KnightLogic();
+		ap = new AbsolutePins();
 		
 		pl.initializeAll();
 		rl.initializeAll();
 		bl.initializeAll();
 		kl.initializeAll();
 		nl.initializeAll();
-		
+		ap.initializeAll();
 	}
 	/**
 	 * Generates a list of all legal moves in a position
 	 * @
 	 * 
 	 */
-
+	//long moveableSquares = position.whiteToPlay ? ~position.blackAttackMap : ~position.whiteAttackMap;
 	public static List<Move> generateStrictlyLegal(Position position) {
 		List<Move> allMoves = generateAllMoves(position);
 		List<Move> legalMoves = allMoves.stream().filter(move -> {
@@ -49,108 +51,151 @@ public class MoveGenerator{
 		return legalMoves;
 	}
 	
-	public static List<Move> generateAllMoves(Position position) {
+	public static List<Move> generateMoves(Position position) {
+		if (position.checkers == 0L)
+			return generateAllMoves(position);
+		if (BBO.getSquares(position.checkers).size() == 1) {
+			return generateSingleCheckMoves(position);
+		}
+		return generateDoubleCheckMoves(position);
+	}
+	
+	public static List<Move> generateSingleCheckMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		generatedMoves.addAll(generatePawnMoves(position));
-		generatedMoves.addAll(generateRookMoves(position));
-		generatedMoves.addAll(generateBishopMoves(position));
-		generatedMoves.addAll(generateKnightMoves(position));
-		generatedMoves.addAll(generateQueenMoves(position));
-		generatedMoves.addAll(generateKingMoves(position));
+		int kingLoc = BBO.getSquares(position.kings  & (position.whiteToPlay ? position.whitePieces : position.blackPieces)).get(0);
+		int checkerLoc = BBO.getSquares(position.checkers).get(0);
+		long legalMoveMask = AbsolutePins.inBetween[checkerLoc][kingLoc] | (1L << checkerLoc);
+		generatedMoves.addAll(generatePawnMoves(position, legalMoveMask));
+		generatedMoves.addAll(generateRookMoves(position, legalMoveMask));
+		generatedMoves.addAll(generateBishopMoves(position, legalMoveMask));
+		generatedMoves.addAll(generateKnightMoves(position, legalMoveMask));
+		generatedMoves.addAll(generateQueenMoves(position, legalMoveMask));
+		generatedMoves.addAll(generateKingMoves(position, legalMoveMask));
 		return generatedMoves;
 	}
 	
-	private static List<Move> generatePawnMoves(Position position) {
+	public static List<Move> generateDoubleCheckMoves(Position position) {
+		List<Move> generatedMoves = new ArrayList<Move>();
+		long kingList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.kings;
+		List<Integer> kingLocations = BBO.getSquares(kingList);
+		for (int square : kingLocations) {
+			long legalMoves = position.moveScope[square];
+			BBO.getSquares(legalMoves & kl.getCaptures(square, position)).stream().forEach(destination ->  
+					generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
+			BBO.getSquares(legalMoves & kl.getQuietMoves(square, position)).stream().forEach(destination ->  
+					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
+		}
+		return generatedMoves;
+	}
+	
+	public static List<Move> generateAllMoves(Position position) {
+		List<Move> generatedMoves = new ArrayList<Move>();
+		generatedMoves.addAll(generatePawnMoves(position, -1L));
+		generatedMoves.addAll(generateRookMoves(position, -1L));
+		generatedMoves.addAll(generateBishopMoves(position, -1L));
+		generatedMoves.addAll(generateKnightMoves(position, -1L));
+		generatedMoves.addAll(generateQueenMoves(position, -1L));
+		generatedMoves.addAll(generateKingMoves(position, -1L));
+		return generatedMoves;
+	}
+	
+	private static List<Move> generatePawnMoves(Position position, long checkFilter) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long pawnList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.pawns;
 		List<Integer> pawnLocations = BBO.getSquares(pawnList);
 		for (int square : pawnLocations) {
-			BBO.getSquares(pl.getCaptures(square, position)).stream().forEach(destination ->  {
+			long legalMoves = position.moveScope[square];
+			BBO.getSquares(checkFilter & legalMoves & pl.getCaptures(square, position)).stream().forEach(destination ->  {
 				if (destination / 8 == 0 || destination / 8 == 7) {
 					generatedMoves.addAll(generatePromotions(square, destination));
 				} else {
 					generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination));
 				}
 			});
-			BBO.getSquares(pl.getQuietMoves(square, position)).stream().forEach(destination ->  {
+			BBO.getSquares(checkFilter & legalMoves & pl.getQuietMoves(square, position)).stream().forEach(destination ->  {
 				if (destination / 8 == 0 || destination / 8 == 7) {
 					generatedMoves.addAll(generatePromotions(square, destination));
 				} else {
 					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination));
 				}
 			});
-			BBO.getSquares(pl.getEnPassant(square, position)).stream().forEach(destination -> 
+			BBO.getSquares(checkFilter & legalMoves & pl.getEnPassant(square, position)).stream().forEach(destination -> 
 				generatedMoves.add(new Move(Move.MoveType.ENPASSANT, square, destination)));
 		}
 		return generatedMoves;
 	}
 	
-	private static List<Move> generateRookMoves(Position position) {
+	private static List<Move> generateRookMoves(Position position, long checkFilter) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long rookList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.rooks;
 		List<Integer> rookLocations = BBO.getSquares(rookList);
 		for (int square : rookLocations) {
-			BBO.getSquares(rl.getCaptures(square, position)).stream().forEach(destination ->  
+			long legalMoves = position.moveScope[square];
+			BBO.getSquares(checkFilter & legalMoves & rl.getCaptures(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			BBO.getSquares(rl.getQuietMoves(square, position)).stream().forEach(destination ->  
+			BBO.getSquares(checkFilter & legalMoves & rl.getQuietMoves(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
 		}
 		return generatedMoves;
 	}
 	
-	private static List<Move> generateBishopMoves(Position position) {
+	private static List<Move> generateBishopMoves(Position position, long checkFilter) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long bishopList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.bishops;
 		List<Integer> bishopLocations = BBO.getSquares(bishopList);
 		for (int square : bishopLocations) {
-			BBO.getSquares(bl.getCaptures(square, position)).stream().forEach(destination ->  
+			long legalMoves = position.moveScope[square];
+			BBO.getSquares(checkFilter & legalMoves & bl.getCaptures(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			BBO.getSquares(bl.getQuietMoves(square, position)).stream().forEach(destination ->  
+			BBO.getSquares(checkFilter & legalMoves & bl.getQuietMoves(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
 		}
 		return generatedMoves;
 	}
 	
-	private static List<Move> generateKnightMoves(Position position) {
+	private static List<Move> generateKnightMoves(Position position, long checkFilter) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long knightList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.knights;
 		List<Integer> knightLocations = BBO.getSquares(knightList);
 		for (int square : knightLocations) {
-			BBO.getSquares(nl.getCaptures(square, position)).stream().forEach(destination ->  
+			long legalMoves = position.moveScope[square];
+			BBO.getSquares(checkFilter & legalMoves & nl.getCaptures(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			BBO.getSquares(nl.getQuietMoves(square, position)).stream().forEach(destination ->  
+			BBO.getSquares(checkFilter & legalMoves & nl.getQuietMoves(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
 		}
 		return generatedMoves;
 	}
 	
-	private static List<Move> generateKingMoves(Position position) {
+	private static List<Move> generateKingMoves(Position position, long checkFilter) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long rookList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.kings;
-		List<Integer> kingLocations = BBO.getSquares(rookList);
+		long kingList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.kings;
+		List<Integer> kingLocations = BBO.getSquares(kingList);
 		for (int square : kingLocations) {
-			BBO.getSquares(kl.getCaptures(square, position)).stream().forEach(destination ->  
+			long legalMoves = position.moveScope[square];
+			BBO.getSquares(checkFilter & legalMoves & kl.getCaptures(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			BBO.getSquares(kl.getQuietMoves(square, position)).stream().forEach(destination ->  
+			BBO.getSquares(checkFilter & legalMoves & kl.getQuietMoves(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
-			BBO.getSquares(kl.generateCastles(square, position)).stream().forEach(destination ->
+			BBO.getSquares(checkFilter & legalMoves & kl.generateCastles(square, position)).stream().forEach(destination ->
 					generatedMoves.add(new Move(Move.MoveType.CASTLE, square, destination)));
 		}
 		return generatedMoves;
 	}
 	
-	public static List<Move> generateQueenMoves(Position position) {
+	public static List<Move> generateQueenMoves(Position position, long checkFilter) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long queenList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.queens;
 		List<Integer> queenLocations = BBO.getSquares(queenList);
 		for (int square : queenLocations) {
-			BBO.getSquares(bl.getCaptures(square, position)).stream().forEach(destination ->  
+			long legalMoves = position.moveScope[square];
+			BBO.getSquares(checkFilter & legalMoves & bl.getCaptures(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			BBO.getSquares(bl.getQuietMoves(square, position)).stream().forEach(destination ->  
+			BBO.getSquares(checkFilter & legalMoves & bl.getQuietMoves(square, position)).stream().forEach(destination ->  
 					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
-			BBO.getSquares(rl.getCaptures(square, position)).stream().forEach(destination ->  
+			BBO.getSquares(checkFilter & legalMoves & rl.getCaptures(square, position)).stream().forEach(destination ->  
 				generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			BBO.getSquares(rl.getQuietMoves(square, position)).stream().forEach(destination ->  
+			BBO.getSquares(checkFilter & legalMoves & rl.getQuietMoves(square, position)).stream().forEach(destination ->  
 				generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
 		}
 		return generatedMoves;
@@ -264,96 +309,54 @@ public class MoveGenerator{
 		return 0L;
 	}
 	
+	
+
+	
+	
+	public static long getXrayAttacks(Position position, int square) {
+		if ((position.bishops & (1L << square)) != 0) {
+			return bl.xrayAttacks(square, position);
+		} else if ((position.rooks & (1L << square)) != 0) {
+			return rl.xrayAttacks(square, position);
+		} else if ((position.queens & (1L << square)) != 0) {
+			return bl.xrayAttacks(square, position) | rl.xrayAttacks(square, position);
+		} else {
+			return 0L;
+		}
+	}
 
 	
 }
 
 /*LEGACY:
- * 
- * 	public static long generateBlackAttacks(Position position) {
-		long attacks = 0L;
+ 	
+	 * gets the location of an absolutely pinned piece
+	 * supposes that the turn is the one we want to generate moves for, so if whiteToPlay we assume the blcker is white.
+	 * @Param board
+	 * @Param square of the pinning piece
+	 * @Return mask of the pinned piece
+	 
+	public static long generateAbsolutePin(Position position, int square) {
+		long xRayAttacks = 0L;
+		long kingMask = position.kings & (position.whiteToPlay ? position.whitePieces : position.blackPieces);
 		
-		for(int square : BBO.getSquares(position.blackPieces)) {
-			if (BBO.squareHasPiece(position.pawns, square)) {
-				attacks |= pl.getBlackPawnAttacks(square);
-			} else if (BBO.squareHasPiece(position.rooks, square)) {
-				attacks |= rl.getMoveBoard(square, position.occupancy);
-			} else if (BBO.squareHasPiece(position.bishops, square)) {
-				attacks |= bl.getMoveBoard(square, position.occupancy);
-			} else if (BBO.squareHasPiece(position.queens, square)) {
-				attacks |= rl.getMoveBoard(square, position.occupancy);
-				attacks |= bl.getMoveBoard(square, position.occupancy);
-			} else if (BBO.squareHasPiece(position.kings, square)) {
-				attacks |= kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.knights, square)) {
-				attacks |= nl.getKnightMoves(square);
-			}
-		}
+		//get xRayAttacks depending on sliding piece
+		if ((position.bishops & (1L << square)) != 0) {
+			xRayAttacks = bl.xrayAttacks(square, position);
+		} else if ((position.rooks & (1L << square)) != 0) {
+			xRayAttacks = rl.xrayAttacks(square, position);
+		} else if ((position.queens & (1L << square)) != 0) {
+			xRayAttacks = rl.xrayAttacks(square, position);
+			xRayAttacks |= bl.xrayAttacks(square, position);
+		} 
 		
-		return attacks;
-	}
- * 	private static List<Move> generatePawnMoves(int square, Position position) {
-		List<Move> generatedMoves = new ArrayList<Move>();
-		if (position.whiteToPlay) {
-			long pushes = pl.getWhitePawnPushes(position.occupancy, square);
-			BBO.getSquares(pushes).stream().forEach(destination -> 
-					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
-			
-			long captures = pl.getWhitePawnAttacks(square) & position.blackPieces;
-			BBO.getSquares(captures).stream().forEach(destination -> 
-			generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			
-			if (BBO.getRank(square) == 4 && //if on fourth rank
-					position.priorMove != null && //prior move exists
-					position.priorMove.start - position.priorMove.destination == 16 && //prior move is form of double pawn push
-					BBO.squareHasPiece(position.pawns, position.priorMove.destination)) {//prior move is a pawn
-				generatedMoves.add(new Move(Move.MoveType.ENPASSANT, square, position.priorMove.destination + 8));
-			}
-		} else {
-			long pushes = pl.getBlackPawnPushes(position.occupancy, square);
-			BBO.getSquares(pushes).stream().forEach(destination ->
-				generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
-			
-			long captures = pl.getBlackPawnAttacks(square) & position.whitePieces;
-			BBO.getSquares(captures).stream().forEach(destination -> 
-				generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			
-			if (BBO.getRank(square) == 3 && //if on fourth rank
-					position.priorMove != null && //prior move exists
-					position.priorMove.destination - position.priorMove.start == 16 && //prior move is form of double pawn push
-					BBO.squareHasPiece(position.pawns, position.priorMove.destination)) {//prior move is a pawn
-				generatedMoves.add(new Move(Move.MoveType.ENPASSANT, square, position.priorMove.destination - 8));
-			}
-		}
+		if ((xRayAttacks & kingMask) == 0L) //if xray doesn't hit king we return
+			return -1;
 		
-		return generatedMoves;
-	}
- * 	public static List<Move> generateAllMoves(Position position) {
-		List<Move> generatedMoves = new ArrayList<Move>();
-		BBO.getSquares(position.whiteToPlay ? position.whitePieces : position.blackPieces).stream().forEach(square -> {
-			if (BBO.squareHasPiece(position.pawns, square)) {
-				generatedMoves.addAll(generatePawnMoves(square, position));
-			} else if (BBO.squareHasPiece(position.rooks, square)) {
-				generatedMoves.addAll(generateRookMoves(square, position));
-			} else if (BBO.squareHasPiece(position.bishops, square)) {
-				generatedMoves.addAll(generateBishopMoves(square, position));
-			} else if (BBO.squareHasPiece(position.queens, square)) {
-				generatedMoves.addAll(generateQueenMoves(square, position));
-			} else if (BBO.squareHasPiece(position.kings, square)) {
-				generatedMoves.addAll(generateKingMoves(square, position));
-			} else if (BBO.squareHasPiece(position.knights, square)) {
-				generatedMoves.addAll(generateKnightMoves(square, position));
-			}
-		});
-		return generatedMoves;
-	}
- * 	private static List<Move> generateMoves(int square, Position position) {
-		//assert that there is a piece of the correct color at this position
-		assert position.whiteToPlay ? (position.whitePieces & (1L << square)) != 0 : (position.blackPieces & (1L << square)) != 0;
+		int kingLoc = BBO.getSquares(kingMask).get(0);
+		long possibleBlockerMask = AbsolutePins.inBetween[square][kingLoc];
+		long blockers = position.whiteToPlay ? position.whitePieces : position.blackPieces;
 		
-		List<Move> generatedMoves = new ArrayList<Move>();	 
-		return generatedMoves;
+		return blockers & possibleBlockerMask;
 	}
- * 
- * 
  * */

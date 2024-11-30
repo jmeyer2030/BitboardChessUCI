@@ -40,6 +40,13 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	
 //Public Methods:
+	public long xrayAttacks(int square, Position position) {
+		long attacks = getAttackBoard(square, position);
+		long removeFirstHit = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & attacks;//first hit pieces
+		return attacks ^ getAttackBoard(square, position.occupancy ^ removeFirstHit);
+		
+	}
+	
 	/**
 	 * Returns a move board given a square and position
 	 * @Param square
@@ -73,6 +80,11 @@ public abstract class MagicBitboard implements LogicInterface{
 		return getMoveBoards().get(square).get(index);
 	}
 	
+	public long getAttackBoard(int square, long occupancy) {
+		long blockerBoard = occupancy & getBlockerMasks()[square];
+		int index = getIndexForBlocker(blockerBoard, square);
+		return getMoveBoards().get(square).get(index);
+	}
 
 	
 //Implemented Methods:

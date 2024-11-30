@@ -8,7 +8,33 @@ load the position:
 generate perft from that position:
 "go perft [depth]"
 
-Perft not working at 6
-Generatedd: 119060327
+Perft working at 6
+Generated: 119060324
 Expected: 119060324
+time: 97964
+
+filtering but still looking if self chec
+moves: 119051602
+time: 97277
+
+fixed bug not checking queens
+117258715
+
+fixed bug looking at own pieces attacking own king
+Total: 119051602
+Perft time: 96892
+
+fixed bug not allowing captures
+Total: 119060324
+Perft time: 98090
+
+changed move generation:
+Total: 119043018
+Perft time: 58330
+
+pert still slow...
+
+with multi threading:
+Total: 119043018
+Perft time: 14697
 
