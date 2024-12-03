@@ -8,12 +8,12 @@ load the position:
 generate perft from that position:
 "go perft [depth]"
 
-Perft working at 6
+Perft History at depth 6:
 Generated: 119060324
 Expected: 119060324
 time: 97964
 
-filtering but still looking if self chec
+filtering but still looking if self check
 moves: 119051602
 time: 97277
 
@@ -25,16 +25,25 @@ Total: 119051602
 Perft time: 96892
 
 fixed bug not allowing captures
-Total: 119060324
+Total: 119060324 CORRECT!!!
 Perft time: 98090
 
 changed move generation:
 Total: 119043018
 Perft time: 58330
 
-pert still slow...
+perft still slow...
 
 with multi threading:
 Total: 119043018
 Perft time: 14697
 
+no multithreading, added MoveDetails
+Total: 119043018
+Perft time: 75856
+
+Total: 119045805 toggled line in capture
+Perft time: 64908
+
+1M make/unmake:
+1373ms

@@ -4,6 +4,7 @@ import board.Position;
 import system.BBO;
 
 public class KingLogic {
+	
 	public static long[] moveBoards;
 
 //Public Methods

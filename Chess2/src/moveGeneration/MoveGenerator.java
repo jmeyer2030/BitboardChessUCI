@@ -293,18 +293,21 @@ public class MoveGenerator{
 	}
 	
 	public static long getAttacks(Position position, int square) {
-		if (BBO.squareHasPiece(position.pawns, square)) {
-			return pl.getAttackBoard(square, position);
-		} else if (BBO.squareHasPiece(position.rooks, square)) {
+		long pieceMask = (1L << square);
+		if ((position.pawns & pieceMask) != 0) {
+			if ((position.whitePieces & pieceMask) != 0)
+				return PawnLogic.whitePawnAttacks[square];
+			return PawnLogic.blackPawnAttacks[square];
+		} else if ((position.rooks & pieceMask) != 0) {
 			return rl.getAttackBoard(square, position);
-		} else if (BBO.squareHasPiece(position.bishops, square)) {
+		} else if ((position.bishops & pieceMask) != 0) {
 			return bl.getAttackBoard(square, position);
-		} else if (BBO.squareHasPiece(position.queens, square)) {
+		} else if ((position.queens & pieceMask) != 0) {
 			return rl.getAttackBoard(square, position) | bl.getAttackBoard(square, position);
-		} else if (BBO.squareHasPiece(position.kings, square)) {
-			return kl.getKingAttacks(square);
-		} else if (BBO.squareHasPiece(position.knights, square)) {
-			return nl.getAttackBoard(square, position);
+		} else if ((position.kings & pieceMask) != 0) {
+			return KingLogic.moveBoards[square];
+		} else if ((position.knights & pieceMask) != 0) {
+			return KnightLogic.knightMoves[square];
 		}
 		return 0L;
 	}
@@ -329,34 +332,5 @@ public class MoveGenerator{
 }
 
 /*LEGACY:
- 	
-	 * gets the location of an absolutely pinned piece
-	 * supposes that the turn is the one we want to generate moves for, so if whiteToPlay we assume the blcker is white.
-	 * @Param board
-	 * @Param square of the pinning piece
-	 * @Return mask of the pinned piece
-	 
-	public static long generateAbsolutePin(Position position, int square) {
-		long xRayAttacks = 0L;
-		long kingMask = position.kings & (position.whiteToPlay ? position.whitePieces : position.blackPieces);
-		
-		//get xRayAttacks depending on sliding piece
-		if ((position.bishops & (1L << square)) != 0) {
-			xRayAttacks = bl.xrayAttacks(square, position);
-		} else if ((position.rooks & (1L << square)) != 0) {
-			xRayAttacks = rl.xrayAttacks(square, position);
-		} else if ((position.queens & (1L << square)) != 0) {
-			xRayAttacks = rl.xrayAttacks(square, position);
-			xRayAttacks |= bl.xrayAttacks(square, position);
-		} 
-		
-		if ((xRayAttacks & kingMask) == 0L) //if xray doesn't hit king we return
-			return -1;
-		
-		int kingLoc = BBO.getSquares(kingMask).get(0);
-		long possibleBlockerMask = AbsolutePins.inBetween[square][kingLoc];
-		long blockers = position.whiteToPlay ? position.whitePieces : position.blackPieces;
-		
-		return blockers & possibleBlockerMask;
-	}
+ 
  * */

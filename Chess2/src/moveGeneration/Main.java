@@ -12,73 +12,29 @@ import board.Position;
 import system.BBO;
 public class Main {
 	public static void main(String[] args) {
-		String fish = "a7a6: 1\r\n"
-				+ "b7b6: 1\r\n"
-				+ "e8f8: 1\r\n"
-				+ "f7f6: 1\r\n"
-				+ "g7g6: 1\r\n"
-				+ "h7h6: 1\r\n"
-				+ "a7a5: 1\r\n"
-				+ "b7b5: 1\r\n"
-				+ "e8e7: 1\r\n"
-				+ "f7f5: 1\r\n"
-				+ "g7g5: 1\r\n"
-				+ "h7h5: 1\r\n"
-				+ "d7c6: 1\r\n"
-				+ "b7c6: 1\r\n"
-				+ "b8a6: 1\r\n"
-				+ "b8c6: 1\r\n"
-				+ "g8f6: 1\r\n"
-				+ "g8h6: 1\r\n"
-				+ "g8e7: 1\r\n"
-				+ "b4d2: 1\r\n"
-				+ "b4a3: 1\r\n"
-				+ "b4c3: 1\r\n"
-				+ "b4a5: 1\r\n"
-				+ "b4c5: 1\r\n"
-				+ "b4d6: 1\r\n"
-				+ "b4e7: 1\r\n"
-				+ "b4f8: 1\r\n"
-				+ "d8h4: 1\r\n"
-				+ "d8g5: 1\r\n"
-				+ "d8f6: 1\r\n"
-				+ "d8e7: 1";
-		String generated = "a7a5: 1\r\n"
-				+ "a7a6: 1\r\n"
-				+ "b7c6: 1\r\n"
-				+ "b7b5: 1\r\n"
-				+ "b7b6: 1\r\n"
-				+ "f7f5: 1\r\n"
-				+ "f7f6: 1\r\n"
-				+ "g7g5: 1\r\n"
-				+ "g7g6: 1\r\n"
-				+ "h7h5: 1\r\n"
-				+ "h7h6: 1\r\n"
-				+ "b4d2: 1\r\n"
-				+ "b4a3: 1\r\n"
-				+ "b4c3: 1\r\n"
-				+ "b4a5: 1\r\n"
-				+ "b4c5: 1\r\n"
-				+ "b4d6: 1\r\n"
-				+ "b4e7: 1\r\n"
-				+ "b4f8: 1\r\n"
-				+ "b8c6: 1\r\n"
-				+ "b8a6: 1\r\n"
-				+ "g8f6: 1\r\n"
-				+ "g8h6: 1\r\n"
-				+ "g8e7: 1\r\n"
-				+ "d8h4: 1\r\n"
-				+ "d8g5: 1\r\n"
-				+ "d8f6: 1\r\n"
-				+ "d8e7: 1\r\n"
-				+ "e8e7: 1\r\n"
-				+ "e8f8: 1";
+		/*
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
+		String fish = "";
+		String generated = "";
 		Testing.perftDiff(fish, generated);
 		
+		new MoveGenerator();
+		*/
 		new MoveGenerator();
 		//Testing.printBoard(AbsolutePins.inBetween[0][7]);
 		Position position = new Position();
 		long start = System.currentTimeMillis();
+		//try {
+		//	Thread.sleep(10000);
+		//} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+		//	e.printStackTrace();
+		//}
 		
 		//position = position.applyMove(new Move(Move.MoveType.QUIET, 12, 28));
 		//Testing.printBoard(position.checkers);
@@ -109,10 +65,30 @@ public class Main {
 		//position = position.applyMove(new Move(Move.MoveType.QUIET, 48, 32));
 		//position = position.applyMove(new Move(Move.MoveType.QUIET, 5, 33));
 
-		Testing.perft(6, position);
+		for (int i = 0; i < 10_000_000; i++) {
+			//MoveGenerator.generateMoves(position);
+			position.makeMove(new Move(Move.MoveType.QUIET, 12, 28)); //e4
+			position.unMakeMove();
+		}
+		
+		/*
+		position.makeMove(new Move(Move.MoveType.QUIET, 12, 28)); //e4
+		position.makeMove(new Move(Move.MoveType.QUIET, 51, 35)); //d5
+		
+		System.out.println("1e4, d5, ");
+		position.makeMove(new Move(Move.MoveType.CAPTURE, 28, 35)); //exd
+		position.printBoard();
+		
+		System.out.println("unmade move");
+		position.unMakeMove();
+		position.unMakeMove();
+		position.unMakeMove();
+		position.printBoard();
+		*/
+		//Testing.perft(6, position);
 		long end = System.currentTimeMillis();
 		
-		System.out.println("Perft time: " + (end - start));
+		System.out.println("Total time: " + (end - start));
 		
 		
 	}
