@@ -220,7 +220,6 @@ public class Position {
 	    // Handle specific piece types
 	    switch (move.moveType) {
 	        case QUIET:
-	        case CHECK:
 	            // Update the relevant piece bitboard
 	            if ((pawns & startMask) != 0) {
 	                pawns ^= (startMask | destinationMask);
