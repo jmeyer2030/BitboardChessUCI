@@ -8,12 +8,11 @@ import org.junit.jupiter.api.Test;
 import moveGeneration.BishopLogic;
 
 public class BishopLogicTest {
-	private static BishopLogic bmb;
-	private static BishopLogic.TestHook hook;
+	private BishopLogic.TestHook hook;
 	
 	@BeforeEach
 	public void setUp() {
-		bmb = new BishopLogic();
+		BishopLogic bmb = new BishopLogic();
 		hook = new BishopLogic.TestHook(bmb);
 	}
 //Method: initialize all
@@ -25,21 +24,21 @@ public class BishopLogicTest {
 //Method: generateBlockerMask(int square)
 	//Corner
 	@Test
-	public void testGenerateBlockermaskCorner() {
+	public void testGenerateBlockerMaskCorner() {
 		long result = hook.testGenerateBlockerMask(0);
 		long expected = 0b0000000_01000000_00100000_00010000_00001000_00000100_00000010_00000000L;
 		assertEquals(expected, result);
 	}
 	//Edge
 	@Test
-	public void testGenerateBlockermaskEdge() {
+	public void testGenerateBlockerMaskEdge() {
 		long result = hook.testGenerateBlockerMask(4);
 		long expected = 0b0000000_00000000_00000000_00000000_00000010_01000100_00101000_00000000L;
 		assertEquals(expected, result);
 	}
 	//Center
 	@Test
-	public void testGenerateBlockermaskCenter() {
+	public void testGenerateBlockerMaskCenter() {
 		long result = hook.testGenerateBlockerMask(28);
 		long expected = 0b0000000_00000010_01000100_00101000_00000000_00101000_01000100_00000000L;
 		assertEquals(expected, result);

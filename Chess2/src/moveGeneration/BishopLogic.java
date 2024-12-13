@@ -9,7 +9,7 @@ public class BishopLogic extends MagicBitboard{
 	
 	private static final Logger LOGGER = Logging.getLogger(BishopLogic.class);
 	
-	public static int[] numBits = new int[] 
+	public static int[] numBits = new int[]
 					{6, 5, 5, 5, 5, 5, 5, 6, 
 					 5, 5, 5, 5, 5, 5, 5, 5,
 					 5, 5, 7, 7, 7, 7, 5, 5, 
@@ -69,6 +69,11 @@ public class BishopLogic extends MagicBitboard{
 	}
 	
 //Protected methods
+
+	/**
+	 * generates all potential locations of blockers for each square
+	 * @return blocker mask array
+	 */
 	protected long[] generateBlockerMasks() {
 		long[] blockerMasks = new long[64];
 		for (int i = 0; i < 64; i++) {
@@ -79,9 +84,9 @@ public class BishopLogic extends MagicBitboard{
 	
 	/**
 	 * This method returns a rook blocker-mask for a given square
-	 * Meaning that it is every place that a piece could exist that would stop it from moving further
-	 * @Param square an integer between 0 and 63
-	 * @Return a bishop blockerMask if the bishop were on that square
+	 * Blocker Mask: BB of all potential blocker locations
+	 * @param square an integer between 0 and 63
+	 * @return a bishop blockerMask if the bishop were on that square
 	 */
 	protected long generateBlockerMask(int square) {
 	    assert square >= 0;
@@ -113,9 +118,9 @@ public class BishopLogic extends MagicBitboard{
 	
 	/**
 	 * Returns a move board for a bishop blockerBoard
-	 * @Param blockerBoard, a bishop blockerBoard
-	 * @Param square, the square associated with the blockerBoard
-	 * @Return the moveBoard for that blockerBoard
+	 * @param blockerBoard, a bishop blockerBoard
+	 * @param square, the square associated with the blockerBoard
+	 * @return the moveBoard for that blockerBoard
 	 */
 	protected long generateMoveBoard(long blockerBoard, int square) {
 		int rankLoc = square / 8;
@@ -164,7 +169,7 @@ public class BishopLogic extends MagicBitboard{
 	
 //Testing help
 	public static class TestHook {
-		private BishopLogic bmb;
+		private final BishopLogic bmb;
 		
 		public TestHook(BishopLogic bmb) {
 			this.bmb = bmb;

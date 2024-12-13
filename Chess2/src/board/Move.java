@@ -7,7 +7,6 @@ public class Move {
         CAPTURE,
         ENPASSANT,
         PROMOTION,
-        CHECK,
         CASTLE
     }
 
