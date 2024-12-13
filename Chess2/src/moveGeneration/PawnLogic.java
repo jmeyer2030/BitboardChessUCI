@@ -65,13 +65,13 @@ public class PawnLogic {
 	}
 	
 	public long getEnPassant(int square, Position position) {
-		if (position.enPassant == 0 || (position.enPassant + 1 != square && position.enPassant - 1 != square) ||
-				(square / 8 != 3 || square / 8 != 4)) // enpassant doesn't exist or isn't next to the piece
+		if (position.enPassant == 0 || (((1L << position.enPassant) & (position.whiteToPlay ? whitePawnAttacks[square] : blackPawnAttacks[square])) == 0))// ||//If square doesn't attack the enPassant square//(position.enPassant + 1 != square && position.enPassant - 1 != square) ||
+				//(square / 8 != 3 || square / 8 != 4)) // enpassant doesn't exist or isn't next to the piece
 			return 0L;
-		if (position.enPassant / 8 == 3) {//if its a white pawn to be taken
-			return (1L << (position.enPassant - 8));
-		}
-		return (1L << (position.enPassant + 8));
+		//if (position.whiteToPlay) {//if its a white pawn to be taken
+		//	return (1L << (position.enPassant));
+		//}
+		return (1L << (position.enPassant));
 	}
 	
 	
@@ -90,7 +90,7 @@ public class PawnLogic {
 	
 	private long getBlackPawnPushes(int square, long occupancyBoard) {
 		if (square < 48) // if not on rank 2
-			return blackPawnPushBlockerMask[square] & occupancyBoard;
+			return blackPawnPushBlockerMask[square] & ~occupancyBoard;
 		
 		//true if there is a piece on rank 3 of the square's file
 		boolean blockerAtRankSix = ((occupancyBoard & sixthRankMask & blackPawnPushBlockerMask[square]) != 0);

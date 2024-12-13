@@ -1,63 +1,97 @@
 package moveGeneration;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
+import board.FEN;
 import board.Move;
 import board.Position;
+import system.BBO;
 public class Main {
 	public static void main(String[] args) {
+		/*
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
+		String fish = "";
+		String generated = "";
+		Testing.perftDiff(fish, generated);
 		
 		new MoveGenerator();
+		*/
+		new MoveGenerator();
+		//Testing.printBoard(AbsolutePins.inBetween[0][7]);
 		Position position = new Position();
-		//position = position.applyMove(new Move(Move.MoveType.QUIET, 15, 31));
-		//position = position.applyMove(new Move(Move.MoveType.QUIET, 48, 32));
 		long start = System.currentTimeMillis();
-		//System.out.println("queen on 3" + (0 != (position.queens & (1L << 3))));
-		//System.out.println("num d1 queen moves" + MoveGenerator.generateQueenMoves(position).size());
-		//System.out.println("piece blocking at 10" + (0 != (position.occupancy & (1L << 10))));
-		//perft(1, position);
-		perft(4, position);
+		//try {
+		//	Thread.sleep(10000);
+		//} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+		//	e.printStackTrace();
+		//}
+		
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 12, 28));
+		//Testing.printBoard(position.checkers);
+		//System.out.println(MoveGenerator.generateAllMoves(position).size());
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 52, 36));
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 5, 33));
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 61, 25));
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 33, 42));
+		
+		//FEN fen = new FEN("rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 1 2");
+		//position = new Position(fen);
+		//System.out.println("moves of 53");
+		//Testing.printBoard(position.moveScope[6]);
+		
+		/*
+		//position = position.applyMove(new Move(Move.MoveType.ENPASSANT, 36, 43));
+		System.out.println("WAM");
+		Testing.printBoard(position.whiteAttackMap);
+		System.out.println("occupancy");
+		Testing.printBoard(position.occupancy);
+		*/
+		//System.out.println("BAM");
+		//Testing.printBoard(position.blackAttackMap);
+		//System.out.println("Occupancy");
+		//Testing.printBoard(position.occupancy);
+		//System.out.println(position.enPassant);
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 12, 28));
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 48, 32));
+		//position = position.applyMove(new Move(Move.MoveType.QUIET, 5, 33));
+
+		for (int i = 0; i < 10_000_000; i++) {
+			//MoveGenerator.generateMoves(position);
+			position.makeMove(new Move(Move.MoveType.QUIET, 12, 28)); //e4
+			position.unMakeMove();
+		}
+		
+		/*
+		position.makeMove(new Move(Move.MoveType.QUIET, 12, 28)); //e4
+		position.makeMove(new Move(Move.MoveType.QUIET, 51, 35)); //d5
+		
+		System.out.println("1e4, d5, ");
+		position.makeMove(new Move(Move.MoveType.CAPTURE, 28, 35)); //exd
+		position.printBoard();
+		
+		System.out.println("unmade move");
+		position.unMakeMove();
+		position.unMakeMove();
+		position.unMakeMove();
+		position.printBoard();
+		*/
+		//Testing.perft(6, position);
 		long end = System.currentTimeMillis();
 		
-		System.out.println("Perft time: " + (end - start));
+		System.out.println("Total time: " + (end - start));
 		
 		
 	}
 	
-	public static void perft(int depth, Position position) {
-		if (depth < 1)
-			return;
-		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
-		int total = 0;
-		for (Move move : initial) {
-			long thisMove = perftRecursion(depth - 1, position.applyMove(move));
-			System.out.println(notation(move.start) + notation(move.destination) + ": " + thisMove);
-			total += thisMove;
-		}
-		System.out.println("Total: " + total);
-		
-	}
 	
-	public static long perftRecursion(int depth, Position position) {
-		if (position.selfInCheck())
-			return 0;
-		if (depth == 0)
-			return 1;
-		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
-			Position appliedMove = position.applyMove(move);
-			if (appliedMove.selfInCheck())
-				return 0;
-			return perftRecursion(depth - 1, appliedMove);
-		}).sum();
-		
-	}
-	
-	public static String notation(int square) {
-		String[] files = new String[] {"a", "b", "c", "d", "e", "f", "g", "h"};
-		String[] ranks = new String[] {"1", "2", "3", "4", "5", "6", "7", "8"};
-		int rank = square / 8;
-		int file = square % 8;
-		return files[file] + ranks[rank] ;
-		
-	}
 }
