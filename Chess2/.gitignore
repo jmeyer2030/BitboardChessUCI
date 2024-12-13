@@ -12,3 +12,6 @@ bin/
 .classpath
 
 .project
+
+#intellij specific
+.idea/
