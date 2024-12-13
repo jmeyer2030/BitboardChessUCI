@@ -5,7 +5,7 @@ build/
 report/
 
 #Eclipse Specific:
-.settings/
+Chess2/.settings/
 
 bin/
 
