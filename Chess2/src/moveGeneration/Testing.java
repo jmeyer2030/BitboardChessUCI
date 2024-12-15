@@ -15,11 +15,31 @@ import board.Position;
 
 public class Testing {
 
+	public static int perft1(int depth, Position position) {
+		// Base case: if depth is 0 or the game is over
+		if (depth == 0 || position.gameStatus != 2) {
+			return 1;
+		}
+
+		int nodes = 0;
+
+		// Generate strictly legal moves for the current position
+		List<Move> legalMoves = MoveGenerator.generateStrictlyLegal(position);
+
+		// For each legal move, apply it, recursively calculate perft, and undo the move
+		for (Move move : legalMoves) {
+			position.makeMove(move);           // Apply the move
+			nodes += perft1(depth - 1, position); // Recursively count the moves at the next depth
+			position.unMakeMove(move);         // Undo the move
+		}
+		return nodes;
+	}
 	/**
 	 * Runs a perft test on a position
 	 * @Param depth
 	 * @Param position
 	 */
+
 	public static void perft(int depth, Position position) {
 		if (depth < 1 || position.gameStatus != 2)
 			return;
@@ -44,7 +64,7 @@ public class Testing {
 			return perftRecursion(depth - 1, appliedMove);
 		}).sum();
 	}
-	
+
 	/**
 	 * Prints the differences between perft results
 	 * @Param stockfish perft result

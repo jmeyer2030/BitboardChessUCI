@@ -399,27 +399,19 @@ public class MoveGenerator{
 	*/
 	public static long getAttacks(Position position, int square) {
 		long pieceMask = (1L << square);
-		if ((position.pawns & pieceMask) != 0) {
-			if ((position.whitePieces & pieceMask) != 0)
-				return PawnLogic.whitePawnAttacks[square];
-			return PawnLogic.blackPawnAttacks[square];
-		} else if ((position.rooks & pieceMask) != 0) {
-			return rl.getAttackBoard(square, position);
-		} else if ((position.bishops & pieceMask) != 0) {
-			return bl.getAttackBoard(square, position);
-		} else if ((position.queens & pieceMask) != 0) {
-			return rl.getAttackBoard(square, position) | bl.getAttackBoard(square, position);
-		} else if ((position.kings & pieceMask) != 0) {
-			return KingLogic.moveBoards[square];
-		} else if ((position.knights & pieceMask) != 0) {
-			return KnightLogic.knightMoves[square];
-		}
-		return 0L;
+		long attacks = 0L;
+		attacks |= ((position.pawns & pieceMask) != 0) ?
+				((position.whitePieces & pieceMask) != 0) ? PawnLogic.blackPawnAttacks[square] :
+						PawnLogic.whitePawnAttacks[square] : 0L;
+		attacks |= ((position.rooks & pieceMask) != 0) ? rl.getAttackBoard(square, position) : 0L;
+		attacks |= ((position.bishops & pieceMask) != 0) ? bl.getAttackBoard(square, position) : 0L;
+		attacks |= ((position.queens & pieceMask) != 0) ?
+				(rl.getAttackBoard(square, position) | bl.getAttackBoard(square, position)) : 0L;
+		attacks |= ((position.kings & pieceMask) != 0) ? KingLogic.moveBoards[square] : 0L;
+		attacks |= ((position.knights & pieceMask) != 0) ? KnightLogic.knightMoves[square] : 0L;
+
+		return attacks;
 	}
-
-
-
-
 }
 
 /*LEGACY:
