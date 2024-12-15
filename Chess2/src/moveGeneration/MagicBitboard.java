@@ -27,7 +27,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	*/
 	
 	private static final Logger LOGGER = Logging.getLogger(MagicBitboard.class);
-		
+
 //Abstract Methods:
 	public abstract void initializeAll();
 	protected abstract long generateBlockerMask(int square);

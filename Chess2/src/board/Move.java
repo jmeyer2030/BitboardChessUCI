@@ -1,71 +1,99 @@
 package board;
 
 public class Move {
-    // Enum for move types
-    public enum MoveType {
-        QUIET,
-        CAPTURE,
-        ENPASSANT,
-        PROMOTION,
-        CASTLE
-    }
 
-    // Enum for piece types (used for promotions and other specific moves)
-    public enum PieceType {
-        ROOK,
-        BISHOP,
-        KNIGHT,
-        QUEEN
-    }
-
-    // Fields
-    public final MoveType moveType;
-    public final PieceType pieceType; // Null for non-promotion moves
+/**
+* Fields
+*/
+    //Move details:
     public final int start;
     public final int destination;
+    public final MoveType moveType;
+    public final PieceType promotionType; // Null for non-promotion moves
+    public final PieceType captureType;
 
-    // Constructor
-    public Move(MoveType moveType, PieceType pieceType, int start, int destination) {
-        this.moveType = moveType;
-        this.pieceType = pieceType; // Can be null for moves without promotions
+    //Position details:
+    public final int halfMoveCount;
+    public final byte castleRights;
+
+/**
+* Constructors
+*/
+    /**
+    * General Constructor
+    */
+    public Move(int start, int destination, MoveType moveType, PieceType promotionType,
+        PieceType captureType, int halfMoveCount, byte castleRights) {
         this.start = start;
         this.destination = destination;
+        this.moveType = moveType;
+        this.promotionType = promotionType;
+        this.captureType = captureType;
+        this.halfMoveCount = halfMoveCount;
+        this.castleRights = castleRights;
+    }
+/*
+* Factory Methods
+*/
+    /**
+    * Returns a new quiet move
+    */
+    public static Move quietMove(int start, int destination, Position position) {
+        return new Move(start, destination, MoveType.QUIET, null, null,
+            position.rule50, position.castleRights);
     }
 
-    // Convenience Constructor (for non-promotion moves)
-    public Move(MoveType moveType, int start, int destination) {
-        this(moveType, null, start, destination);
+    /**
+    * Returns a new capture move
+    */
+    public static Move captureMove(int start, int destination, Position position) {
+        PieceType captureType = position.getPieceType(destination);
+        return new Move(start, destination, MoveType.CAPTURE, null, captureType,
+            position.rule50, position.castleRights);
     }
 
-    // Print the move in a readable format
-    public void printMove() {
-        String promotion = (pieceType != null) ? " Promotion to: " + pieceType : "";
-        System.out.println("Move start: " + this.start 
-            + " Destination: " + this.destination 
-            + " Type: " + this.moveType + promotion);
+    /**
+     * Returns a new En Passant move
+     */
+    public static Move enPassantMove(int start, int destination, Position position) {
+        return new Move(start, destination, MoveType.ENPASSANT, null, null,
+            position.rule50, position.castleRights);
     }
 
-    // Convert move to chess notation (e.g., e2e4)
-    public String toAlgebraic() {
-        return squareToAlgebraic(start) + squareToAlgebraic(destination)
-            + (pieceType != null ? pieceTypeToChar(pieceType) : "");
+    /**
+     * Returns a new promotion move
+     */
+    public static Move promotionMove(int start, int destination, Position position, PieceType promotionType) {
+        PieceType captureType = position.getPieceType(destination);
+        return new Move(start, destination, MoveType.PROMOTION, promotionType, captureType,
+            position.rule50, position.castleRights);
     }
 
-    // Helper to convert a square index (0-63) to algebraic notation (e.g., 0 -> a1)
-    private static String squareToAlgebraic(int square) {
-        int file = square % 8;
-        int rank = square / 8;
-        return "" + (char) ('a' + file) + (rank + 1);
+    /**
+     * Returns a new castle move
+     */
+    public static Move castleMove(int start, int destination, Position position) {
+        return new Move(start, destination, MoveType.CASTLE, null, null,
+            position.rule50, position.castleRights);
     }
 
-    // Helper to get the promotion piece character
-    private static char pieceTypeToChar(PieceType pieceType) {
-        switch (pieceType) {
-            case ROOK: return 'r';
-            case BISHOP: return 'b';
-            case KNIGHT: return 'n';
-            case QUEEN: return 'q';
-            default: throw new IllegalArgumentException("Unknown PieceType");
-        }
+/**
+* Helper Methods
+*/
+    /**
+    * Returns a string version of the move
+    * @return description of the move
+    */
+    @Override
+    public String toString() {
+        String moveDescription = "";
+        moveDescription += "Start: " + this.start + " \n";
+        moveDescription += "Destination: " + this.destination + " \n";
+        moveDescription += "MoveType: " + this.moveType + " \n";
+        moveDescription += "PromotionType: " + this.promotionType + " \n";
+        moveDescription += "CaptureType: " + this.captureType + " \n";
+        moveDescription += "HalfMoveCount: " + this.halfMoveCount + " \n";
+        moveDescription += "CastleRights: " + this.castleRights + " \n";
+        return moveDescription;
     }
 }

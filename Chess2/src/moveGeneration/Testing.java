@@ -23,10 +23,12 @@ public class Testing {
 	public static void perft(int depth, Position position) {
 		if (depth < 1 || position.gameStatus != 2)
 			return;
-		List<Move> initial = MoveGenerator.generateMoves(position);
+		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
 		int total = 0;
 		for (Move move : initial) {
-			long thisMove = perftRecursion(depth - 1, position.applyMove(move));
+			Position copy = new Position(position);
+			copy.makeMove(move);
+			long thisMove = perftRecursion(depth - 1, copy);
 			System.out.println(notation(move.start) + notation(move.destination) + ": " + thisMove);
 			total += thisMove;
 		}
@@ -36,8 +38,9 @@ public class Testing {
 	private static long perftRecursion(int depth, Position position) {
 		if (depth == 0 || position.gameStatus != 2)
 			return 1;
-		return MoveGenerator.generateMoves(position).stream().mapToLong(move -> {
-			Position appliedMove = position.applyMove(move);
+		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
+			Position appliedMove = new Position(position);
+			appliedMove.makeMove(move);
 			return perftRecursion(depth - 1, appliedMove);
 		}).sum();
 	}
@@ -73,9 +76,7 @@ public class Testing {
 	        System.out.println();
 	    }
 	}
-	
 
-	
 	private static String notation(int square) {
 		String[] files = new String[] {"a", "b", "c", "d", "e", "f", "g", "h"};
 		String[] ranks = new String[] {"1", "2", "3", "4", "5", "6", "7", "8"};

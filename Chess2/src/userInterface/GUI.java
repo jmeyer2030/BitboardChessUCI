@@ -57,7 +57,7 @@ public class GUI implements ActionListener{
 				}).findFirst();
 				if (moveToApply.isEmpty())
 					continue;
-				position.applyMove(moveToApply.get());
+				//position;
 				updateDisplay();
 				waitingForDestination = false;
 			}
