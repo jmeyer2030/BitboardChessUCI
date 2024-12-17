@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import board.Move;
-import board.MoveType;
 import board.PieceType;
 import board.Position;
 import system.BBO;
@@ -13,7 +12,7 @@ import system.BBO;
 
 public class MoveGenerator{
 
-/**
+/*
 * Fields
 */
 	private static PawnLogic pl;
@@ -21,8 +20,7 @@ public class MoveGenerator{
 	private static RookLogic rl;
 	private static BishopLogic bl;
 	private static KnightLogic nl;
-	private static AbsolutePins ap;
-/**
+    /*
 * Constructor(s)
 */
 	/**
@@ -34,7 +32,7 @@ public class MoveGenerator{
 		rl = new RookLogic();
 		bl = new BishopLogic();
 		nl = new KnightLogic();
-		ap = new AbsolutePins();
+        AbsolutePins ap = new AbsolutePins();
 
 		pl.initializeAll();
 		rl.initializeAll();
@@ -45,8 +43,8 @@ public class MoveGenerator{
 	}
 	/**
 	 * Generates a list of all legal moves in a position
-	 * @param position
-	 * @return Move list
+	 * @param position Position
+	 * @return Move list List<Move>
 	 */
 	public static List<Move> generateStrictlyLegal(Position position) {
 		List<Move> allMoves = generateAllMoves(position);
@@ -54,10 +52,8 @@ public class MoveGenerator{
 			position.makeMove(move);
 			boolean invalidMove = position.selfInCheck();
 			position.unMakeMove(move);
-			if (invalidMove)
-				return false;
-			return true;
-		}).collect(Collectors.toList());
+            return !invalidMove;
+        }).collect(Collectors.toList());
 		return legalMoves;
 	}
 
@@ -76,7 +72,7 @@ public class MoveGenerator{
 		generatedMoves.addAll(generateKingMoves(position));
 		return generatedMoves;
 	}
-/**
+/*
 * Private methods
 */
 	/**
@@ -87,7 +83,7 @@ public class MoveGenerator{
 
 	private static List<Move> generatePawnMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long pawnList = position.pawns & (position.whiteToPlay ? position.whitePieces : position.blackPieces);
+		long pawnList = position.pieces[0] & (position.whiteToPlay ? position.whitePieces : position.blackPieces);
 
 		while (pawnList != 0L) {
 			int square = Long.numberOfTrailingZeros(pawnList);
@@ -101,7 +97,7 @@ public class MoveGenerator{
 				if (destination / 8 == 0 || destination / 8 == 7) {
 					generatedMoves.addAll(generatePromotions(square, destination, position));
 				} else {
-					generatedMoves.add(Move.captureMove(square, destination, position));
+					generatedMoves.add(Move.captureMove(square, destination, position, PieceType.PAWN));
 				}
 			}
 
@@ -113,7 +109,7 @@ public class MoveGenerator{
 				if (destination / 8 == 0 || destination / 8 == 7) {
 					generatedMoves.addAll(generatePromotions(square, destination, position));
 				} else {
-					generatedMoves.add(Move.quietMove(square, destination, position));
+					generatedMoves.add(Move.quietMove(square, destination, position, PieceType.PAWN));
 				}
 			}
 
@@ -136,7 +132,7 @@ public class MoveGenerator{
 
 	private static List<Move> generateRookMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long rookList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.rooks;
+		long rookList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.pieces[3];
 
 		// Iterate over the rook positions using bitwise manipulation
 		while (rookList != 0L) {
@@ -148,7 +144,7 @@ public class MoveGenerator{
 			while (captureDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(captureDestinations);
 				captureDestinations &= (captureDestinations - 1);
-				generatedMoves.add(Move.captureMove(square, destination, position));
+				generatedMoves.add(Move.captureMove(square, destination, position, PieceType.ROOK));
 			}
 
 			// Process quiet moves
@@ -156,7 +152,7 @@ public class MoveGenerator{
 			while (quietDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(quietDestinations);
 				quietDestinations &= (quietDestinations - 1);
-				generatedMoves.add(Move.quietMove(square, destination, position));
+				generatedMoves.add(Move.quietMove(square, destination, position, PieceType.ROOK));
 			}
 		}
 		return generatedMoves;
@@ -170,7 +166,7 @@ public class MoveGenerator{
 
 	private static List<Move> generateBishopMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long bishopList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.bishops;
+		long bishopList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.pieces[2];
 
 		// Iterate over bishop positions using bitwise manipulation
 		while (bishopList != 0L) {
@@ -182,7 +178,7 @@ public class MoveGenerator{
 			while (captureDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(captureDestinations);
 				captureDestinations &= (captureDestinations - 1);
-				generatedMoves.add(Move.captureMove(square, destination, position));
+				generatedMoves.add(Move.captureMove(square, destination, position, PieceType.BISHOP));
 			}
 
 			// Process quiet moves
@@ -190,7 +186,7 @@ public class MoveGenerator{
 			while (quietDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(quietDestinations);
 				quietDestinations &= (quietDestinations - 1);
-				generatedMoves.add(Move.quietMove(square, destination, position));
+				generatedMoves.add(Move.quietMove(square, destination, position, PieceType.BISHOP));
 			}
 		}
 
@@ -205,7 +201,7 @@ public class MoveGenerator{
 
 	private static List<Move> generateKnightMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long knightList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.knights;
+		long knightList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.pieces[1];
 
 		// Iterate over knight positions using bitwise manipulation
 		while (knightList != 0L) {
@@ -217,7 +213,7 @@ public class MoveGenerator{
 			while (captureDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(captureDestinations);
 				captureDestinations &= (captureDestinations - 1);
-				generatedMoves.add(Move.captureMove(square, destination, position));
+				generatedMoves.add(Move.captureMove(square, destination, position, PieceType.KNIGHT));
 			}
 
 			// Process quiet moves
@@ -225,7 +221,7 @@ public class MoveGenerator{
 			while (quietDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(quietDestinations);
 				quietDestinations &= (quietDestinations - 1);
-				generatedMoves.add(Move.quietMove(square, destination, position));
+				generatedMoves.add(Move.quietMove(square, destination, position, PieceType.KNIGHT));
 			}
 		}
 
@@ -240,7 +236,7 @@ public class MoveGenerator{
 
 	private static List<Move> generateKingMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long kingList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.kings;
+		long kingList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.pieces[5];
 
 		// Iterate over king positions using bitwise manipulation
 		while (kingList != 0L) {
@@ -252,7 +248,7 @@ public class MoveGenerator{
 			while (captureDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(captureDestinations);
 				captureDestinations &= (captureDestinations - 1);
-				generatedMoves.add(Move.captureMove(square, destination, position));
+				generatedMoves.add(Move.captureMove(square, destination, position, PieceType.KING));
 			}
 
 			// Process quiet moves
@@ -260,7 +256,7 @@ public class MoveGenerator{
 			while (quietDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(quietDestinations);
 				quietDestinations &= (quietDestinations - 1);
-				generatedMoves.add(Move.quietMove(square, destination, position));
+				generatedMoves.add(Move.quietMove(square, destination, position, PieceType.KING));
 			}
 
 			// Process castling moves
@@ -283,41 +279,41 @@ public class MoveGenerator{
 
 	public static List<Move> generateQueenMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long queenList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.queens;
+		long queenList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.pieces[4];
 
 		// Iterate over queen positions using bitwise manipulation
 		while (queenList != 0L) {
 			int square = Long.numberOfTrailingZeros(queenList);
 			queenList &= (queenList - 1);
 
-			// Process rook-like capture and quiet moves (same as rooks)
+			// Process rook-like capture and quiet moves (same as.pieces[3])
 			long rookCaptureDestinations = rl.getCaptures(square, position);
 			while (rookCaptureDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(rookCaptureDestinations);
 				rookCaptureDestinations &= (rookCaptureDestinations - 1);
-				generatedMoves.add(Move.captureMove(square, destination, position));
+				generatedMoves.add(Move.captureMove(square, destination, position, PieceType.QUEEN));
 			}
 
 			long rookQuietDestinations = rl.getQuietMoves(square, position);
 			while (rookQuietDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(rookQuietDestinations);
 				rookQuietDestinations &= (rookQuietDestinations - 1);
-				generatedMoves.add(Move.quietMove(square, destination, position));
+				generatedMoves.add(Move.quietMove(square, destination, position, PieceType.QUEEN));
 			}
 
-			// Process bishop-like capture and quiet moves (same as bishops)
+			// Process bishop-like capture and quiet moves (same as.pieces[2])
 			long bishopCaptureDestinations = bl.getCaptures(square, position);
 			while (bishopCaptureDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(bishopCaptureDestinations);
 				bishopCaptureDestinations &= (bishopCaptureDestinations - 1);
-				generatedMoves.add(Move.captureMove(square, destination, position));
+				generatedMoves.add(Move.captureMove(square, destination, position, PieceType.QUEEN));
 			}
 
 			long bishopQuietDestinations = bl.getQuietMoves(square, position);
 			while (bishopQuietDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(bishopQuietDestinations);
 				bishopQuietDestinations &= (bishopQuietDestinations - 1);
-				generatedMoves.add(Move.quietMove(square, destination, position));
+				generatedMoves.add(Move.quietMove(square, destination, position, PieceType.QUEEN));
 			}
 		}
 
@@ -348,18 +344,18 @@ public class MoveGenerator{
 	public static long generateWhiteAttacks(Position position) {
 		long attacks = 0L;
 		for(int square : BBO.getSquares(position.whitePieces)) {
-			if (BBO.squareHasPiece(position.pawns, square)) {
+			if (BBO.squareHasPiece(position.pieces[0], square)) {
 				attacks |= pl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.rooks, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
 				attacks |= rl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.bishops, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
 				attacks |= bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.queens, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
 				attacks |= rl.getAttackBoard(square, position);
 				attacks |= bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.kings, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
 				attacks |= kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.knights, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
 				attacks |= nl.getAttackBoard(square, position);
 			}
 		}
@@ -373,18 +369,18 @@ public class MoveGenerator{
 	public static long generateBlackAttacks(Position position) {
 		long attacks = 0L;
 		for(int square : BBO.getSquares(position.blackPieces)) {
-			if (BBO.squareHasPiece(position.pawns, square)) {
+			if (BBO.squareHasPiece(position.pieces[0], square)) {
 				attacks |= pl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.rooks, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
 				attacks |= rl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.bishops, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
 				attacks |= bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.queens, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
 				attacks |= rl.getAttackBoard(square, position);
 				attacks |= bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.kings, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
 				attacks |= kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.knights, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
 				attacks |= nl.getAttackBoard(square, position);
 			}
 		}
@@ -400,29 +396,72 @@ public class MoveGenerator{
 	public static long getAttacks(Position position, int square) {
 		long pieceMask = (1L << square);
 		long attacks = 0L;
-		attacks |= ((position.pawns & pieceMask) != 0) ?
+		attacks |= ((position.pieces[0] & pieceMask) != 0) ?
 				((position.whitePieces & pieceMask) != 0) ? PawnLogic.blackPawnAttacks[square] :
 						PawnLogic.whitePawnAttacks[square] : 0L;
-		attacks |= ((position.rooks & pieceMask) != 0) ? rl.getAttackBoard(square, position) : 0L;
-		attacks |= ((position.bishops & pieceMask) != 0) ? bl.getAttackBoard(square, position) : 0L;
-		attacks |= ((position.queens & pieceMask) != 0) ?
+		attacks |= ((position.pieces[3] & pieceMask) != 0) ? rl.getAttackBoard(square, position) : 0L;
+		attacks |= ((position.pieces[2] & pieceMask) != 0) ? bl.getAttackBoard(square, position) : 0L;
+		attacks |= ((position.pieces[4] & pieceMask) != 0) ?
 				(rl.getAttackBoard(square, position) | bl.getAttackBoard(square, position)) : 0L;
-		attacks |= ((position.kings & pieceMask) != 0) ? KingLogic.moveBoards[square] : 0L;
-		attacks |= ((position.knights & pieceMask) != 0) ? KnightLogic.knightMoves[square] : 0L;
+		attacks |= ((position.pieces[5] & pieceMask) != 0) ? KingLogic.moveBoards[square] : 0L;
+		attacks |= ((position.pieces[1] & pieceMask) != 0) ? KnightLogic.knightMoves[square] : 0L;
 
 		return attacks;
 	}
+
+
+	public static long getPawnAttacks(Position position, int square)  {
+		return pl.getAttackBoard(square, position);
+	}
+
+	public static long getKnightAttacks(Position position, int square) {
+		return nl.getAttackBoard(square, position);
+	}
+	public static long getBishopAttacks(Position position, int square) {
+		return bl.getAttackBoard(square, position);
+	}
+	public static long getRookAttacks(Position position, int square) {
+		return rl.getAttackBoard(square, position);
+	}
+	public static long getQueenAttacks(Position position, int square) {
+		return rl.getAttackBoard(square, position) | bl.getAttackBoard(square, position);
+	}
+	public static long getKingAttacks(Position position, int square) {
+		return kl.getKingAttacks(square);
+	}
+
+	public static boolean squareAttacked(Position position, int square) {
+		boolean squareAttacked = false;
+
+
+
+	}
+
+	public static boolean kingInCheck(Position position) {
+		boolean selfInCheck = false;
+		int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & (position.whiteToPlay ? position.blackPieces : position.whitePieces));
+		long potentialCheckers = position.whiteToPlay ? position.whitePieces : position.blackPieces;
+		selfInCheck |= ((pl.getAttackBoard(kingLoc, position) & potentialCheckers & position.pieces[0]) != 0);
+		selfInCheck |= ((bl.getAttackBoard(kingLoc, position) & potentialCheckers & position.pieces[2] | position.pieces[5]) != 0);
+		selfInCheck |= ((rl.getAttackBoard(kingLoc, position) & potentialCheckers & (position.pieces[3] | position.pieces[5])) != 0);
+		selfInCheck |= ((nl.getAttackBoard(kingLoc, position) & potentialCheckers & position.pieces[1]) != 0);
+		selfInCheck |= ((kl.getKingAttacks(kingLoc) & potentialCheckers & position.pieces[5]) != 0);
+		return selfInCheck;
+	}
+
+
+
 }
 
 /*LEGACY:
 
 
  	public static long getXrayAttacks(Position position, int square) {
-		if ((position.bishops & (1L << square)) != 0) {
+		if ((position.pieces[2] & (1L << square)) != 0) {
 			return bl.xrayAttacks(square, position);
-		} else if ((position.rooks & (1L << square)) != 0) {
+		} else if ((position.pieces[3] & (1L << square)) != 0) {
 			return rl.xrayAttacks(square, position);
-		} else if ((position.queens & (1L << square)) != 0) {
+		} else if ((position.pieces[4] & (1L << square)) != 0) {
 			return bl.xrayAttacks(square, position) | rl.xrayAttacks(square, position);
 		} else {
 			return 0L;
@@ -432,35 +471,35 @@ public class MoveGenerator{
 	public static long[] generateAttackArray(Position position) {
 		long[] attackArray = new long[64];
 		for(int square : BBO.getSquares(position.whitePieces)) {
-			if (BBO.squareHasPiece(position.pawns, square)) {
+			if (BBO.squareHasPiece(position.pieces[0], square)) {
 				attackArray[square] = pl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.rooks, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
 				attackArray[square] = rl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.bishops, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
 				attackArray[square] = bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.queens, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
 				attackArray[square] = rl.getAttackBoard(square, position);
 				attackArray[square] = bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.kings, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
 				attackArray[square] = kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.knights, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
 				attackArray[square] = nl.getAttackBoard(square, position);
 			}
 		}
 
 		for(int square : BBO.getSquares(position.blackPieces)) {
-			if (BBO.squareHasPiece(position.pawns, square)) {
+			if (BBO.squareHasPiece(position.pieces[0], square)) {
 				attackArray[square] = pl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.rooks, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
 				attackArray[square] = rl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.bishops, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
 				attackArray[square] = bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.queens, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
 				attackArray[square] = rl.getAttackBoard(square, position);
 				attackArray[square] = bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.kings, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
 				attackArray[square] = kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.knights, square)) {
+			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
 				attackArray[square] = nl.getAttackBoard(square, position);
 			}
 		}
@@ -470,7 +509,7 @@ public class MoveGenerator{
 
 	public static List<Move> generateSingleCheckMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		int kingLoc = BBO.getSquares(position.kings  & (position.whiteToPlay ? position.whitePieces : position.blackPieces)).get(0);
+		int kingLoc = BBO.getSquares(position.pieces[5]  & (position.whiteToPlay ? position.whitePieces : position.blackPieces)).get(0);
 		int checkerLoc = BBO.getSquares(position.checkers).get(0);
 		long legalMoveMask = AbsolutePins.inBetween[checkerLoc][kingLoc] | (1L << checkerLoc);
 		generatedMoves.addAll(generatePawnMoves(position, legalMoveMask));
@@ -484,7 +523,7 @@ public class MoveGenerator{
 
 	public static List<Move> generateDoubleCheckMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long kingList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.kings;
+		long kingList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.pieces[5];
 		List<Integer> kingLocations = BBO.getSquares(kingList);
 		for (int square : kingLocations) {
 			long legalMoves = position.moveScope[square];

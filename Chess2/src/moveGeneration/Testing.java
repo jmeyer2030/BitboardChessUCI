@@ -17,7 +17,7 @@ public class Testing {
 
 	public static int perft1(int depth, Position position) {
 		// Base case: if depth is 0 or the game is over
-		if (depth == 0 || position.gameStatus != 2) {
+		if (depth == 0) {
 			return 1;
 		}
 
@@ -41,7 +41,7 @@ public class Testing {
 	 */
 
 	public static void perft(int depth, Position position) {
-		if (depth < 1 || position.gameStatus != 2)
+		if (depth < 1)
 			return;
 		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
 		int total = 0;
@@ -56,7 +56,7 @@ public class Testing {
 	}
 //Private Helper Methods
 	private static long perftRecursion(int depth, Position position) {
-		if (depth == 0 || position.gameStatus != 2)
+		if (depth == 0)
 			return 1;
 		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
 			Position appliedMove = new Position(position);

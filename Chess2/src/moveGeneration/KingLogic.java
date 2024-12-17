@@ -14,13 +14,11 @@ public class KingLogic {
 	
 	public long getCaptures(int square, Position position) {
 		long capturablePieces = position.whiteToPlay ? position.blackPieces : position.whitePieces;
-		long moveableSquares = position.whiteToPlay ? ~position.blackAttackMap : ~position.whiteAttackMap;
-		return moveBoards[square] & capturablePieces & moveableSquares;
+		return moveBoards[square] & capturablePieces;
 	}
 	
 	public long getQuietMoves(int square, Position position) {
-		long moveableSquares = position.whiteToPlay ? ~position.blackAttackMap : ~position.whiteAttackMap;
-		return moveBoards[square] & ~position.occupancy & moveableSquares;
+		return moveBoards[square] & ~position.occupancy;
 	}
 	
 	public long getKingAttacks(int square) {

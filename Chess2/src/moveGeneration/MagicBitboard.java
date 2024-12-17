@@ -49,9 +49,9 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	/**
 	 * Returns a move board given a square and position
-	 * @Param square
-	 * @Param position
-	 * @Return moveBoard of all moves
+	 * @param square square
+	 * @param position position
+	 * @return moveBoard of all moves
 	 */
 	public long getMoveBoard(int square, Position position) {
 		long activePlayerPieces = position.whiteToPlay ? position.whitePieces : position.blackPieces;
@@ -70,9 +70,9 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	/**
 	 * Returns an attack board given a square and occupancy board
-	 * @Param square
-	 * @Param occupancy of all squares
-	 * @Return attackBoard of all attacks
+	 * @param square
+	 * @param position
+	 * @return attackBoard of all attacks
 	 */
 	public long getAttackBoard(int square, Position position) {
 		long blockerBoard = position.occupancy & getBlockerMasks()[square];
@@ -90,7 +90,7 @@ public abstract class MagicBitboard implements LogicInterface{
 //Implemented Methods:
 	/**
 	 * Generates an array of the blockerMasks
-	 * @Return array of blockerMasks
+	 * @return array of blockerMasks
 	 */
 	protected long[] generateBlockerMasks() {
 		long[] blockerMasks = new long[64];
@@ -102,8 +102,8 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	/**
 	 *This method returns all blockerBoards for a given blockerMask 
-	 * @Param blockerMask an arbitrary blocker-mask
-	 * @Return list of all blockerBoards for a blockerMask
+	 * @param blockerMask an arbitrary blocker-mask
+	 * @return list of all blockerBoards for a blockerMask
 	 */
 	protected List<Long> generateBlockerBoards(long blockerMask) {
 		int numBlocks = Long.bitCount(blockerMask); 
@@ -138,8 +138,8 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	/**
 	 * This method searches for and returns a magic number for all the blockerBoards of a square
-	 * @Param square that we want to generate the magic number for
-	 * @Return a long that serves as an surjective mapping from a blockerBoard to the index associated with its moveBoard
+	 * @param square that we want to generate the magic number for
+	 * @return a long that serves as an surjective mapping from a blockerBoard to the index associated with its moveBoard
 	 */
 	protected long generateMagicNumber(int square) {
 		//Retrieve pre-initialized data
@@ -231,8 +231,8 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	/**
 	 * Returns the number of 1s in the binary form of a long
-	 * @Param any long
-	 * @Return the number of 1s in its binary form
+	 * @param value long
+	 * @return the number of 1s in its binary form
 	 */
     private static int count1s(long value) {
         int count = 0;
@@ -247,8 +247,8 @@ public abstract class MagicBitboard implements LogicInterface{
 	
     /**
      * Generates the corresponding list of moveBoards
-     * @Param square
-     * @Return moveBoardList
+     * @param square
+     * @return moveBoardList
      */
 	protected List<Long> generateMoveBoards(int square) {
 		List<Long> blockerBoards = getBlockerBoards().get(square);
@@ -263,7 +263,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	/**
 	 * Returns an array of all blockerboards on each square
-	 * @Return List<List<Long>> blockerBoards, every blocker configuration for each square
+	 * @return List<List<Long>> blockerBoards, every blocker configuration for each square
 	 */
 	protected List<List<Long>> generateAllBlockerBoards() {
 		assert getBlockerMasks() != null;
@@ -279,7 +279,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	/**
 	 * generates an array of the magic numbers
-	 * @Return a long array of the magic numbers
+	 * @return a long array of the magic numbers
 	 */
 	protected long[] generateAllMagicNumbers() {
 		long[] magicNumbers = new long[64];
@@ -293,7 +293,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	/**
 	 * Returns a List<List<Long>> of all move boards
-	 * @Return List<List<Long>> moveBoards
+	 * @return List<List<Long>> moveBoards
 	 */
 	protected List<List<Long>> generateAllMoveBoards() {
 		List<List<Long>> moveBoards = new ArrayList<List<Long>>();

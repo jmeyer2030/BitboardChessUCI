@@ -11,6 +11,7 @@ public class Move {
     public final MoveType moveType;
     public final PieceType promotionType; // Null for non-promotion moves
     public final PieceType captureType;
+    public final PieceType movePiece;
 
     //Position details:
     public final int halfMoveCount;
@@ -23,7 +24,7 @@ public class Move {
     * General Constructor
     */
     public Move(int start, int destination, MoveType moveType, PieceType promotionType,
-        PieceType captureType, int halfMoveCount, byte castleRights) {
+        PieceType captureType, int halfMoveCount, byte castleRights, PieceType movePiece) {
         this.start = start;
         this.destination = destination;
         this.moveType = moveType;
@@ -31,6 +32,7 @@ public class Move {
         this.captureType = captureType;
         this.halfMoveCount = halfMoveCount;
         this.castleRights = castleRights;
+        this.movePiece = movePiece;
     }
 /*
 * Factory Methods
@@ -38,18 +40,18 @@ public class Move {
     /**
     * Returns a new quiet move
     */
-    public static Move quietMove(int start, int destination, Position position) {
+    public static Move quietMove(int start, int destination, Position position, PieceType movePiece) {
         return new Move(start, destination, MoveType.QUIET, null, null,
-            position.rule50, position.castleRights);
+            position.rule50, position.castleRights, movePiece);
     }
 
     /**
     * Returns a new capture move
     */
-    public static Move captureMove(int start, int destination, Position position) {
+    public static Move captureMove(int start, int destination, Position position, PieceType movePiece) {
         PieceType captureType = position.getPieceType(destination);
         return new Move(start, destination, MoveType.CAPTURE, null, captureType,
-            position.rule50, position.castleRights);
+            position.rule50, position.castleRights, movePiece);
     }
 
     /**
@@ -57,7 +59,7 @@ public class Move {
      */
     public static Move enPassantMove(int start, int destination, Position position) {
         return new Move(start, destination, MoveType.ENPASSANT, null, null,
-            position.rule50, position.castleRights);
+            position.rule50, position.castleRights, PieceType.PAWN);
     }
 
     /**
@@ -66,7 +68,7 @@ public class Move {
     public static Move promotionMove(int start, int destination, Position position, PieceType promotionType) {
         PieceType captureType = position.getPieceType(destination);
         return new Move(start, destination, MoveType.PROMOTION, promotionType, captureType,
-            position.rule50, position.castleRights);
+            position.rule50, position.castleRights, PieceType.PAWN);
     }
 
     /**
@@ -74,7 +76,7 @@ public class Move {
      */
     public static Move castleMove(int start, int destination, Position position) {
         return new Move(start, destination, MoveType.CASTLE, null, null,
-            position.rule50, position.castleRights);
+            position.rule50, position.castleRights, PieceType.KING);
     }
 
 /**

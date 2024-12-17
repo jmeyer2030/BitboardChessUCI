@@ -2,7 +2,8 @@ package board;
 
 import moveGeneration.MoveGenerator;
 import moveGeneration.Testing;
-import system.BBO;
+
+import java.util.Arrays;
 
 /*
  * Represents a position with Bitboards
@@ -12,25 +13,17 @@ public class Position {
 	public long occupancy;
 	public long whitePieces; 
 	public long blackPieces;
-	public long pawns;
-	public long rooks;
-	public long knights;
-	public long bishops;
-	public long queens;
-	public long kings;
+	public long[] pieces; // This stores all piece BBs at the PieceType.ordinal() position
 
 	//State:
 	public boolean whiteToPlay;
 	public byte castleRights;//Castle Rights: 0b0000(whiteQueen)(whiteKing)(blackQueen)(blackKing)
 	public int enPassant;//Same as fen, is the location where the pawn would be if it advanced one square.
-	public int gameStatus;//-1 if black win, 0, if staleMate, 1 if white win. 2 if ongoing
+	//public int gameStatus;//-1 if black win, 0, if staleMate, 1 if white win. 2 if ongoing
 	public int rule50;
 	public int fullMoveCount;
 
 	//Attack Maps:
-	public long whiteAttackMap;
-	public long blackAttackMap;
-
 /*
 * Constructors
 */
@@ -38,28 +31,26 @@ public class Position {
 	* Build starting position
 	*/
 	public Position() {
+
+		pieces = new long[6];
 		//Piece Locations:
 		occupancy = 0b11111111_11111111_00000000_00000000_00000000_00000000_11111111_11111111L;
 		whitePieces = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_11111111L;
 		blackPieces = 0b11111111_11111111_00000000_00000000_00000000_00000000_00000000_00000000L;
-		pawns = 0b00000000_11111111_00000000_00000000_00000000_00000000_11111111_00000000L;
-		rooks = 0b10000001_00000000_00000000_00000000_00000000_00000000_00000000_10000001L;
-		knights = 0b01000010_00000000_00000000_00000000_00000000_00000000_00000000_01000010L;
-		bishops = 0b00100100_00000000_00000000_00000000_00000000_00000000_00000000_00100100L;
-		queens = 0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L;
-		kings = 0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
+
+		pieces[0] = 0b00000000_11111111_00000000_00000000_00000000_00000000_11111111_00000000L;
+		pieces[1] = 0b01000010_00000000_00000000_00000000_00000000_00000000_00000000_01000010L;
+		pieces[2] = 0b00100100_00000000_00000000_00000000_00000000_00000000_00000000_00100100L;
+		pieces[3] = 0b10000001_00000000_00000000_00000000_00000000_00000000_00000000_10000001L;
+		pieces[4] = 0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L;
+		pieces[5] = 0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
 
 		//State:
 		whiteToPlay = true;
 		castleRights = 0b00001111;
 		enPassant = 0;
-		gameStatus = 2;
 		rule50 = 0;
 		fullMoveCount = 0;
-
-		//Attack Maps:
-		whiteAttackMap = generateWhiteAttackMap();
-		blackAttackMap = generateBlackAttackMap();
 	}
 	/**
 	* Copy a position
@@ -68,21 +59,12 @@ public class Position {
 		this.occupancy = position.occupancy;
 		this.whitePieces = position.whitePieces;
 		this.blackPieces = position.blackPieces;
-		this.pawns = position.pawns;
-		this.rooks = position.rooks;
-		this.bishops = position.bishops;
-		this.knights = position.knights;
-		this.queens = position.queens;
-		this.kings = position.kings;
+		this.pieces = Arrays.copyOf(position.pieces, 6);
 		this.whiteToPlay = position.whiteToPlay;
 		this.castleRights = position.castleRights;
 		this.enPassant = position.enPassant;
 		this.rule50 = position.rule50;
 		this.fullMoveCount = position.fullMoveCount;
-		this.whiteAttackMap = position.whiteAttackMap;
-		this.blackAttackMap = position.blackAttackMap;
-		this.gameStatus = position.gameStatus;
-
 	}
 	/**
 	* Build from FEN
@@ -201,12 +183,7 @@ public class Position {
 	    this.occupancy = occupancy;
 	    this.whitePieces = whitePieces;
 	    this.blackPieces = blackPieces;
-	    this.pawns = pawns;
-	    this.rooks = rooks;
-	    this.knights = knights;
-	    this.bishops = bishops;
-	    this.queens = queens;
-	    this.kings = kings;
+		this.pieces = new long[] {pawns, knights, bishops, rooks, queens, kings};
 
 	    //State:
 	    this.whiteToPlay = whiteToPlay;
@@ -214,11 +191,6 @@ public class Position {
 	    this.enPassant = enPassant;
 
 	    //Attack Maps:
-	    this.whiteAttackMap = MoveGenerator.generateWhiteAttacks(this);
-	    this.blackAttackMap = MoveGenerator.generateBlackAttacks(this);
-
-	    //Do this last because it depends on others
-	    this.gameStatus = this.generateGameStatus();
 	}
 /*
 * Make and unMake
@@ -227,15 +199,9 @@ public class Position {
 	* Applies a move
 	*/
 	public void makeMove(Move move) {
-		// Get move details
-		int start = move.start;
-		int destination = move.destination;
-		PieceType promotionType = move.promotionType;
-		MoveType moveType = move.moveType;
-
 		// Create bitmasks
-	    long startMask = 1L << start;
-	    long destinationMask = 1L << destination;
+	    long startMask = 1L << move.start;
+	    long destinationMask = 1L << move.destination;
 	    long swapMask = (startMask | destinationMask);
 
 		// Increment rule50, reset handled later
@@ -250,34 +216,21 @@ public class Position {
 		blackPieces ^= whiteToPlay ? 0L : swapMask;
 
 		// Remove piece on destination square (case of capture)
-		pawns &= ~destinationMask;
-		rooks &= ~destinationMask;
-		knights &= ~destinationMask;
-		bishops &= ~destinationMask;
-		queens &= ~destinationMask;
-		kings &= ~destinationMask;
+		if (move.captureType != null)
+			pieces[move.captureType.ordinal()] &= ~destinationMask;
 
 
 		// Add piece on destination square
-		pawns |= ((pawns & startMask) != 0) ? destinationMask : 0L;
-		rooks |= ((rooks & startMask) != 0) ? destinationMask : 0L;
-		knights |= ((knights & startMask) != 0) ? destinationMask : 0L;
-		bishops |= ((bishops & startMask) != 0) ? destinationMask : 0L;
-		queens |= ((queens & startMask) != 0) ? destinationMask : 0L;
-		kings |= ((kings & startMask) != 0) ? destinationMask : 0L;
+
+		pieces[move.movePiece.ordinal()] |= destinationMask;
 
 		//  Remove piece on start square
-		pawns &= ~startMask;
-		rooks &= ~startMask;
-		knights &= ~startMask;
-		bishops &= ~startMask;
-		queens &= ~startMask;
-		kings &= ~startMask;
+		pieces[move.movePiece.ordinal()] &= ~startMask;
 
 	    // Handle specific move types
 	    switch (move.moveType) {
 	        case QUIET:
-	        	rule50 = (pawns & destinationMask) != 0 ? 0 : rule50;
+	        	rule50 = (pieces[0] & destinationMask) != 0 ? 0 : rule50;
 	        	break;
 	        case CAPTURE:
 	        	rule50 = 0;
@@ -291,30 +244,25 @@ public class Position {
 	            occupancy &= ~enPassantCaptureMask;
 				blackPieces &= ~enPassantCaptureMask;
 				whitePieces &= ~enPassantCaptureMask;
-                pawns &= ~enPassantCaptureMask;
+                pieces[0] &= ~enPassantCaptureMask;
 	            break;
 	        case PROMOTION:
 	        	rule50 = 0;
 	            // Remove promotion square pawn and add promotion piece
-	            pawns &= ~destinationMask;
+	            pieces[0] &= ~destinationMask;
+				pieces[move.promotionType.ordinal()] |= destinationMask;
 
-	            switch (promotionType) {
-	                case ROOK: rooks |= destinationMask; break;
-	                case KNIGHT: knights |= destinationMask; break;
-	                case BISHOP: bishops |= destinationMask; break;
-	                case QUEEN: queens |= destinationMask; break;
-	            }
 	            break;
 	        case CASTLE:
 				// Move the rook
-				int rookStart = (destination == 6 || destination == 62)
+				int rookStart = (move.destination == 6 || move.destination == 62)
 						? (whiteToPlay ? 7 : 63) //king side
 						: (whiteToPlay ? 0 : 56); //queen side
-				int rookEnd = (destination == 6 || destination == 62)
+				int rookEnd = (move.destination == 6 || move.destination == 62)
 						? rookStart - 2 //king side
 						: rookStart + 3; //queen side
 				long rookMoveMask = (1L << rookStart) | (1L << rookEnd);
-				rooks ^= rookMoveMask;
+				pieces[3] ^= rookMoveMask;
 				occupancy ^= rookMoveMask;
 				whitePieces ^= whiteToPlay ? rookMoveMask : 0;
 				blackPieces ^= whiteToPlay ? 0 : rookMoveMask;
@@ -322,21 +270,21 @@ public class Position {
 	    }
 
 	    // Update castle rights for king move
-	    castleRights &= (destinationMask & kings) != 0 ?
-	    	whiteToPlay ? 0b1100 : 0b0011 :
+	    castleRights &= (byte) (destinationMask & pieces[5]) != 0 ?
+                (byte) (whiteToPlay ? 0b1100 : 0b0011) :
 	    	0b1111;
 
 	    // Update castle rights for rook move
-	    castleRights &= (destinationMask & rooks) != 0 ? //If a rook move, we change rights depending on start
-				start == 0 ? 0b1000 :
-				start == 7 ? 0b0100 :
-				start == 56 ? 0b0010 :
-				start == 63 ? 0b0001 : 0b1111
-				: 0b1111;
+	    castleRights &= (move.movePiece == PieceType.ROOK) ? //If a rook move, we change rights depending on start
+                (byte) (move.start == 0 ? 0b1000 :
+                        move.start == 7 ? 0b0100 :
+                        move.start == 56 ? 0b0010 :
+						move.start == 63 ? 0b0001 : 0b1111)
+						: 0b1111;
 
 	    // Set en passant square
-	    enPassant = ((pawns & destinationMask) != 0 && Math.abs(start - destination) == 16) ?
-	    	whiteToPlay ? destination - 8 : destination + 8 : 0;
+	    enPassant = ((pieces[0] & destinationMask) != 0 && Math.abs(move.start - move.destination) == 16) ?
+	    	whiteToPlay ? move.destination - 8 : move.destination + 8 : 0;
 
 
 	    //increment moveCounter
@@ -344,32 +292,15 @@ public class Position {
 
 	    // Switch active player
 	    whiteToPlay = !whiteToPlay;
-
-		// Only update attack map that hits active player king
-		if (whiteToPlay) {
-			blackAttackMap = this.generateBlackAttackMap();
-		} else {
-			whiteAttackMap = this.generateWhiteAttackMap();
-		}
-
 	}
 
 	/**
 	 * Unmakes a move
 	 */
 	public void unMakeMove(Move move) {
-		// Get move details
-		int start = move.start;
-		int destination = move.destination;
-		MoveType moveType = move.moveType;
-		PieceType promotionType = move.promotionType;
-		PieceType captureType = move.captureType;
-		int halfMoveCount = move.halfMoveCount;
-		byte castleRights = move.castleRights;
-
 		// Create bitmaps
-		long startMask = (1L << start);
-		long destinationMask = (1L << destination);
+		long startMask = (1L << move.start);
+		long destinationMask = (1L << move.destination);
 		long swapMask = (startMask | destinationMask);
 
 		// Roughly validate the move
@@ -387,75 +318,59 @@ public class Position {
 		whitePieces ^= whiteToPlay ? swapMask : 0L; //just brings moved piece to start and removes destination
 		blackPieces ^= whiteToPlay ? 0L : swapMask;
 
-		// Add piece on start square and remove from destination
-		pawns |= ((pawns & destinationMask) != 0) ? startMask : 0L;
-		rooks |= ((rooks & destinationMask) != 0) ? startMask : 0L;
-		knights |= ((knights & destinationMask) != 0) ? startMask : 0L;
-		bishops |= ((bishops & destinationMask) != 0) ? startMask : 0L;
-		queens |= ((queens & destinationMask) != 0) ? startMask : 0L;
-		kings |= ((kings & destinationMask) != 0) ? startMask : 0L;
+		// Add piece on start square
+		pieces[move.movePiece.ordinal()] |= startMask;
 
-		// Remove piece on destination square (Needed because of promotions)
-		pawns &= ~destinationMask;
-		rooks &= ~destinationMask;
-		knights &= ~destinationMask;
-		bishops &= ~destinationMask;
-		queens &= ~destinationMask;
-		kings &= ~destinationMask;
+		// Remove piece on destination square
+		pieces[move.movePiece.ordinal()] &= ~destinationMask;
 
 		// Add precious occupant of the destination square (this should handle promotion captures
-		if (captureType != null) {
+		if (move.captureType != null) {
 			occupancy |= destinationMask;
 			whitePieces |= whiteToPlay ? 0L : destinationMask;
 			blackPieces |= whiteToPlay ? destinationMask : 0L;
-			pawns |= captureType == PieceType.PAWN ? destinationMask : 0L;
-			rooks |= captureType == PieceType.ROOK ? destinationMask : 0L;
-			knights |= captureType == PieceType.KNIGHT ? destinationMask : 0L;
-			bishops |= captureType == PieceType.BISHOP ? destinationMask : 0L;
-			queens |= captureType == PieceType.QUEEN ? destinationMask : 0L;
-			kings |= captureType == PieceType.KING ? destinationMask : 0L; // unnecessary
+			pieces[move.captureType.ordinal()] |= destinationMask;
 		}
 
 		// Handle specific piece types
-		switch (moveType) {
+		switch (move.moveType) {
 			case QUIET:
 			case CAPTURE:
 				break;
 			case ENPASSANT:
 				// Replace pawn
-				int enPassantCaptureSquare = whiteToPlay ? destination - 8 : destination + 8;
+				int enPassantCaptureSquare = whiteToPlay ? move.destination - 8 : move.destination + 8;
 				long enPassantCaptureMask = 1L << enPassantCaptureSquare;
 
-				this.enPassant = destination;
+				this.enPassant = move.destination;
 
 				//add the pawn back
 				occupancy ^= enPassantCaptureMask; //add the pawn back
-				pawns ^= enPassantCaptureMask;
+				pieces[0] ^= enPassantCaptureMask;
 				whitePieces |= whiteToPlay ? 0L : enPassantCaptureMask;
 				blackPieces |= whiteToPlay ? enPassantCaptureMask : 0L;
 				break;
 			case PROMOTION:
+				//remove promoted piece
+				pieces[move.promotionType.ordinal()] &= ~destinationMask;
 				//at this point, the promotion piece (QKRB) is back on the start square and the occupancy/color is correct
 				//just need to remove the piece and add a pawn.
-				pawns |= startMask;
-				rooks &= ~startMask;
-				bishops &= ~startMask;
-				queens &= ~startMask;
-				knights &= ~startMask;
+				pieces[move.promotionType.ordinal()] &= ~startMask;
+				pieces[0] |= startMask;
 				break;
 			case CASTLE:
 				//king is back on start and it's occupancy/color is updated.
 				//just need to move the rook back and update occupancy/color for it
 				// Move the rook based on which side castled
 				// Move the rook
-				int rookStart = (destination == 6 || destination == 62)
+				int rookStart = (move.destination == 6 || move.destination == 62)
 						? (whiteToPlay ? 7 : 63) //king side
 						: (whiteToPlay ? 0 : 56); //queen side
-				int rookEnd = (destination == 6 || destination == 62)
+				int rookEnd = (move.destination == 6 || move.destination == 62)
 						? rookStart - 2 //king side
 						: rookStart + 3; //queen side
 				long rookMoveMask = (1L << rookStart) | (1L << rookEnd);
-				rooks ^= rookMoveMask;
+				pieces[3] ^= rookMoveMask;
 				occupancy ^= rookMoveMask;
 				whitePieces ^= whiteToPlay ? rookMoveMask : 0L;
 				blackPieces ^= whiteToPlay ? 0L : rookMoveMask;
@@ -464,50 +379,32 @@ public class Position {
 
 
 		// Update castling rights
-		this.castleRights = castleRights;
+		this.castleRights = move.castleRights;
 
 		// Set en passant square if applicable
-		if ((pawns & destinationMask) != 0 && Math.abs(start - destination) == 16) {
-			enPassant = whiteToPlay ? destination - 8 : destination + 8;
+		if ((pieces[0] & destinationMask) != 0 && Math.abs(move.start - move.destination) == 16) {
+			enPassant = whiteToPlay ? move.destination - 8 : move.destination + 8;
 		}
 
 		// Update 50 move rule
-		this.rule50 = halfMoveCount;
+		this.rule50 = move.halfMoveCount;
 
 		//increment moveCounter
 		if (!whiteToPlay)
 			fullMoveCount--;
-
-		//whiteAttackMap = this.generateWhiteAttackMap();
-		//blackAttackMap = this.generateBlackAttackMap();
-		gameStatus = generateGameStatus();
 	}
 
 /*
 * Helper Methods:
 */
-	/**
-	* Returns if a square is attacked by the non-active player
-	* @param square square to check attacked
-	* @return if square is attacked by non-active player
-	*/
-	public boolean squareAttacked(int square) {
-		if (whiteToPlay) {
-			return (blackAttackMap & (1L << square)) != 0;
-		} else {
-			return (whiteAttackMap & (1L << square)) != 0;
-		}
-	}
+
 	/**
 	* Checks and returns if the non-active player is in check
 	* @return if non-active player is in check
 	*/
 	public boolean selfInCheck() {
-		if (whiteToPlay) { //return if black is already in check
-			return ((whiteAttackMap & kings & blackPieces) != 0L);
-		} else {
-			return ((blackAttackMap & kings & whitePieces) != 0L);
-		}
+		return false;
+		//return MoveGenerator.kingInCheck(this);
 	}
 
 	/**
@@ -546,37 +443,28 @@ public class Position {
 		return result;
 	}
 
-	/**
-	* checks for checkmate and draw
-	*/
-	public int generateGameStatus() {
-		if (rule50 >= 50)
-			return 0;
-		if (selfInCheck())
-			return whiteToPlay ? -1 : 1;
-		return 2;
-	}
+
 
 
 	/**
 	* Returns the PieceType on a square
-	* @param square
+	* @param square square
 	* @return pieceType
 	*/
 	public PieceType getPieceType(int square) {
 		long squareMask = (1L << square);
 		PieceType pieceType = null;
-		if ((this.pawns & squareMask) != 0) {
+		if ((this.pieces[0] & squareMask) != 0) {
 			pieceType = PieceType.PAWN;
-		} else if ((this.rooks & squareMask) != 0) {
+		} else if ((this.pieces[3] & squareMask) != 0) {
 			pieceType = PieceType.ROOK;
-		} else if ((this.knights & squareMask) != 0) {
+		} else if ((this.pieces[1] & squareMask) != 0) {
 			pieceType = PieceType.KNIGHT;
-		} else if ((this.bishops & squareMask) != 0) {
+		} else if ((this.pieces[2] & squareMask) != 0) {
 			pieceType = PieceType.BISHOP;
-		} else if ((this.queens & squareMask) != 0) {
+		} else if ((this.pieces[4] & squareMask) != 0) {
 			pieceType = PieceType.QUEEN;
-		} else if ((this.kings & squareMask) != 0) {
+		} else if ((this.pieces[5] & squareMask) != 0) {
 			pieceType = PieceType.KING;
 		}
 
@@ -599,22 +487,22 @@ public class Position {
 		Testing.printBoard(blackPieces);
 
 		System.out.println("Pawns: ");
-		Testing.printBoard(pawns);
+		Testing.printBoard(pieces[0]);
 
 		System.out.println("Rooks: ");
-		Testing.printBoard(rooks);
+		Testing.printBoard(pieces[3]);
 
 		System.out.println("Bishops: ");
-		Testing.printBoard(bishops);
+		Testing.printBoard(pieces[2]);
 
 		System.out.println("Queens: ");
-		Testing.printBoard(queens);
+		Testing.printBoard(pieces[4]);
 
 		System.out.println("Kings: ");
-		Testing.printBoard(kings);
+		Testing.printBoard(pieces[5]);
 
 		System.out.println("Knights: ");
-		Testing.printBoard(knights);
+		Testing.printBoard(pieces[1]);
 
 		System.out.println("HalfMoveCount: " + rule50);
 		System.out.println("FullMoveCount: " + fullMoveCount);
@@ -628,12 +516,12 @@ LEGACY CODE:
 	    long occupancy = position.occupancy;
 	    long whitePieces = position.whitePieces;
 	    long blackPieces = position.blackPieces;
-	    long pawns = position.pawns;
-	    long rooks = position.rooks;
-	    long knights = position.knights;
-	    long bishops = position.bishops;
-	    long queens = position.queens;
-	    long kings = position.kings;
+	    long pawns = position.pieces[0];
+	    long rooks = position.pieces[3];
+	    long knights = position.pieces[1];
+	    long bishops = position.pieces[2];
+	    long queens = position.pieces[4];
+	    long kings = position.pieces[5];
 
 	    boolean whiteToPlay = position.whiteToPlay;
 	    byte castleRights = position.castleRights;
@@ -839,12 +727,12 @@ LEGACY CODE:
 	    this.occupancy = occupancy;
 	    this.whitePieces = whitePieces;
 	    this.blackPieces = blackPieces;
-	    this.pawns = pawns;
-	    this.rooks = rooks;
-	    this.knights = knights;
-	    this.bishops = bishops;
-	    this.queens = queens;
-	    this.kings = kings;
+	    this.pieces[0] = pawns;
+	    this.pieces[3] = rooks;
+	    this.pieces[1] = knights;
+	    this.pieces[2] = bishops;
+	    this.pieces[4] = queens;
+	    this.pieces[5] = kings;
 	    this.whiteToPlay = whiteToPlay;
 	    this.castleRights = castleRights;
 	    this.enPassant = enPassant;
@@ -862,7 +750,7 @@ LEGACY CODE:
 
 
 	    //updateCheckers
-		long kingMask = this.kings & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
+		long kingMask = this.pieces[5] & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
 		long enemyPieces = this.whiteToPlay ? this.blackPieces : this.whitePieces;
 
 		//change checkers if attacked by the destination
@@ -894,7 +782,7 @@ LEGACY CODE:
 		}
 		long enemyMask = this.whiteToPlay ? this.blackPieces : this.whitePieces;
 		for (int pinner : BBO.getSquares(enemyMask & (bishops | queens | rooks))) {//for each possible pinner
-			long kingMask = this.kings & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
+			long kingMask = this.pieces[5] & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
 			long xrayAttacks = MoveGenerator.getXrayAttacks(this, pinner);
 			if ((xrayAttacks & kingMask) == 0L)//if xray doesn't hit king
 				continue;
@@ -920,7 +808,7 @@ public long generateCheckers() {
 	long checkers = 0L;
 	long pieceMask = this.whiteToPlay ? this.blackPieces : this.whitePieces;
 	long attackMask = this.whiteToPlay ? this.blackAttackMap : this.whiteAttackMap;
-	long kingMask = this.kings & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
+	long kingMask = this.pieces[5] & (this.whiteToPlay ? this.whitePieces : this.blackPieces);
 	if ((attackMask & kingMask) == 0) //if not in check
 		return checkers;
 
@@ -930,4 +818,24 @@ public long generateCheckers() {
 	}
 	return checkers;
 }
+
+	* Returns if a square is attacked by the non-active player
+	* @param square square to check attacked
+	* @return if square is attacked by non-active player
+public boolean squareAttacked(int square) {
+	if (whiteToPlay) {
+		return (blackAttackMap & (1L << square)) != 0;
+	} else {
+		return (whiteAttackMap & (1L << square)) != 0;
+	}
+}
+
+* checks for checkmate and draw
+	public int generateGameStatus() {
+		if (rule50 >= 50)
+			return 0;
+		if (selfInCheck())
+			return whiteToPlay ? -1 : 1;
+		return 2;
+	}
 	*/
