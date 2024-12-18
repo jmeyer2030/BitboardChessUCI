@@ -264,6 +264,9 @@ public class MoveGenerator{
 			while (castleDestinations != 0) {
 				int destination = Long.numberOfTrailingZeros(castleDestinations);
 				castleDestinations &= (castleDestinations - 1);
+				// Check if they move through or are in check
+				if (castleSquaresAttacked(position, destination))
+					continue;
 				generatedMoves.add(Move.castleMove(square, destination, position));
 			}
 		}
@@ -361,53 +364,6 @@ public class MoveGenerator{
 		}
 		return attacks;
 	}
-	/**
-	 * generates and returns black's attack map
-	 * @param position
-	 * @return attackBB
-	 */
-	public static long generateBlackAttacks(Position position) {
-		long attacks = 0L;
-		for(int square : BBO.getSquares(position.blackPieces)) {
-			if (BBO.squareHasPiece(position.pieces[0], square)) {
-				attacks |= pl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
-				attacks |= rl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
-				attacks |= bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
-				attacks |= rl.getAttackBoard(square, position);
-				attacks |= bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
-				attacks |= kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
-				attacks |= nl.getAttackBoard(square, position);
-			}
-		}
-		return attacks;
-	}
-
-	/**
-	* generates and retursn the attacks of a square in a position
-	* @param position
-	* @param square
-	* @return attackBB
-	*/
-	public static long getAttacks(Position position, int square) {
-		long pieceMask = (1L << square);
-		long attacks = 0L;
-		attacks |= ((position.pieces[0] & pieceMask) != 0) ?
-				((position.whitePieces & pieceMask) != 0) ? PawnLogic.blackPawnAttacks[square] :
-						PawnLogic.whitePawnAttacks[square] : 0L;
-		attacks |= ((position.pieces[3] & pieceMask) != 0) ? rl.getAttackBoard(square, position) : 0L;
-		attacks |= ((position.pieces[2] & pieceMask) != 0) ? bl.getAttackBoard(square, position) : 0L;
-		attacks |= ((position.pieces[4] & pieceMask) != 0) ?
-				(rl.getAttackBoard(square, position) | bl.getAttackBoard(square, position)) : 0L;
-		attacks |= ((position.pieces[5] & pieceMask) != 0) ? KingLogic.moveBoards[square] : 0L;
-		attacks |= ((position.pieces[1] & pieceMask) != 0) ? KnightLogic.knightMoves[square] : 0L;
-
-		return attacks;
-	}
 
 
 	public static long getPawnAttacks(Position position, int square)  {
@@ -430,117 +386,104 @@ public class MoveGenerator{
 		return kl.getKingAttacks(square);
 	}
 
-	public static boolean squareAttacked(Position position, int square) {
+	/**
+	* Returns if castle squares are attacked
+	* Only checks starting square and move-through square
+	* @param position position to check
+	* @param destination destination of the king
+	* @return if the castle move is valid
+	*/
+	private static boolean castleSquaresAttacked(Position position, int destination) {
+		boolean validCastle = true;
+		if (destination == 2) {
+			validCastle &= squareAttackedBy(position, 4, false);
+			validCastle &= squareAttackedBy(position, 3, false);
+		} else if (destination == 6) {
+			validCastle &= squareAttackedBy(position, 4, false);
+			validCastle &= squareAttackedBy(position, 5, false);
+		} else if (destination == 58) {
+			validCastle &= squareAttackedBy(position, 60, false);
+			validCastle &= squareAttackedBy(position, 59, false);
+		} else if (destination == 62) {
+			validCastle &= squareAttackedBy(position, 60, false);
+			validCastle &= squareAttackedBy(position, 61, false);
+		}
+		return validCastle;
+	}
+
+	/**
+	* Returns if the king of the specified color is in check
+	* @param position position to check
+	* @param whiteKing if the king we want to check is white (else black)
+	* @return if the specified king is in check
+	*/
+	public static boolean kingInCheck(Position position, boolean whiteKing) {
+		int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & (whiteKing ? position.blackPieces : position.whitePieces));
+		return squareAttackedBy(position, kingLoc, !whiteKing);
+	}
+
+	/**
+	* Returns if a square is attacked by the specified color
+	* @param position position to check
+	* @param square square to check
+	* @param whiteAttackers if attacking pieces are white
+	* @return squareAttacked if square is attacked by specified color
+	*/
+	public static boolean squareAttackedBy(Position position, int square, boolean whiteAttackers) {
 		boolean squareAttacked = false;
-
-
-
+		long potentialAttackers = whiteAttackers ? position.whitePieces : position.blackPieces;
+		squareAttacked |= ((pl.getAttackBoard(square, position) & potentialAttackers & position.pieces[0]) != 0);
+		squareAttacked |= ((bl.getAttackBoard(square, position) & potentialAttackers & position.pieces[2] | position.pieces[5]) != 0);
+		squareAttacked |= ((rl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[3] | position.pieces[5])) != 0);
+		squareAttacked |= ((nl.getAttackBoard(square, position) & potentialAttackers & position.pieces[1]) != 0);
+		squareAttacked |= ((kl.getKingAttacks(square) & potentialAttackers & position.pieces[5]) != 0);
+		return squareAttacked;
 	}
-
-	public static boolean kingInCheck(Position position) {
-		boolean selfInCheck = false;
-		int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & (position.whiteToPlay ? position.blackPieces : position.whitePieces));
-		long potentialCheckers = position.whiteToPlay ? position.whitePieces : position.blackPieces;
-		selfInCheck |= ((pl.getAttackBoard(kingLoc, position) & potentialCheckers & position.pieces[0]) != 0);
-		selfInCheck |= ((bl.getAttackBoard(kingLoc, position) & potentialCheckers & position.pieces[2] | position.pieces[5]) != 0);
-		selfInCheck |= ((rl.getAttackBoard(kingLoc, position) & potentialCheckers & (position.pieces[3] | position.pieces[5])) != 0);
-		selfInCheck |= ((nl.getAttackBoard(kingLoc, position) & potentialCheckers & position.pieces[1]) != 0);
-		selfInCheck |= ((kl.getKingAttacks(kingLoc) & potentialCheckers & position.pieces[5]) != 0);
-		return selfInCheck;
-	}
-
-
-
 }
 
-/*LEGACY:
+/*
+Legacy Code
+	* generates and returns the attacks of a square in a position
+	* @param position
+	* @param square
+	* @return attackBB
+public static long getAttacks(Position position, int square) {
+	long pieceMask = (1L << square);
+	long attacks = 0L;
+	attacks |= ((position.pieces[0] & pieceMask) != 0) ?
+			((position.whitePieces & pieceMask) != 0) ? PawnLogic.blackPawnAttacks[square] :
+					PawnLogic.whitePawnAttacks[square] : 0L;
+	attacks |= ((position.pieces[3] & pieceMask) != 0) ? rl.getAttackBoard(square, position) : 0L;
+	attacks |= ((position.pieces[2] & pieceMask) != 0) ? bl.getAttackBoard(square, position) : 0L;
+	attacks |= ((position.pieces[4] & pieceMask) != 0) ?
+			(rl.getAttackBoard(square, position) | bl.getAttackBoard(square, position)) : 0L;
+	attacks |= ((position.pieces[5] & pieceMask) != 0) ? KingLogic.moveBoards[square] : 0L;
+	attacks |= ((position.pieces[1] & pieceMask) != 0) ? KnightLogic.knightMoves[square] : 0L;
 
-
- 	public static long getXrayAttacks(Position position, int square) {
-		if ((position.pieces[2] & (1L << square)) != 0) {
-			return bl.xrayAttacks(square, position);
-		} else if ((position.pieces[3] & (1L << square)) != 0) {
-			return rl.xrayAttacks(square, position);
-		} else if ((position.pieces[4] & (1L << square)) != 0) {
-			return bl.xrayAttacks(square, position) | rl.xrayAttacks(square, position);
-		} else {
-			return 0L;
+	return attacks;
+}
+	 * generates and returns black's attack map
+	 * @param position
+	 * @return attackBB
+public static long generateBlackAttacks(Position position) {
+	long attacks = 0L;
+	for(int square : BBO.getSquares(position.blackPieces)) {
+		if (BBO.squareHasPiece(position.pieces[0], square)) {
+			attacks |= pl.getAttackBoard(square, position);
+		} else if (BBO.squareHasPiece(position.pieces[3], square)) {
+			attacks |= rl.getAttackBoard(square, position);
+		} else if (BBO.squareHasPiece(position.pieces[2], square)) {
+			attacks |= bl.getAttackBoard(square, position);
+		} else if (BBO.squareHasPiece(position.pieces[4], square)) {
+			attacks |= rl.getAttackBoard(square, position);
+			attacks |= bl.getAttackBoard(square, position);
+		} else if (BBO.squareHasPiece(position.pieces[5], square)) {
+			attacks |= kl.getKingAttacks(square);
+		} else if (BBO.squareHasPiece(position.pieces[1], square)) {
+			attacks |= nl.getAttackBoard(square, position);
 		}
 	}
+	return attacks;
+}
 
-	public static long[] generateAttackArray(Position position) {
-		long[] attackArray = new long[64];
-		for(int square : BBO.getSquares(position.whitePieces)) {
-			if (BBO.squareHasPiece(position.pieces[0], square)) {
-				attackArray[square] = pl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
-				attackArray[square] = rl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
-				attackArray[square] = bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
-				attackArray[square] = rl.getAttackBoard(square, position);
-				attackArray[square] = bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
-				attackArray[square] = kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
-				attackArray[square] = nl.getAttackBoard(square, position);
-			}
-		}
-
-		for(int square : BBO.getSquares(position.blackPieces)) {
-			if (BBO.squareHasPiece(position.pieces[0], square)) {
-				attackArray[square] = pl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
-				attackArray[square] = rl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
-				attackArray[square] = bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
-				attackArray[square] = rl.getAttackBoard(square, position);
-				attackArray[square] = bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
-				attackArray[square] = kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
-				attackArray[square] = nl.getAttackBoard(square, position);
-			}
-		}
-
-		return attackArray;
-	}
-
-	public static List<Move> generateSingleCheckMoves(Position position) {
-		List<Move> generatedMoves = new ArrayList<Move>();
-		int kingLoc = BBO.getSquares(position.pieces[5]  & (position.whiteToPlay ? position.whitePieces : position.blackPieces)).get(0);
-		int checkerLoc = BBO.getSquares(position.checkers).get(0);
-		long legalMoveMask = AbsolutePins.inBetween[checkerLoc][kingLoc] | (1L << checkerLoc);
-		generatedMoves.addAll(generatePawnMoves(position, legalMoveMask));
-		generatedMoves.addAll(generateRookMoves(position, legalMoveMask));
-		generatedMoves.addAll(generateBishopMoves(position, legalMoveMask));
-		generatedMoves.addAll(generateKnightMoves(position, legalMoveMask));
-		generatedMoves.addAll(generateQueenMoves(position, legalMoveMask));
-		generatedMoves.addAll(generateKingMoves(position, legalMoveMask));
-		return generatedMoves;
-	}
-
-	public static List<Move> generateDoubleCheckMoves(Position position) {
-		List<Move> generatedMoves = new ArrayList<Move>();
-		long kingList = (position.whiteToPlay ? position.whitePieces : position.blackPieces) & position.pieces[5];
-		List<Integer> kingLocations = BBO.getSquares(kingList);
-		for (int square : kingLocations) {
-			long legalMoves = position.moveScope[square];
-			BBO.getSquares(legalMoves & kl.getCaptures(square, position)).stream().forEach(destination ->
-					generatedMoves.add(new Move(Move.MoveType.CAPTURE, square, destination)));
-			BBO.getSquares(legalMoves & kl.getQuietMoves(square, position)).stream().forEach(destination ->
-					generatedMoves.add(new Move(Move.MoveType.QUIET, square, destination)));
-		}
-		return generatedMoves;
-	}
-
-	public static List<Move> generateMoves(Position position) {
-		if (position.checkers == 0L)
-			return generateAllMoves(position);
-		if (BBO.getSquares(position.checkers).size() == 1) {
-			return generateSingleCheckMoves(position);
-		}
-		return generateDoubleCheckMoves(position);
-	}
- * */
+*/
