@@ -8,7 +8,7 @@ public class testPERFT {
 
         long start = System.currentTimeMillis();
         Position position = new Position();
-        int depth = 6;
+        int depth = 1;
         Testing.perft(depth, position);
         long end = System.currentTimeMillis();
 

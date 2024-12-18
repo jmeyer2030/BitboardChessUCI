@@ -1,5 +1,6 @@
 package moveGeneration;
 
+import board.Color;
 import board.Position;
 import system.BBO;
 
@@ -43,29 +44,30 @@ public class PawnLogic {
 	}
 	
 	public long getAttackBoard(int square, Position position) {
-		if (BBO.squareHasPiece(position.whitePieces, square)) {
+		if ((position.pieceColors[0] & (1L << square)) != 0) {
 			return whitePawnAttacks[square];
 		}
 		return blackPawnAttacks[square];
 	}
 	
 	public long getQuietMoves(int square, Position position) {
-		if (BBO.squareHasPiece(position.whitePieces, square)) {
+		if ((position.pieceColors[0] & (1L << square)) != 0) {
 			return getWhitePawnPushes(square, position.occupancy);
 		}
 		return getBlackPawnPushes(square, position.occupancy);
 	}
 	
 	public long getCaptures(int square, Position position) {
-		if (BBO.squareHasPiece(position.whitePieces, square)) {
-			return whitePawnAttacks[square] & position.blackPieces;
+		if ((position.pieceColors[0] & (1L << square)) != 0) {
+			return whitePawnAttacks[square] & position.pieceColors[1];
 		}
-		
-		return blackPawnAttacks[square] & position.whitePieces;
+		return blackPawnAttacks[square] & position.pieceColors[0];
 	}
 	
 	public long getEnPassant(int square, Position position) {
-		if (position.enPassant == 0 || (((1L << position.enPassant) & (position.whiteToPlay ? whitePawnAttacks[square] : blackPawnAttacks[square])) == 0))// ||//If square doesn't attack the enPassant square//(position.enPassant + 1 != square && position.enPassant - 1 != square) ||
+		if (position.enPassant == 0 ||
+		(((1L << position.enPassant) & (position.activePlayer == Color.WHITE ? whitePawnAttacks[square] :
+		blackPawnAttacks[square])) == 0))// ||//If square doesn't attack the enPassant square//(position.enPassant + 1 != square && position.enPassant - 1 != square) ||
 				//(square / 8 != 3 || square / 8 != 4)) // enpassant doesn't exist or isn't next to the piece
 			return 0L;
 		//if (position.whiteToPlay) {//if its a white pawn to be taken

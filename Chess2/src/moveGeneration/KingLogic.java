@@ -1,5 +1,6 @@
 package moveGeneration;
 
+import board.Color;
 import board.Position;
 import system.BBO;
 
@@ -13,8 +14,8 @@ public class KingLogic {
 	}
 	
 	public long getCaptures(int square, Position position) {
-		long capturablePieces = position.whiteToPlay ? position.blackPieces : position.whitePieces;
-		return moveBoards[square] & capturablePieces;
+		long enemyPieces = position.activePlayer == Color.WHITE ? position.blackPieces : position.whitePieces;
+		return moveBoards[square] & enemyPieces;
 	}
 	
 	public long getQuietMoves(int square, Position position) {
@@ -26,50 +27,38 @@ public class KingLogic {
 	}
 	
 	public long generateCastles(int square, Position position) {
-		return position.whiteToPlay ? generateWhiteCastles(square, position) : generateBlackCastles(square, position);
+		return position.activePlayer == Color.WHITE ? generateWhiteCastles(position) : generateBlackCastles(position);
 	}
 
 //Private Helper Methods
-	private long generateWhiteCastles(int square, Position position) {
+	private long generateWhiteCastles(Position position) {
 		long result = 0L;
-		//queenside
+		//queen side
 		if (((position.castleRights & (1 << 3)) != 0) &&
 				!BBO.squareHasPiece(position.occupancy, 1) &&
 				!BBO.squareHasPiece(position.occupancy, 2) &&
-				!BBO.squareHasPiece(position.occupancy, 3) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 2) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 3) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 4))
+				!BBO.squareHasPiece(position.occupancy, 3))
 			result |= (1L << 2);
-		//kingside
+		//king side
 		if (((position.castleRights & (1 << 2)) != 0) &&
 				!BBO.squareHasPiece(position.occupancy, 5) &&
-				!BBO.squareHasPiece(position.occupancy, 6) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 4) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 5) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 6))
+				!BBO.squareHasPiece(position.occupancy, 6))
 			result |= (1L << 6);
 		return result;
 	}
 	
-	private long generateBlackCastles(int square, Position position) {
+	private long generateBlackCastles(Position position) {
 		long result = 0L;
 		//queenside
 		if (((position.castleRights & (1 << 1)) != 0) &&
 				!BBO.squareHasPiece(position.occupancy, 57) &&
 				!BBO.squareHasPiece(position.occupancy, 58) &&
-				!BBO.squareHasPiece(position.occupancy, 59) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 58) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 59) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 60))
+				!BBO.squareHasPiece(position.occupancy, 59))
 			result |= (1L << 58);
 		//kingside
 		if (((position.castleRights & (1 << 0)) != 0) &&
 				!BBO.squareHasPiece(position.occupancy, 61) &&
-				!BBO.squareHasPiece(position.occupancy, 62) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 60) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 61) &&
-				!BBO.squareHasPiece(position.blackAttackMap, 62))
+				!BBO.squareHasPiece(position.occupancy, 62))
 			result |= (1L << 62);
 		return result;
 	}
@@ -140,15 +129,3 @@ public class KingLogic {
 	}
 	
 }
-
-/*LEGACY CODE
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * */

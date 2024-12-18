@@ -1,5 +1,6 @@
 package moveGeneration;
 
+import board.Color;
 import board.Position;
 
 public class KnightLogic implements LogicInterface{
@@ -10,13 +11,13 @@ public class KnightLogic implements LogicInterface{
 	}
 	
 	public long getMoveBoard(int square, Position position) {
-		long activePlayerPieces = position.whiteToPlay ? position.whitePieces : position.blackPieces;
+		long activePlayerPieces = position.pieceColors[position.activePlayer.ordinal()];
 		return knightMoves[square] & ~activePlayerPieces;
 	}
 	
 	public long getCaptures(int square, Position position) {
-		long capturablePieces = position.whiteToPlay ? position.blackPieces : position.whitePieces;
-		return knightMoves[square] & capturablePieces;
+		long enemyPieces = position.activePlayer == Color.WHITE ? position.pieceColors[1] : position.pieceColors[0];
+		return knightMoves[square] & enemyPieces;
 	}
 	
 	public long getQuietMoves(int square, Position position) {

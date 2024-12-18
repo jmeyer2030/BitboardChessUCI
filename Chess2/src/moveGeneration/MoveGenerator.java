@@ -50,7 +50,7 @@ public class MoveGenerator{
 		List<Move> allMoves = generateAllMoves(position);
 		List<Move> legalMoves = allMoves.stream().filter(move -> {
 			position.makeMove(move);
-			boolean invalidMove = position.selfInCheck();
+			boolean invalidMove = kingInCheck(position, !position.whiteToPlay);
 			position.unMakeMove(move);
             return !invalidMove;
         }).collect(Collectors.toList());
@@ -339,31 +339,7 @@ public class MoveGenerator{
 		return promotions;
 	}
 
-	/**
-	* generates and returns white's attack map
-	* @param position
-	* @return attackBB
-	*/
-	public static long generateWhiteAttacks(Position position) {
-		long attacks = 0L;
-		for(int square : BBO.getSquares(position.whitePieces)) {
-			if (BBO.squareHasPiece(position.pieces[0], square)) {
-				attacks |= pl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
-				attacks |= rl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
-				attacks |= bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
-				attacks |= rl.getAttackBoard(square, position);
-				attacks |= bl.getAttackBoard(square, position);
-			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
-				attacks |= kl.getKingAttacks(square);
-			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
-				attacks |= nl.getAttackBoard(square, position);
-			}
-		}
-		return attacks;
-	}
+
 
 
 	public static long getPawnAttacks(Position position, int square)  {
@@ -485,5 +461,49 @@ public static long generateBlackAttacks(Position position) {
 	}
 	return attacks;
 }
-
+* generates and returns white's attack map
+	* @param position
+	* @return attackBB
+	public static long generateWhiteAttacks(Position position) {
+		long attacks = 0L;
+		for(int square : BBO.getSquares(position.whitePieces)) {
+			if (BBO.squareHasPiece(position.pieces[0], square)) {
+				attacks |= pl.getAttackBoard(square, position);
+			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
+				attacks |= rl.getAttackBoard(square, position);
+			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
+				attacks |= bl.getAttackBoard(square, position);
+			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
+				attacks |= rl.getAttackBoard(square, position);
+				attacks |= bl.getAttackBoard(square, position);
+			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
+				attacks |= kl.getKingAttacks(square);
+			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
+				attacks |= nl.getAttackBoard(square, position);
+			}
+		}
+		return attacks;
+	}* generates and returns white's attack map
+	* @param position
+	* @return attackBB
+	public static long generateWhiteAttacks(Position position) {
+		long attacks = 0L;
+		for(int square : BBO.getSquares(position.whitePieces)) {
+			if (BBO.squareHasPiece(position.pieces[0], square)) {
+				attacks |= pl.getAttackBoard(square, position);
+			} else if (BBO.squareHasPiece(position.pieces[3], square)) {
+				attacks |= rl.getAttackBoard(square, position);
+			} else if (BBO.squareHasPiece(position.pieces[2], square)) {
+				attacks |= bl.getAttackBoard(square, position);
+			} else if (BBO.squareHasPiece(position.pieces[4], square)) {
+				attacks |= rl.getAttackBoard(square, position);
+				attacks |= bl.getAttackBoard(square, position);
+			} else if (BBO.squareHasPiece(position.pieces[5], square)) {
+				attacks |= kl.getKingAttacks(square);
+			} else if (BBO.squareHasPiece(position.pieces[1], square)) {
+				attacks |= nl.getAttackBoard(square, position);
+			}
+		}
+		return attacks;
+	}
 */
