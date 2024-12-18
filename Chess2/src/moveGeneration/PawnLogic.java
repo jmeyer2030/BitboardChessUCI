@@ -43,8 +43,8 @@ public class PawnLogic {
 		blackPawnPushBlockerMask = generateBlackPawnPushes();
 	}
 	
-	public long getAttackBoard(int square, Position position) {
-		if ((position.pieceColors[0] & (1L << square)) != 0) {
+	public long getAttackBoard(int square, Position position, Color attackColor) {
+		if (attackColor == Color.WHITE) {
 			return whitePawnAttacks[square];
 		}
 		return blackPawnAttacks[square];

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import board.Color;
 import board.Move;
 import board.PieceType;
 import board.Position;
@@ -50,7 +51,7 @@ public class MoveGenerator{
 		List<Move> allMoves = generateAllMoves(position);
 		List<Move> legalMoves = allMoves.stream().filter(move -> {
 			position.makeMove(move);
-			boolean invalidMove = kingInCheck(position, !position.whiteToPlay);
+			boolean invalidMove = kingInCheck(position, position.activePlayer == Color.WHITE ? Color.BLACK :: Color.WHITE);
 			position.unMakeMove(move);
             return !invalidMove;
         }).collect(Collectors.toList());
@@ -342,8 +343,8 @@ public class MoveGenerator{
 
 
 
-	public static long getPawnAttacks(Position position, int square)  {
-		return pl.getAttackBoard(square, position);
+	public static long getPawnAttacks(Position position, int square, Color attackColor)  {
+		return pl.getAttackBoard(square, position, attackColor);
 	}
 
 	public static long getKnightAttacks(Position position, int square) {
@@ -372,17 +373,17 @@ public class MoveGenerator{
 	private static boolean castleSquaresAttacked(Position position, int destination) {
 		boolean validCastle = true;
 		if (destination == 2) {
-			validCastle &= squareAttackedBy(position, 4, false);
-			validCastle &= squareAttackedBy(position, 3, false);
+			validCastle &= squareAttackedBy(position, 4, Color.BLACK);
+			validCastle &= squareAttackedBy(position, 3, Color.BLACK);
 		} else if (destination == 6) {
-			validCastle &= squareAttackedBy(position, 4, false);
-			validCastle &= squareAttackedBy(position, 5, false);
+			validCastle &= squareAttackedBy(position, 4, Color.BLACK);
+			validCastle &= squareAttackedBy(position, 5, Color.BLACK);
 		} else if (destination == 58) {
-			validCastle &= squareAttackedBy(position, 60, false);
-			validCastle &= squareAttackedBy(position, 59, false);
+			validCastle &= squareAttackedBy(position, 60, Color.WHITE);
+			validCastle &= squareAttackedBy(position, 59, Color.WHITE);
 		} else if (destination == 62) {
-			validCastle &= squareAttackedBy(position, 60, false);
-			validCastle &= squareAttackedBy(position, 61, false);
+			validCastle &= squareAttackedBy(position, 60, Color.WHITE);
+			validCastle &= squareAttackedBy(position, 61, Color.WHITE);
 		}
 		return validCastle;
 	}
@@ -390,25 +391,25 @@ public class MoveGenerator{
 	/**
 	* Returns if the king of the specified color is in check
 	* @param position position to check
-	* @param whiteKing if the king we want to check is white (else black)
+	* @param kingColor color of king
 	* @return if the specified king is in check
 	*/
-	public static boolean kingInCheck(Position position, boolean whiteKing) {
-		int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & (whiteKing ? position.blackPieces : position.whitePieces));
-		return squareAttackedBy(position, kingLoc, !whiteKing);
+	public static boolean kingInCheck(Position position, Color kingColor) {
+		int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & position.pieceColors[kingColor.ordinal()]);
+		return squareAttackedBy(position, kingLoc, kingColor == Color.WHITE ? Color.BLACK : Color.WHITE);
 	}
 
 	/**
 	* Returns if a square is attacked by the specified color
 	* @param position position to check
 	* @param square square to check
-	* @param whiteAttackers if attacking pieces are white
+	* @param attackColor color of attacking pieces
 	* @return squareAttacked if square is attacked by specified color
 	*/
-	public static boolean squareAttackedBy(Position position, int square, boolean whiteAttackers) {
+	public static boolean squareAttackedBy(Position position, int square, Color attackColor) {
 		boolean squareAttacked = false;
-		long potentialAttackers = whiteAttackers ? position.whitePieces : position.blackPieces;
-		squareAttacked |= ((pl.getAttackBoard(square, position) & potentialAttackers & position.pieces[0]) != 0);
+		long potentialAttackers = position.pieceColors[attackColor.ordinal()];
+		squareAttacked |= ((pl.getAttackBoard(square, position, attackColor == Color.WHITE ? Color.BLACK : Color.WHITE) & potentialAttackers & position.pieces[0]) != 0);
 		squareAttacked |= ((bl.getAttackBoard(square, position) & potentialAttackers & position.pieces[2] | position.pieces[5]) != 0);
 		squareAttacked |= ((rl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[3] | position.pieces[5])) != 0);
 		squareAttacked |= ((nl.getAttackBoard(square, position) & potentialAttackers & position.pieces[1]) != 0);
