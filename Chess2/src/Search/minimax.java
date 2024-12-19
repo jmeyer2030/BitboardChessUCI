@@ -30,13 +30,35 @@ public class minimax {
         long start = System.currentTimeMillis();
 
         int depth = 0;
+        ExecutorService executor = Executors.newSingleThreadExecutor();
 
         while (System.currentTimeMillis() - start < limitMillis) {
             depth++;
-            searchResults.add(minimax(position, isMaximizingPlayer, depth, Integer.MIN_VALUE, Integer.MAX_VALUE));
+            int finalDepth = depth;
+
+            Position copy = new Position(position);
+
+            Callable<MoveValue> task = () -> {
+               MoveValue result = minimax(copy, isMaximizingPlayer, finalDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
+               return result;
+            };
+
+            Future<MoveValue> future = executor.submit(task);
+
+            try {
+                MoveValue result = future.get(limitMillis, TimeUnit.MILLISECONDS); // Timeout in seconds
+                searchResults.add(result);
+            } catch (TimeoutException e) {
+                System.out.println("Function timed out!");
+                future.cancel(true); // Attempts to terminate the thread
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             System.out.println("Depth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove.toString());
         }
+        executor.shutdown();
 
         return searchResults.getLast();
     }

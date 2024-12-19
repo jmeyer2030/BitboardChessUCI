@@ -18,6 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import Search.minimax;
 import board.Move;
 import board.Position;
 import moveGeneration.MoveGenerator;
@@ -63,6 +64,7 @@ public class GUI implements ActionListener{
 					// Apply the move if it's legal
 					applyMove(moveToApply.get());
 					resetSquares(); // Reset squares after applying the move
+					selectedSquare = -1;
 				} else {
 					// If the clicked square is not a legal move, highlight legal moves from this new square
 					selectedSquare = clickedSquare;
@@ -79,6 +81,10 @@ public class GUI implements ActionListener{
 	private void applyMove(Move move) {
 		position.makeMove(move);
 		updateDisplay();
+		Move computerMove = minimax.iterativeDeepening(position, 10_000).bestMove;
+		position.makeMove(computerMove);
+		updateDisplay();
+
 		legalMoves = MoveGenerator.generateStrictlyLegal(position);
 	}
 

@@ -15,5 +15,5 @@ bin/
 
 #intellij specific
 .idea/
-
+.idea
 out/
