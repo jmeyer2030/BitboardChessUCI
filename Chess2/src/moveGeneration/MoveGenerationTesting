@@ -47,3 +47,11 @@ Perft time: 64908
 
 1M make/unmake:
 1373ms
+
+
+PERFT 6 Is good?
+
+
+PERFT 7:
+3,195,905,546 in 243195
+3,195,905,546 in 237784
