@@ -2,7 +2,6 @@ package moveGeneration;
 
 import board.Color;
 import board.Position;
-import system.BBO;
 
 public class PawnLogic {
 	public static long[] whitePawnPushes;
@@ -43,7 +42,7 @@ public class PawnLogic {
 		blackPawnPushBlockerMask = generateBlackPawnPushes();
 	}
 	
-	public long getAttackBoard(int square, Position position, Color attackColor) {
+	public long getAttackBoard(int square, Color attackColor) {
 		if (attackColor == Color.WHITE) {
 			return whitePawnAttacks[square];
 		}

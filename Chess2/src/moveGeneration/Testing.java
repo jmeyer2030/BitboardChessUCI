@@ -44,7 +44,7 @@ public class Testing {
 		if (depth < 1)
 			return;
 		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
-		int total = 0;
+		long total = 0;
 		for (Move move : initial) {
 			Position copy = new Position(position);
 			copy.makeMove(move);
@@ -71,8 +71,8 @@ public class Testing {
 	 * @Param chess2 perft result
 	 */
 	public static void perftDiff(String stockFish, String generated) {
-		Set<String> stockFishParse = new HashSet<String> (Arrays.asList(stockFish.split("\\r\\n")));
-		Set<String> generatedParse = new HashSet<String> (Arrays.asList(generated.split("\\r\\n")));
+		Set<String> stockFishParse = new HashSet<String> (Arrays.asList(stockFish.split("\\n")));
+		Set<String> generatedParse = new HashSet<String> (Arrays.asList(generated.split("\\n")));
 		
 		Set<String> diffs = new HashSet<String>();
 		

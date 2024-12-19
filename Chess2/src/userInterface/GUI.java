@@ -105,7 +105,7 @@ public class GUI implements ActionListener{
 		Icon icon;
 		for (int i = 0; i < 64; i++) {
 			int jpanelPos = littleEndianToJPanel(i);
-			if ((position.whitePieces & (1L << i)) != 0) {
+			if ((position.pieceColors[0] & (1L << i)) != 0) {
 				if((position.pieces[0] & (1L << i)) != 0) {
 					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_Pawn.png");
 					buttonArray[jpanelPos].setIcon(icon);
@@ -125,7 +125,7 @@ public class GUI implements ActionListener{
 					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_King.png");
 					buttonArray[jpanelPos].setIcon(icon);
 				}
-			} else if ((position.blackPieces & (1L << i)) != 0) {
+			} else if ((position.pieceColors[1] & (1L << i)) != 0) {
 				if((position.pieces[0] & (1L << i)) != 0) {
 					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_Black_Pawn.png");
 					buttonArray[jpanelPos].setIcon(icon);

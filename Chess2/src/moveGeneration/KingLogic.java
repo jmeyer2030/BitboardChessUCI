@@ -14,7 +14,7 @@ public class KingLogic {
 	}
 	
 	public long getCaptures(int square, Position position) {
-		long enemyPieces = position.activePlayer == Color.WHITE ? position.blackPieces : position.whitePieces;
+		long enemyPieces = position.pieceColors[Color.flipColor(position.activePlayer).ordinal()];
 		return moveBoards[square] & enemyPieces;
 	}
 	

@@ -47,7 +47,7 @@ public class Position {
 		castleRights = 0b00001111;
 		enPassant = 0;
 		rule50 = 0;
-		fullMoveCount = 0;
+		fullMoveCount = 1;
 	}
 	/**
 	* Copy a position
@@ -203,7 +203,7 @@ public class Position {
 	    occupancy |= destinationMask; //add destination
 
 		// Change color pieces of moved piece
-
+		pieceColors[Color.flipColor(activePlayer).ordinal()] &= ~destinationMask;
 		pieceColors[activePlayer.ordinal()] ^= swapMask;
 
 		// Remove piece on destination square (case of capture)
@@ -366,16 +366,14 @@ public class Position {
 		// Update castling rights
 		this.castleRights = move.castleRights;
 
-		// Set en passant square if applicable
-		if ((pieces[0] & destinationMask) != 0 && Math.abs(move.start - move.destination) == 16) {
-			enPassant = activePlayer == Color.WHITE ? move.destination - 8 : move.destination + 8;
-		}
+		// Set en passant square
+		this.enPassant = move.enPassant;
 
 		// Update 50 move rule
 		this.rule50 = move.halfMoveCount;
 
 		//increment moveCounter
-		if (activePlayer == Color.WHITE)
+		if (activePlayer == Color.BLACK)
 			fullMoveCount--;
 	}
 
@@ -405,6 +403,67 @@ public class Position {
 		}
 
 		return pieceType;
+	}
+
+	public boolean equals(Position position) {
+		boolean equal = true;
+		if (this.occupancy != position.occupancy) {
+			System.out.println("occupancy diff");
+			equal = false;
+		}
+		if (this.pieces[0] != position.pieces[0]) {
+			System.out.println("pawn diff");
+			equal = false;
+		}
+		if (this.pieces[1] != position.pieces[1]) {
+			System.out.println("knight diff");
+			equal = false;
+		}
+		if (this.pieces[2] != position.pieces[2]) {
+			System.out.println("bishop diff");
+			equal = false;
+		}
+		if (this.pieces[3] != position.pieces[3]) {
+			System.out.println("rook diff");
+			equal = false;
+		}
+		if (this.pieces[4] != position.pieces[4]) {
+			System.out.println("queen diff");
+			equal = false;
+		}
+		if (this.pieces[5] != position.pieces[5]) {
+			System.out.println("king diff");
+			equal = false;
+		}
+		if (this.pieceColors[0] != position.pieceColors[0]) {
+			System.out.println("white diff");
+			equal = false;
+		}
+		if (this.pieceColors[1] != position.pieceColors[1]) {
+			System.out.println("black diff");
+			equal = false;
+		}
+		if (this.castleRights != position.castleRights) {
+			System.out.println("castle diff");
+			equal = false;
+		}
+		if (this.rule50 != position.rule50) {
+			System.out.println("rule50 diff");
+			equal = false;
+		}
+		if (this.enPassant != position.enPassant) {
+			System.out.println("en passant diff");
+			equal = false;
+		}
+		if (this.activePlayer != position.activePlayer) {
+			System.out.println("activePlayer diff");
+			equal = false;
+		}
+		if (this.fullMoveCount != position.fullMoveCount) {
+			System.out.println("full move diff");
+			equal = false;
+		}
+		return equal;
 	}
 
 /*
@@ -441,6 +500,8 @@ public class Position {
 		System.out.println("Knights: ");
 		Testing.printBoard(pieces[1]);
 
+		System.out.println("Castle Rights" + Integer.toBinaryString((castleRights+256)%256));
+		System.out.println("En Passant: " + enPassant);
 		System.out.println("HalfMoveCount: " + rule50);
 		System.out.println("FullMoveCount: " + fullMoveCount);
 	}
