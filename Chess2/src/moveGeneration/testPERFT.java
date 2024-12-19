@@ -1,5 +1,6 @@
 package moveGeneration;
 
+import Search.StaticEvaluation;
 import board.*;
 
 public class testPERFT {
@@ -17,7 +18,9 @@ public class testPERFT {
         position1.printBoard();
         */
         long start = System.currentTimeMillis();
-        int depth = 6;
+        int depth = 1;
+
+        System.out.println(StaticEvaluation.evaluatePosition(position));
         Testing.perft(depth, position);
         long end = System.currentTimeMillis();
 

@@ -97,7 +97,7 @@ public class Testing {
 	    }
 	}
 
-	private static String notation(int square) {
+	public static String notation(int square) {
 		String[] files = new String[] {"a", "b", "c", "d", "e", "f", "g", "h"};
 		String[] ranks = new String[] {"1", "2", "3", "4", "5", "6", "7", "8"};
 		int rank = square / 8;

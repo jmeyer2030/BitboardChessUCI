@@ -1,4 +1,5 @@
 package board;
+import moveGeneration.Testing;
 
 public class Move {
 
@@ -91,6 +92,8 @@ public class Move {
     @Override
     public String toString() {
         String moveDescription = "";
+        moveDescription += Testing.notation(this.start) + " -> " + Testing.notation(this.destination);
+        /*
         moveDescription += "Start: " + this.start + " \n";
         moveDescription += "Destination: " + this.destination + " \n";
         moveDescription += "MoveType: " + this.moveType + " \n";
@@ -98,6 +101,7 @@ public class Move {
         moveDescription += "CaptureType: " + this.captureType + " \n";
         moveDescription += "HalfMoveCount: " + this.halfMoveCount + " \n";
         moveDescription += "CastleRights: " + this.castleRights + " \n";
+        */
         return moveDescription;
     }
 }

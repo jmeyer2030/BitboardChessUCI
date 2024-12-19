@@ -26,43 +26,60 @@ public class GUI implements ActionListener{
 	JLabel label;
 	JFrame frame;
 	JPanel panel;
-	JButton[][] buttonarray = new JButton[8][8];
 	JButton[] buttonArray = new JButton[64];
-	JPanel buttonPanel;
 	Position position;
 	List<Move> legalMoves;
 	List<Move> movesFromSelected;
 	int moveStart;
 	int moveDestination;
-	boolean waitingForDestination;
+	int selectedSquare;
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		for (int i = 0; i < 64; i++) {
 			if (e.getSource() != buttonArray[i])
 				continue;
-			if (!waitingForDestination) {
-				moveStart = littleEndianToJPanel(i);
-				movesFromSelected = legalMoves.stream().filter(move -> {
-					if (move.start == moveStart)
-						return true;
-					return false;
-				}).collect(Collectors.toList());
-				waitingForDestination = true;
+
+			int clickedSquare = littleEndianToJPanel(i);
+
+			// Reset highlighted squares after every button press
+			resetSquares();
+
+			// If no square is selected, set the clicked square as the selected one
+			if (selectedSquare == -1) {
+				selectedSquare = clickedSquare;
+				// Highlight the legal moves from the selected square
+				movesFromSelected = legalMoves.stream()
+						.filter(move -> move.start == selectedSquare)
+						.collect(Collectors.toList());
+				highlightSquares(movesFromSelected);
 			} else {
-				moveDestination = littleEndianToJPanel(i);
-				Optional<Move> moveToApply = movesFromSelected.stream().filter(move -> {
-					if (move.destination == moveDestination)
-						return true;
-					return false;
-				}).findFirst();
-				if (moveToApply.isEmpty())
-					continue;
-				//position;
-				updateDisplay();
-				waitingForDestination = false;
+				// If a square is already selected, check if the move is legal
+				Optional<Move> moveToApply = movesFromSelected.stream()
+						.filter(move -> move.destination == clickedSquare)
+						.findFirst();
+
+				if (moveToApply.isPresent()) {
+					// Apply the move if it's legal
+					applyMove(moveToApply.get());
+					resetSquares(); // Reset squares after applying the move
+				} else {
+					// If the clicked square is not a legal move, highlight legal moves from this new square
+					selectedSquare = clickedSquare;
+					movesFromSelected = legalMoves.stream()
+							.filter(move -> move.start == selectedSquare)
+							.collect(Collectors.toList());
+					highlightSquares(movesFromSelected);
+				}
 			}
 		}
-		
+	}
+
+
+	private void applyMove(Move move) {
+		position.makeMove(move);
+		updateDisplay();
+		legalMoves = MoveGenerator.generateStrictlyLegal(position);
 	}
 
 	private int littleEndianToJPanel(int endian) {
@@ -98,13 +115,36 @@ public class GUI implements ActionListener{
 		frame.setVisible(true);
 		this.updateDisplay();
 		
-		waitingForDestination = false;
+		selectedSquare = -1;
 		legalMoves = MoveGenerator.generateStrictlyLegal(position);
 	}
+	public void highlightSquares(List<Move> moves) {
+		for (Move move : moves) {
+			buttonArray[littleEndianToJPanel(move.destination)].setBackground(new Color(115, 125, 215));
+		}
+	}
+
+	public void resetSquares() {
+		for (int i = 0; i < 64; i++) {
+			if (((i + (i / 8)) % 2) == 1) {
+				buttonArray[i].setBackground(Color.GRAY);
+				buttonArray[i].setForeground(Color.WHITE);
+			} else {
+				buttonArray[i].setBackground(Color.WHITE);
+				buttonArray[i].setForeground(Color.BLACK);
+			}
+			panel.add(buttonArray[i]);
+			buttonArray[i].addActionListener(this);
+		}
+
+
+	}
+
 	public void updateDisplay() {
 		Icon icon;
 		for (int i = 0; i < 64; i++) {
 			int jpanelPos = littleEndianToJPanel(i);
+			buttonArray[jpanelPos].setIcon(null);
 			if ((position.pieceColors[0] & (1L << i)) != 0) {
 				if((position.pieces[0] & (1L << i)) != 0) {
 					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_Pawn.png");
