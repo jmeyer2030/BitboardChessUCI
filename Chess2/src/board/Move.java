@@ -53,6 +53,12 @@ public class Move {
     */
     public static Move captureMove(int start, int destination, Position position, PieceType movePiece) {
         PieceType captureType = position.getPieceType(destination);
+        if (captureType == null) {
+            System.out.println("CAPTURE WITH NO TARGET");
+            position.printBoard();
+            System.out.println(start + " -> " + destination);
+
+        }
         return new Move(start, destination, MoveType.CAPTURE, null, captureType,
             position.rule50, position.castleRights, movePiece, position.enPassant);
     }

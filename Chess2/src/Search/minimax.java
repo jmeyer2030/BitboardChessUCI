@@ -64,13 +64,16 @@ public class minimax {
         }
         executor.shutdown();
 
-        return searchResults.getLast();
+        System.out.println("Evaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove.toString() + ", " + searchResults.getLast().bestMove.moveType);
+
+        return searchResults.get(searchResults.size() - 1);
     }
 
 
     public static MoveValue minimax(Position position, boolean isMaximizingPlayer, int depth, int alpha, int beta) {
         if (depth == 0) {
-            return new MoveValue(quiesce(alpha, beta, position), null);
+            return new MoveValue(quiesce(alpha, beta, position, isMaximizingPlayer), null);
+            //return new MoveValue(StaticEvaluation.evaluatePosition(position), null);
         }
 
         List<Move> children = MoveGenerator.generateStrictlyLegal(position);
@@ -118,40 +121,64 @@ public class minimax {
     }
 
 
-    public static int quiesce(int alpha, int beta, Position position) {
+
+    public static int quiesce(int alpha, int beta, Position position, boolean isMaximizingPlayer) {
         // Perform static evaluation (stand pat)
         int standPat = StaticEvaluation.evaluatePosition(position);
-        if (standPat >= beta) {
-            return beta; // Fail-hard beta cutoff
-        }
-        if (standPat > alpha) {
-            alpha = standPat; // Update alpha with stand-pat value
+
+        if (isMaximizingPlayer) {
+            if (standPat >= beta) {
+                return beta;
+            }
+            if (standPat > alpha) {
+                alpha = standPat;
+            }
+        } else {
+            if (standPat <= alpha) {
+                return alpha;
+            }
+            if (standPat < beta) {
+                beta = standPat;
+            }
         }
 
         // Generate loud moves (captures, promotions, checks, etc.)
         List<Move> loudMoves = MoveGenerator.generateStrictlyLegal(position).stream()
-                .filter(move -> move.moveType == MoveType.CAPTURE)
+                .filter(move -> move.captureType != null)
                 .collect(Collectors.toList());
 
-        // Sort moves to improve alpha-beta efficiency (e.g., MVV-LVA heuristic)
+        // Sort moves to improve efficiency
         mVVLVA(loudMoves);
 
         // Evaluate each loud move
         for (Move move : loudMoves) {
             position.makeMove(move);
-            int score = -quiesce(-beta, -alpha, position); // Recursive negamax quiescence
+
+            // Recursive call with flipped player role
+            int score = quiesce(alpha, beta, position, !isMaximizingPlayer);
+
             position.unMakeMove(move);
 
-            if (score >= beta) {
-                return beta; // Fail-hard beta cutoff
-            }
-            if (score > alpha) {
-                alpha = score; // Update alpha
+            if (isMaximizingPlayer) {
+                if (score >= beta) {
+                    return beta; // Fail-hard beta cutoff
+                }
+                if (score > alpha) {
+                    alpha = score; // Update alpha
+                }
+            } else {
+                if (score <= alpha) {
+                    return alpha; // Fail-hard alpha cutoff
+                }
+                if (score < beta) {
+                    beta = score; // Update beta
+                }
             }
         }
 
-        return alpha; // Return the best score found
+        return isMaximizingPlayer ? alpha : beta; // Return best score for the current player
     }
+
 
     public void moveOrder(List<Move> list) {
    //     list.sort();

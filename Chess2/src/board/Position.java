@@ -279,6 +279,8 @@ public class Position {
 
 	    // Switch active player
 	    activePlayer = activePlayer == Color.WHITE ? Color.BLACK : Color.WHITE;
+
+	    looseValidatePosition(move);
 	}
 
 	/**
@@ -504,5 +506,17 @@ public class Position {
 		System.out.println("En Passant: " + enPassant);
 		System.out.println("HalfMoveCount: " + rule50);
 		System.out.println("FullMoveCount: " + fullMoveCount);
+	}
+
+
+	protected void looseValidatePosition(Move move) {
+		long generatedOccupancy = 0L | pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
+		if (occupancy != generatedOccupancy) {
+			System.out.println("Occupancy doesn't match!!!");
+			printBoard();
+			System.out.println(move.toString());
+		}
+
+
 	}
 }

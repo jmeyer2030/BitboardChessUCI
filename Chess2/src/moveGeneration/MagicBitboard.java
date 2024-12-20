@@ -313,7 +313,11 @@ public abstract class MagicBitboard implements LogicInterface{
 	        System.out.println();
 	    }
 	}
+
 }
+
+
+
 /*
 *
 * public long xrayAttacks(int square, Position position) {

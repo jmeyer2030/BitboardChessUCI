@@ -99,7 +99,7 @@ public class GUI implements ActionListener{
             throw new RuntimeException(e);
         }
 
-        Move computerMove = minimax.iterativeDeepening(position, 10_000).bestMove;
+        Move computerMove = minimax.iterativeDeepening(position, 5_000).bestMove;
 
 		position.makeMove(computerMove);
 
