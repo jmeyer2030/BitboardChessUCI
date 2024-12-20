@@ -1,5 +1,7 @@
 package Search;
 
+import board.Move;
+import board.MoveType;
 import board.Position;
 
 public class StaticEvaluation {
@@ -121,6 +123,11 @@ public class StaticEvaluation {
 
        return (mgScore * mgPhase + egScore * egPhase) / 24;
 
+   }
+
+   public static int evaluateExchange(Move move) {
+        assert move.moveType == MoveType.CAPTURE;
+        return pieceValues[0][move.captureType.ordinal()] - pieceValues[0][move.movePiece.ordinal()];
    }
 
 }

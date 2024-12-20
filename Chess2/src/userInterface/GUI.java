@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -48,17 +49,22 @@ public class GUI implements ActionListener{
 
 			// If no square is selected, set the clicked square as the selected one
 			if (selectedSquare == -1) {
+				movesFromSelected.clear();
 				selectedSquare = clickedSquare;
 				// Highlight the legal moves from the selected square
-				movesFromSelected = legalMoves.stream()
-						.filter(move -> move.start == selectedSquare)
-						.collect(Collectors.toList());
+				for (Move move : legalMoves) {
+					if (move.start == selectedSquare)
+					movesFromSelected.add(move);
+
+				}
 				highlightSquares(movesFromSelected);
 			} else {
 				// If a square is already selected, check if the move is legal
 				Optional<Move> moveToApply = movesFromSelected.stream()
 						.filter(move -> move.destination == clickedSquare)
 						.findFirst();
+
+				movesFromSelected.clear();
 
 				if (moveToApply.isPresent()) {
 					// Apply the move if it's legal
@@ -67,13 +73,18 @@ public class GUI implements ActionListener{
 					selectedSquare = -1;
 				} else {
 					// If the clicked square is not a legal move, highlight legal moves from this new square
+					movesFromSelected.clear();
 					selectedSquare = clickedSquare;
-					movesFromSelected = legalMoves.stream()
-							.filter(move -> move.start == selectedSquare)
-							.collect(Collectors.toList());
+					for (Move move : legalMoves) {
+						if (move.start == selectedSquare)
+							movesFromSelected.add(move);
+
+					}
 					highlightSquares(movesFromSelected);
 				}
 			}
+			System.out.println("legal moves size: " + legalMoves.size());
+			System.out.println("selected size: " + movesFromSelected.size());
 		}
 	}
 
@@ -81,11 +92,24 @@ public class GUI implements ActionListener{
 	private void applyMove(Move move) {
 		position.makeMove(move);
 		updateDisplay();
-		Move computerMove = minimax.iterativeDeepening(position, 10_000).bestMove;
+
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        Move computerMove = minimax.iterativeDeepening(position, 10_000).bestMove;
+
 		position.makeMove(computerMove);
+
 		updateDisplay();
 
-		legalMoves = MoveGenerator.generateStrictlyLegal(position);
+		legalMoves.clear();
+
+		resetSquares();
+
+		legalMoves.addAll(MoveGenerator.generateStrictlyLegal(position));
 	}
 
 	private int littleEndianToJPanel(int endian) {
@@ -108,8 +132,8 @@ public class GUI implements ActionListener{
 				buttonArray[i].setBackground(Color.WHITE);
 				buttonArray[i].setForeground(Color.BLACK);
 			}
-			panel.add(buttonArray[i]);
 			buttonArray[i].addActionListener(this);
+			panel.add(buttonArray[i]);
 		}
 		panel.setPreferredSize(new Dimension(450,450));
 		panel.setBorder(BorderFactory.createEmptyBorder(30,30,10,30));
@@ -120,7 +144,7 @@ public class GUI implements ActionListener{
 		frame.setResizable(false);
 		frame.setVisible(true);
 		this.updateDisplay();
-		
+		movesFromSelected = new LinkedList<Move>();
 		selectedSquare = -1;
 		legalMoves = MoveGenerator.generateStrictlyLegal(position);
 	}
@@ -139,11 +163,7 @@ public class GUI implements ActionListener{
 				buttonArray[i].setBackground(Color.WHITE);
 				buttonArray[i].setForeground(Color.BLACK);
 			}
-			panel.add(buttonArray[i]);
-			buttonArray[i].addActionListener(this);
 		}
-
-
 	}
 
 	public void updateDisplay() {

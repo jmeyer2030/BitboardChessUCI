@@ -258,7 +258,7 @@ public class Position {
 
 	    // Update castle rights for king move
 	    castleRights &= (byte) (destinationMask & pieces[5]) != 0 ?
-                (byte) (activePlayer == Color.WHITE ? 0b0011 : 0b1100) :
+                (byte) (activePlayer == Color.WHITE ? 0b1100 : 0b0011) :
 	    	0b1111;
 
 	    // Update castle rights for rook move

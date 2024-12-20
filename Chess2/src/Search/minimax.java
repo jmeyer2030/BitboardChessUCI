@@ -3,13 +3,17 @@ package Search;
 
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.concurrent.*;
 import board.Move;
+import board.MoveType;
 import board.Position;
 import moveGeneration.MoveGenerator;
 import board.Color;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class minimax {
 
@@ -66,7 +70,7 @@ public class minimax {
 
     public static MoveValue minimax(Position position, boolean isMaximizingPlayer, int depth, int alpha, int beta) {
         if (depth == 0) {
-            return new MoveValue(StaticEvaluation.evaluatePosition(position), null);
+            return new MoveValue(quiesce(alpha, beta, position), null);
         }
 
         List<Move> children = MoveGenerator.generateStrictlyLegal(position);
@@ -74,8 +78,8 @@ public class minimax {
             if (position.rule50 >= 50)
                 return new MoveValue(0, null);
             if (MoveGenerator.kingInCheck(position, Color.WHITE))
-                return new MoveValue(Integer.MIN_VALUE, null);
-            return new MoveValue(Integer.MAX_VALUE, null);
+                return new MoveValue(Integer.MIN_VALUE + 1000 - depth, null); //prefer a higher depth (mate earlier)
+            return new MoveValue(Integer.MAX_VALUE - 1000 + depth, null);// prefer a higher depth
         }
 
         MoveValue bestMoveValue;
@@ -111,130 +115,53 @@ public class minimax {
         }
 
         return bestMoveValue;
+    }
+
+
+    public static int quiesce(int alpha, int beta, Position position) {
+        // Perform static evaluation (stand pat)
+        int standPat = StaticEvaluation.evaluatePosition(position);
+        if (standPat >= beta) {
+            return beta; // Fail-hard beta cutoff
+        }
+        if (standPat > alpha) {
+            alpha = standPat; // Update alpha with stand-pat value
+        }
+
+        // Generate loud moves (captures, promotions, checks, etc.)
+        List<Move> loudMoves = MoveGenerator.generateStrictlyLegal(position).stream()
+                .filter(move -> move.moveType == MoveType.CAPTURE)
+                .collect(Collectors.toList());
+
+        // Sort moves to improve alpha-beta efficiency (e.g., MVV-LVA heuristic)
+        mVVLVA(loudMoves);
+
+        // Evaluate each loud move
+        for (Move move : loudMoves) {
+            position.makeMove(move);
+            int score = -quiesce(-beta, -alpha, position); // Recursive negamax quiescence
+            position.unMakeMove(move);
+
+            if (score >= beta) {
+                return beta; // Fail-hard beta cutoff
+            }
+            if (score > alpha) {
+                alpha = score; // Update alpha
+            }
+        }
+
+        return alpha; // Return the best score found
+    }
+
+    public void moveOrder(List<Move> list) {
+   //     list.sort();
+    }
+
+    // movst valuable victim/ least valuable agressor
+    public static void mVVLVA(List<Move> list) {
+        list.sort(Comparator.comparingInt(move -> -(StaticEvaluation.evaluateExchange(move))));
     }
 
 
 
 }
-/*
-*
-    public static MoveValue minimaxRecursion(Position position, boolean isMaximizingPlayer, int depth, int alpha, int beta) {
-        if (depth == 0) {
-            return new MoveValue(StaticEvaluation.evaluatePosition(position), null);
-        }
-
-        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
-        if (children.size() == 0) {
-            if (position.rule50 >= 50)
-                return new MoveValue(0, null);
-            if (MoveGenerator.kingInCheck(position, Color.WHITE))
-                return new MoveValue(Integer.MIN_VALUE, null);
-            return new MoveValue(Integer.MAX_VALUE, null);
-        }
-
-        MoveValue bestMoveValue;
-
-        if (isMaximizingPlayer) {
-            bestMoveValue = new MoveValue(Integer.MIN_VALUE, null);
-            for (Move move : children) {
-                position.makeMove(move);
-                MoveValue value = minimaxRecursion(position, !isMaximizingPlayer, depth - 1, alpha, beta);
-                if (value.value > bestMoveValue.value) {
-                    bestMoveValue.value = value.value;
-                    bestMoveValue.bestMove = move;
-                }
-                alpha = Math.max(alpha, bestMoveValue.value);
-                position.unMakeMove(move);
-                if (beta <= alpha)
-                    break;
-            }
-        } else {
-            bestMoveValue = new MoveValue(Integer.MAX_VALUE, null);
-            for (Move move : children) {
-                position.makeMove(move);
-                MoveValue value = minimaxRecursion(position, !isMaximizingPlayer, depth - 1, alpha, beta);
-                if (value.value < bestMoveValue.value) {
-                    bestMoveValue.value = value.value;
-                    bestMoveValue.bestMove = move;
-                }
-                beta = Math.min(beta, bestMoveValue.value);
-                position.unMakeMove(move);
-                if (beta <= alpha)
-                    break;
-            }
-        }
-
-        return bestMoveValue;
-    }
-*
-*
-*
-* */
-
-/*
-    public static Move minimax(Position position, int depth) {
-       List<Move> startingMoves = MoveGenerator.generateStrictlyLegal(position);
-       boolean isMaximizingPlayer = position.activePlayer == Color.WHITE ? true : false;
-       int bestMoveEval = isMaximizingPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-       Move bestMove = null;
-       for (Move move : startingMoves) {
-            position.makeMove(move);
-            int value = minimaxRecursion(position, isMaximizingPlayer, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
-            if (isMaximizingPlayer) {
-                if (value > bestMoveEval) {
-                    bestMove = move;
-                    bestMoveEval = value;
-                }
-            } else {
-                if (value < bestMoveEval) {
-                    bestMove = move;
-                    bestMoveEval = value;
-                }
-            }
-            position.unMakeMove(move);
-       }
-       return bestMove;
-    }
-
-    public static int minimaxRecursion(Position position, boolean isMaximizingPlayer, int depth, int alpha, int beta) {
-        if (depth == 0) {
-            return StaticEvaluation.evaluatePosition(position);
-        }
-
-        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
-        if (children.size() == 0) {
-            if (position.rule50 >= 50)
-                return 0;
-            if (MoveGenerator.kingInCheck(position, Color.WHITE))
-                return Integer.MIN_VALUE;
-            return Integer.MAX_VALUE;
-        }
-
-        int bestVal;
-
-        if (isMaximizingPlayer) {
-            bestVal = Integer.MIN_VALUE;
-            for (Move move : children) {
-                position.makeMove(move);
-                int value = minimaxRecursion(position, !isMaximizingPlayer, depth--, alpha, beta);
-                bestVal = Math.max(alpha, bestVal);
-                alpha = Math.max(value, bestVal);
-                position.unMakeMove(move);
-                if (beta <= alpha)
-                    break;
-            }
-        } else {
-            bestVal = Integer.MAX_VALUE;
-            for (Move move : children) {
-                position.makeMove(move);
-                int value = minimaxRecursion(position, !isMaximizingPlayer, depth--, alpha, beta);
-                bestVal = Math.min(bestVal, value);
-                beta = Math.min(bestVal, beta);
-                position.unMakeMove(move);
-                if (beta <= alpha)
-                    break;
-            }
-        }
-        return bestVal;
-    }
-*/

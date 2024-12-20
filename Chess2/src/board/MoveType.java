@@ -6,4 +6,5 @@ public enum MoveType{
     ENPASSANT,
     PROMOTION,
     CASTLE,
+    CHECK,
 }
