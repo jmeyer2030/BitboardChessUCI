@@ -1,13 +1,11 @@
-package Search;
+package engine;
 
 
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.concurrent.*;
 import board.Move;
-import board.MoveType;
 import board.Position;
 import moveGeneration.MoveGenerator;
 import board.Color;

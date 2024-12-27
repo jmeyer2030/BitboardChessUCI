@@ -1,6 +1,6 @@
 package moveGeneration;
 
-import Search.StaticEvaluation;
+import engine.StaticEvaluation;
 import board.*;
 
 public class testPERFT {

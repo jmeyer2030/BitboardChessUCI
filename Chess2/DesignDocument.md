@@ -9,17 +9,6 @@ significant bit being zero.
 
 ![alt text](https://www.chessprogramming.org/images/b/b5/Lerf.JPG)
 
-## Position Representation:
-
-Position requirements differ a little from what is most useful in an engine. 
-
-### Bare Requirements:
-
-A position without context essentially requires:
-- Piece location and color
-- En passant legality
-- Castling rights
-- Moves since 50 move rule reset
 
 ### Implementation:
 
@@ -75,3 +64,19 @@ Thus, they have the following fields:
 
 - halfMoveCount: halfMoveCount of position before this move is applied
 - castleRights: castleRights before this move is applied
+
+## GUI:
+
+The GUI seeks to provide options for starting a game against one's self
+primarily for testing reasons.
+
+Additionally one should be able to play against the engine in a variety of time
+controls.
+
+### Starting Options:
+
+First the option is given to play against the engine or yourself.
+
+In the case that the human is selected the game start
+
+###

@@ -1,4 +1,4 @@
-package Search;
+package engine;
 
 import board.Position;
 import moveGeneration.MoveGenerator;

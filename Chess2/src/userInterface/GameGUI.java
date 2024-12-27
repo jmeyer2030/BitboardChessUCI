@@ -9,7 +9,6 @@ import java.awt.event.ActionListener;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -19,12 +18,12 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import Search.minimax;
+import engine.minimax;
 import board.Move;
 import board.Position;
 import moveGeneration.MoveGenerator;
 
-public class GUI implements ActionListener{
+public class GameGUI implements ActionListener{
 	JLabel label;
 	JFrame frame;
 	JPanel panel;
@@ -119,7 +118,7 @@ public class GUI implements ActionListener{
 		return jpanel;
 	}
 	
-	public GUI(Position position) {
+	public GameGUI(Position position) {
 		this.position = position;
 		frame = new JFrame();
 		panel = new JPanel();
