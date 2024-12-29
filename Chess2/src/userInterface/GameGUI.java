@@ -1,40 +1,115 @@
 package userInterface;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 
+import engine.TimeManagement;
 import engine.minimax;
 import board.Move;
 import board.Position;
 import moveGeneration.MoveGenerator;
 
 public class GameGUI implements ActionListener{
-	JLabel label;
 	JFrame frame;
-	JPanel panel;
+	JPanel boardPanel;
 	JButton[] buttonArray = new JButton[64];
+
+	JPanel timerPanel;
+	Timer timer;
+	JLabel whiteTimerLabel;
+	JLabel blackTimerLabel;
 	Position position;
 	List<Move> legalMoves;
 	List<Move> movesFromSelected;
+	long whiteTime;
+	long blackTime;
+	long initialTime;
 	int moveStart;
 	int moveDestination;
 	int selectedSquare;
 
+
+
+	public GameGUI(Position position) {
+		this.position = position;
+
+		this.frame = new JFrame();
+		this.boardPanel = new JPanel();
+		this.timerPanel = new JPanel();
+
+		timer = new Timer(1000, e -> {
+			System.out.println("timer updated");
+            if (position.activePlayer == board.Color.WHITE) {
+				System.out.println("white updated");
+                whiteTime -= 1000;
+                // handle timeout here
+                whiteTimerLabel.setText(getTimeString(whiteTime));
+                whiteTimerLabel.repaint();
+            } else {
+				System.out.println("black updated");
+                blackTime -= 1000;
+                // handle timeout here
+                blackTimerLabel.setText(getTimeString(blackTime));
+                blackTimerLabel.repaint();
+            }
+        });
+
+
+		initialTime = 300_000;
+		whiteTime = initialTime;
+		blackTime = initialTime;
+
+		whiteTimerLabel = new JLabel();
+		blackTimerLabel = new JLabel();
+		whiteTimerLabel.setFont(new Font("Serif", Font.PLAIN, 25));
+		blackTimerLabel.setFont(new Font("Serif", Font.PLAIN, 25));
+		whiteTimerLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+		blackTimerLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+		whiteTimerLabel.setText(getTimeString(whiteTime));
+		blackTimerLabel.setText(getTimeString(blackTime));
+
+		timerPanel.add(whiteTimerLabel);
+		timerPanel.add(blackTimerLabel);
+		//timerPanel.add(new JButton("flip"));
+
+
+		frame.add(timerPanel, BorderLayout.PAGE_START);
+
+
+
+		for (int i = 0; i < 64; i++) {
+			buttonArray[i] = new JButton();
+			if (((i + (i / 8)) % 2) == 1) {
+				buttonArray[i].setBackground(Color.GRAY);
+				buttonArray[i].setForeground(Color.WHITE);
+			} else {
+				buttonArray[i].setBackground(Color.WHITE);
+				buttonArray[i].setForeground(Color.BLACK);
+			}
+			buttonArray[i].addActionListener(this);
+			boardPanel.add(buttonArray[i]);
+		}
+		boardPanel.setPreferredSize(new Dimension(500,500));
+		boardPanel.setBorder(BorderFactory.createEmptyBorder(30,30,10,30));
+		boardPanel.setLayout(new GridLayout(8,8));
+		frame.add(boardPanel, BorderLayout.PAGE_END);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.pack();
+		frame.setResizable(false);
+		frame.setVisible(true);
+		this.updateDisplay();
+		movesFromSelected = new LinkedList<Move>();
+		selectedSquare = -1;
+		legalMoves = MoveGenerator.generateStrictlyLegal(position);
+
+		timer.start();
+	}
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		for (int i = 0; i < 64; i++) {
@@ -53,7 +128,7 @@ public class GameGUI implements ActionListener{
 				// Highlight the legal moves from the selected square
 				for (Move move : legalMoves) {
 					if (move.start == selectedSquare)
-					movesFromSelected.add(move);
+						movesFromSelected.add(move);
 
 				}
 				highlightSquares(movesFromSelected);
@@ -86,67 +161,49 @@ public class GameGUI implements ActionListener{
 			System.out.println("selected size: " + movesFromSelected.size());
 		}
 	}
-
-
+	/**
+	* Applies a human move
+	*/
 	private void applyMove(Move move) {
+		legalMoves.clear();
 		position.makeMove(move);
 		updateDisplay();
 
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+		computerMove();
 
-        Move computerMove = minimax.iterativeDeepening(position, 5_000).bestMove;
 
-		position.makeMove(computerMove);
-
-		updateDisplay();
-
-		legalMoves.clear();
-
-		resetSquares();
-
-		legalMoves.addAll(MoveGenerator.generateStrictlyLegal(position));
 	}
 
-	private int littleEndianToJPanel(int endian) {
-		int endianRow = endian / 8;
-		int jpanelRow = 7 - endianRow;
-		int jpanel = jpanelRow * 8 + endian % 8;
-		return jpanel;
-	}
-	
-	public GameGUI(Position position) {
-		this.position = position;
-		frame = new JFrame();
-		panel = new JPanel();
-		for (int i = 0; i < 64; i++) {
-			buttonArray[i] = new JButton();
-			if (((i + (i / 8)) % 2) == 1) {
-				buttonArray[i].setBackground(Color.GRAY);
-				buttonArray[i].setForeground(Color.WHITE);
-			} else {
-				buttonArray[i].setBackground(Color.WHITE);
-				buttonArray[i].setForeground(Color.BLACK);
+	/**
+	* generates and applies a computer move
+	*/
+	private void computerMove() {
+		SwingWorker<Move, Void> worker = new SwingWorker<>() {
+			@Override
+			protected Move doInBackground() throws Exception {
+				return minimax.iterativeDeepening(position, TimeManagement.millisForMove(
+					position.activePlayer == board.Color.WHITE ? whiteTime : blackTime)).bestMove;
 			}
-			buttonArray[i].addActionListener(this);
-			panel.add(buttonArray[i]);
-		}
-		panel.setPreferredSize(new Dimension(450,450));
-		panel.setBorder(BorderFactory.createEmptyBorder(30,30,10,30));
-		panel.setLayout(new GridLayout(8,8));
-		frame.add(panel, BorderLayout.CENTER);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.pack();
-		frame.setResizable(false);
-		frame.setVisible(true);
-		this.updateDisplay();
-		movesFromSelected = new LinkedList<Move>();
-		selectedSquare = -1;
-		legalMoves = MoveGenerator.generateStrictlyLegal(position);
+
+			@Override
+			protected void done() {
+				try {
+					Move computerMove = get();
+					position.makeMove(computerMove);
+					updateDisplay();
+					legalMoves.clear();
+					legalMoves.addAll(MoveGenerator.generateStrictlyLegal(position));
+					resetSquares();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		};
+
+		worker.execute();
+
 	}
+
 	public void highlightSquares(List<Move> moves) {
 		for (Move move : moves) {
 			buttonArray[littleEndianToJPanel(move.destination)].setBackground(new Color(115, 125, 215));
@@ -212,5 +269,19 @@ public class GameGUI implements ActionListener{
 				}
 			}
 		}
+	}
+
+	private int littleEndianToJPanel(int endian) {
+		int endianRow = endian / 8;
+		int jpanelRow = 7 - endianRow;
+		int jpanel = jpanelRow * 8 + endian % 8;
+		return jpanel;
+	}
+
+	private String getTimeString(long time) {
+		long totalSeconds = time / 1000;
+		long seconds = totalSeconds % 60;
+		long minutes = totalSeconds / 60;
+		return String.format("%02d:%02d", minutes, seconds);
 	}
 }

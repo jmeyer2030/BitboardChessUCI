@@ -70,8 +70,8 @@ public class minimax {
 
     public static MoveValue minimax(Position position, boolean isMaximizingPlayer, int depth, int alpha, int beta) {
         if (depth == 0) {
-            return new MoveValue(quiesce(alpha, beta, position, isMaximizingPlayer), null);
-            //return new MoveValue(StaticEvaluation.evaluatePosition(position), null);
+            //return new MoveValue(quiesce(alpha, beta, position, isMaximizingPlayer), null);
+            return new MoveValue(StaticEvaluation.evaluatePosition(position), null);
         }
 
         List<Move> children = MoveGenerator.generateStrictlyLegal(position);

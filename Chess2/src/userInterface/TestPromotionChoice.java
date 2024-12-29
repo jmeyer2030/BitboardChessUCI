@@ -6,8 +6,8 @@ import javax.swing.*;
 
 public class TestPromotionChoice {
     public static void main(String[] args) {
-//       System.out.println(getPromotionPiece());
-        // System.out.println(getGameSettings().playerColor);
+         System.out.println(getPromotionPiece());
+         System.out.println(getGameSettings(true).playerColor);
     }
     public static String getPromotionPiece() {
         String[] options = {"Queen", "Rook", "Bishop", "Knight"};
