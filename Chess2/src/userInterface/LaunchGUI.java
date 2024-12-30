@@ -80,7 +80,7 @@ public class LaunchGUI {
             }
 
 
-            GameSettings chosen = new GameSettings(millisTime, selectedColor, engineOpponent);
+            GameSettings chosen = new GameSettings(true, millisTime, selectedColor, engineOpponent);
 
             return chosen;
         }

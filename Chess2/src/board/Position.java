@@ -258,16 +258,16 @@ public class Position {
 
 	    // Update castle rights for king move
 	    castleRights &= (byte) (destinationMask & pieces[5]) != 0 ?
-                (byte) (activePlayer == Color.WHITE ? 0b1100 : 0b0011) :
-	    	0b1111;
+                (byte) (activePlayer == Color.WHITE ? 0b0000_0011 : 0b0000_1100) :
+	    	0b0000_1111;
 
 	    // Update castle rights for rook move
 	    castleRights &= (move.movePiece == PieceType.ROOK) ? //If a rook move, we change rights depending on start
-                (byte) (move.start == 0 ? 0b0111 :
-                        move.start == 7 ? 0b1011 :
-                        move.start == 56 ? 0b1101 :
-						move.start == 63 ? 0b1110 : 0b1111)
-						: 0b1111;
+                (byte) (move.start == 0 ? 0b0000_0111 :
+                        move.start == 7 ? 0b0000_1011 :
+                        move.start == 56 ? 0b0000_1101 :
+						move.start == 63 ? 0b0000_1110 : 0b0000_1111)
+						: 0b0000_1111;
 
 	    // Set en passant square
 	    enPassant = ((pieces[0] & destinationMask) != 0 && Math.abs(move.start - move.destination) == 16) ?

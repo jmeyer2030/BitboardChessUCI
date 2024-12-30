@@ -15,6 +15,7 @@ import board.Move;
 import board.Position;
 import moveGeneration.MoveGenerator;
 
+
 public class GameGUI implements ActionListener{
 	JFrame frame;
 	JPanel boardPanel;
@@ -36,7 +37,8 @@ public class GameGUI implements ActionListener{
 
 
 
-	public GameGUI(Position position) {
+
+	public GameGUI(Position position, GameSettings gameSettings) {
 		this.position = position;
 
 		this.frame = new JFrame();
@@ -44,15 +46,12 @@ public class GameGUI implements ActionListener{
 		this.timerPanel = new JPanel();
 
 		timer = new Timer(1000, e -> {
-			System.out.println("timer updated");
             if (position.activePlayer == board.Color.WHITE) {
-				System.out.println("white updated");
                 whiteTime -= 1000;
                 // handle timeout here
                 whiteTimerLabel.setText(getTimeString(whiteTime));
                 whiteTimerLabel.repaint();
             } else {
-				System.out.println("black updated");
                 blackTime -= 1000;
                 // handle timeout here
                 blackTimerLabel.setText(getTimeString(blackTime));
@@ -61,7 +60,7 @@ public class GameGUI implements ActionListener{
         });
 
 
-		initialTime = 300_000;
+		initialTime = gameSettings.millisTime;
 		whiteTime = initialTime;
 		blackTime = initialTime;
 
@@ -229,42 +228,42 @@ public class GameGUI implements ActionListener{
 			buttonArray[jpanelPos].setIcon(null);
 			if ((position.pieceColors[0] & (1L << i)) != 0) {
 				if((position.pieces[0] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_Pawn.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_White_Pawn.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[1] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_Knight.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_White_Knight.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[2] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_Bishop.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_White_Bishop.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[3] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_Rook.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_White_Rook.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[4] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_Queen.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_White_Queen.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[5] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_White_King.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_White_King.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				}
 			} else if ((position.pieceColors[1] & (1L << i)) != 0) {
 				if((position.pieces[0] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_Black_Pawn.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_Black_Pawn.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[1] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_Black_Knight.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_Black_Knight.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[2] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_Black_Bishop.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_Black_Bishop.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[3] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_Black_Rook.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_Black_Rook.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[4] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_Black_Queen.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_Black_Queen.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				} else if((position.pieces[5] & (1L << i)) != 0) {
-					icon = new ImageIcon("C:\\Users\\jmeye\\Pictures\\ChessPieces\\Chess_Black_King.png");
+					icon = new ImageIcon(getClass().getResource("/pngImages/Chess_Black_King.png"));
 					buttonArray[jpanelPos].setIcon(icon);
 				}
 			}
