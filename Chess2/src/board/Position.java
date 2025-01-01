@@ -1,5 +1,6 @@
 package board;
 
+import moveGeneration.MoveGenerator;
 import moveGeneration.Testing;
 
 import java.util.Arrays;
@@ -19,6 +20,8 @@ public class Position {
 	public int enPassant; //Same as fen, is the location where the pawn would be if it advanced one square.
 	public int rule50;
 	public int fullMoveCount;
+	public boolean whiteInCheck;
+	public boolean blackInCheck;
 
 /*
 * Constructors
@@ -48,6 +51,8 @@ public class Position {
 		enPassant = 0;
 		rule50 = 0;
 		fullMoveCount = 1;
+		whiteInCheck = false;
+		blackInCheck = false;
 	}
 	/**
 	* Copy a position
@@ -61,6 +66,8 @@ public class Position {
 		this.enPassant = position.enPassant;
 		this.rule50 = position.rule50;
 		this.fullMoveCount = position.fullMoveCount;
+		this.whiteInCheck = position.whiteInCheck;
+		this.blackInCheck = position.blackInCheck;
 	}
 	/**
 	* Build from FEN
@@ -182,6 +189,9 @@ public class Position {
 	    this.activePlayer = activePlayer;
 	    this.castleRights = castleRights;
 	    this.enPassant = enPassant;
+
+	    this.whiteInCheck = MoveGenerator.kingInCheck(this, Color.WHITE);
+	    this.blackInCheck = MoveGenerator.kingInCheck(this, Color.BLACK);
 	}
 /*
 * Make and unMake

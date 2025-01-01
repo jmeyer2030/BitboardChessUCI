@@ -3,12 +3,15 @@ package userInterface;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 
+import board.PieceType;
 import engine.TimeManagement;
 import engine.minimax;
 import board.Move;
@@ -34,32 +37,84 @@ public class GameGUI implements ActionListener{
 	int moveStart;
 	int moveDestination;
 	int selectedSquare;
+	boolean flipBoard;
 
-
-
+	GameSettings gameSettings;
 
 	public GameGUI(Position position, GameSettings gameSettings) {
+		this.flipBoard = gameSettings.playerColor == board.Color.BLACK;
 		this.position = position;
-
+		this.gameSettings = gameSettings;
 		this.frame = new JFrame();
+		this.legalMoves = new ArrayList<Move>();
+
+		if (this.gameSettings.useTimer) {
+			initTimerPanel();
+		}
+
+		initBoardPanel();
+
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.pack();
+		frame.setResizable(false);
+		frame.setVisible(true);
+		this.updateDisplay();
+		movesFromSelected = new LinkedList<Move>();
+		selectedSquare = -1;
+
+
+		if (!gameSettings.engineOpponent) { //if no engine we always generate legal
+			legalMoves = MoveGenerator.generateStrictlyLegal(position);
+		} else if (gameSettings.playerColor == board.Color.WHITE) { //else if engine AND player color is white
+			legalMoves = MoveGenerator.generateStrictlyLegal(position);
+		} else if (gameSettings.playerColor == board.Color.BLACK) {
+			computerMove();
+		}
+
+	}
+
+	/**
+	* Initializes the board panel
+	*/
+	private void initBoardPanel() {
 		this.boardPanel = new JPanel();
+
+		for (int i = 0; i < 64; i++) {
+			buttonArray[i] = new JButton();
+			if (((i + (i / 8)) % 2) == 1) {
+				buttonArray[i].setBackground(Color.GRAY);
+				buttonArray[i].setForeground(Color.WHITE);
+			} else {
+				buttonArray[i].setBackground(Color.WHITE);
+				buttonArray[i].setForeground(Color.BLACK);
+			}
+			buttonArray[i].addActionListener(this);
+			boardPanel.add(buttonArray[i]);
+		}
+
+		boardPanel.setPreferredSize(new Dimension(500,500));
+		boardPanel.setBorder(BorderFactory.createEmptyBorder(30,30,10,30));
+		boardPanel.setLayout(new GridLayout(8,8));
+		frame.add(boardPanel, BorderLayout.PAGE_END);
+	}
+	/**
+	* Initializes the timer panel and starts it
+	*/
+	private void initTimerPanel() {
 		this.timerPanel = new JPanel();
-
 		timer = new Timer(1000, e -> {
-            if (position.activePlayer == board.Color.WHITE) {
-                whiteTime -= 1000;
-                // handle timeout here
-                whiteTimerLabel.setText(getTimeString(whiteTime));
-                whiteTimerLabel.repaint();
-            } else {
-                blackTime -= 1000;
-                // handle timeout here
-                blackTimerLabel.setText(getTimeString(blackTime));
-                blackTimerLabel.repaint();
-            }
-        });
-
-
+			if (position.activePlayer == board.Color.WHITE) {
+				whiteTime -= 1000;
+				// handle timeout here
+				whiteTimerLabel.setText(getTimeString(whiteTime));
+				whiteTimerLabel.repaint();
+			} else {
+				blackTime -= 1000;
+				// handle timeout here
+				blackTimerLabel.setText(getTimeString(blackTime));
+				blackTimerLabel.repaint();
+			}
+		});
 		initialTime = gameSettings.millisTime;
 		whiteTime = initialTime;
 		blackTime = initialTime;
@@ -75,37 +130,8 @@ public class GameGUI implements ActionListener{
 
 		timerPanel.add(whiteTimerLabel);
 		timerPanel.add(blackTimerLabel);
-		//timerPanel.add(new JButton("flip"));
-
 
 		frame.add(timerPanel, BorderLayout.PAGE_START);
-
-
-
-		for (int i = 0; i < 64; i++) {
-			buttonArray[i] = new JButton();
-			if (((i + (i / 8)) % 2) == 1) {
-				buttonArray[i].setBackground(Color.GRAY);
-				buttonArray[i].setForeground(Color.WHITE);
-			} else {
-				buttonArray[i].setBackground(Color.WHITE);
-				buttonArray[i].setForeground(Color.BLACK);
-			}
-			buttonArray[i].addActionListener(this);
-			boardPanel.add(buttonArray[i]);
-		}
-		boardPanel.setPreferredSize(new Dimension(500,500));
-		boardPanel.setBorder(BorderFactory.createEmptyBorder(30,30,10,30));
-		boardPanel.setLayout(new GridLayout(8,8));
-		frame.add(boardPanel, BorderLayout.PAGE_END);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.pack();
-		frame.setResizable(false);
-		frame.setVisible(true);
-		this.updateDisplay();
-		movesFromSelected = new LinkedList<Move>();
-		selectedSquare = -1;
-		legalMoves = MoveGenerator.generateStrictlyLegal(position);
 
 		timer.start();
 	}
@@ -128,20 +154,28 @@ public class GameGUI implements ActionListener{
 				for (Move move : legalMoves) {
 					if (move.start == selectedSquare)
 						movesFromSelected.add(move);
-
 				}
 				highlightSquares(movesFromSelected);
 			} else {
 				// If a square is already selected, check if the move is legal
-				Optional<Move> moveToApply = movesFromSelected.stream()
+				List<Move> matchingMoves = movesFromSelected.stream()
 						.filter(move -> move.destination == clickedSquare)
-						.findFirst();
+						.collect(Collectors.toList());
 
 				movesFromSelected.clear();
 
-				if (moveToApply.isPresent()) {
+				if (matchingMoves.size() != 0) {
+					if (matchingMoves.size() > 1) { // if promotion move
+						PieceType promotionType = getPromotionPiece();
+						matchingMoves.removeIf(move -> (move.promotionType != promotionType));
+					}
 					// Apply the move if it's legal
-					applyMove(moveToApply.get());
+					applyMove(matchingMoves.getFirst());
+					if (gameSettings.engineOpponent) {
+						computerMove();
+					} else {
+						legalMoves = MoveGenerator.generateStrictlyLegal(position);
+					}
 					resetSquares(); // Reset squares after applying the move
 					selectedSquare = -1;
 				} else {
@@ -156,8 +190,6 @@ public class GameGUI implements ActionListener{
 					highlightSquares(movesFromSelected);
 				}
 			}
-			System.out.println("legal moves size: " + legalMoves.size());
-			System.out.println("selected size: " + movesFromSelected.size());
 		}
 	}
 	/**
@@ -166,11 +198,8 @@ public class GameGUI implements ActionListener{
 	private void applyMove(Move move) {
 		legalMoves.clear();
 		position.makeMove(move);
+		position.printBoard();
 		updateDisplay();
-
-		computerMove();
-
-
 	}
 
 	/**
@@ -274,6 +303,9 @@ public class GameGUI implements ActionListener{
 		int endianRow = endian / 8;
 		int jpanelRow = 7 - endianRow;
 		int jpanel = jpanelRow * 8 + endian % 8;
+		if (flipBoard) {
+			return 63 - jpanel;
+		}
 		return jpanel;
 	}
 
@@ -282,5 +314,25 @@ public class GameGUI implements ActionListener{
 		long seconds = totalSeconds % 60;
 		long minutes = totalSeconds / 60;
 		return String.format("%02d:%02d", minutes, seconds);
+	}
+
+	public static PieceType getPromotionPiece() {
+		String[] options = {"Queen", "Rook", "Bishop", "Knight"};
+		PieceType[] pieceTypes = {PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT};
+		int choice = JOptionPane.showOptionDialog(
+				null, //Parent Component
+				"Choose your promotion piece:",
+				"Promotion Dialog",
+				JOptionPane.DEFAULT_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null,
+				options,
+				options[0]
+		);
+
+		if (choice == JOptionPane.CLOSED_OPTION) {
+			return PieceType.QUEEN; // Default to Queen if the user closes the dialog
+		}
+		return pieceTypes[choice];
 	}
 }

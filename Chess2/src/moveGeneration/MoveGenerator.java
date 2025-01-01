@@ -51,9 +51,13 @@ public class MoveGenerator{
 		List<Move> allMoves = generateAllMoves(position);
 		List<Move> legalMoves = allMoves.stream().filter(move -> {
 			position.makeMove(move);
-			boolean invalidMove = kingInCheck(position, Color.flipColor(position.activePlayer));
+			boolean opponentInCheck = kingInCheck(position, position.activePlayer);
+			if (opponentInCheck) {
+				move.isCheck = true;
+			}
+			boolean selfInCheck = kingInCheck(position, Color.flipColor(position.activePlayer));
 			position.unMakeMove(move);
-            return !invalidMove;
+            return !selfInCheck;
         }).collect(Collectors.toList());
 		return legalMoves;
 	}
@@ -130,7 +134,6 @@ public class MoveGenerator{
 	 * @param position
 	 * @return Move list
 	 */
-
 	private static List<Move> generateRookMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long rookList = (position.pieceColors[position.activePlayer.ordinal()]) & position.pieces[3];
@@ -164,7 +167,6 @@ public class MoveGenerator{
 	 * @param position
 	 * @return Move list
 	 */
-
 	private static List<Move> generateBishopMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long bishopList = position.pieceColors[position.activePlayer.ordinal()] & position.pieces[2];
@@ -199,7 +201,6 @@ public class MoveGenerator{
 	 * @param position
 	 * @return Move list
 	 */
-
 	private static List<Move> generateKnightMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long knightList = position.pieceColors[position.activePlayer.ordinal()] & position.pieces[1];
@@ -234,7 +235,6 @@ public class MoveGenerator{
 	 * @param position
 	 * @return Move list
 	 */
-
 	private static List<Move> generateKingMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long kingList = position.pieceColors[position.activePlayer.ordinal()] & position.pieces[5];
@@ -280,7 +280,6 @@ public class MoveGenerator{
 	 * @param position
 	 * @return Move list
 	 */
-
 	public static List<Move> generateQueenMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long queenList = position.pieceColors[position.activePlayer.ordinal()] & position.pieces[4];
@@ -368,21 +367,21 @@ public class MoveGenerator{
 	* @return if the castle move is valid
 	*/
 	private static boolean castleSquaresAttacked(Position position, int destination) {
-		boolean validCastle = true;
+		boolean squareAttacked = false;
 		if (destination == 2) {
-			validCastle &= squareAttackedBy(position, 4, Color.BLACK);
-			validCastle &= squareAttackedBy(position, 3, Color.BLACK);
+			squareAttacked |= squareAttackedBy(position, 4, Color.BLACK);
+			squareAttacked |= squareAttackedBy(position, 3, Color.BLACK);
 		} else if (destination == 6) {
-			validCastle &= squareAttackedBy(position, 4, Color.BLACK);
-			validCastle &= squareAttackedBy(position, 5, Color.BLACK);
+			squareAttacked |= squareAttackedBy(position, 4, Color.BLACK);
+			squareAttacked |= squareAttackedBy(position, 5, Color.BLACK);
 		} else if (destination == 58) {
-			validCastle &= squareAttackedBy(position, 60, Color.WHITE);
-			validCastle &= squareAttackedBy(position, 59, Color.WHITE);
+			squareAttacked |= squareAttackedBy(position, 60, Color.WHITE);
+			squareAttacked |= squareAttackedBy(position, 59, Color.WHITE);
 		} else if (destination == 62) {
-			validCastle &= squareAttackedBy(position, 60, Color.WHITE);
-			validCastle &= squareAttackedBy(position, 61, Color.WHITE);
+			squareAttacked |= squareAttackedBy(position, 60, Color.WHITE);
+			squareAttacked |= squareAttackedBy(position, 61, Color.WHITE);
 		}
-		return validCastle;
+		return squareAttacked;
 	}
 
 	/**
@@ -424,6 +423,13 @@ public class MoveGenerator{
 			return true;
 		}
 		return false;
+	}
+	/**
+	* Does check detection on a move
+	*/
+	public static void moveCheckDetection(Move move, Position position) {
+		move.whiteInCheck = kingInCheck(position, Color.WHITE);
+		move.blackInCheck = kingInCheck(position, Color.BLACK);
 	}
 }
 

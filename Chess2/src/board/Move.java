@@ -3,7 +3,7 @@ import moveGeneration.Testing;
 
 public class Move {
 
-/**
+/*
 * Fields
 */
     //Move details:
@@ -13,13 +13,17 @@ public class Move {
     public final PieceType promotionType; // Null for non-promotion moves
     public final PieceType captureType;
     public final PieceType movePiece;
+    public boolean whiteInCheck;
+    public boolean blackInCheck;
 
     //Position details:
     public final int halfMoveCount;
     public final byte castleRights;
     public final int enPassant;
+    public final boolean prevWhiteInCheck;
+    public final boolean prevBlackInCheck;
 
-/**
+/*
 * Constructors
 */
     /**

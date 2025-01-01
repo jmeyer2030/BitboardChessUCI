@@ -1,16 +1,18 @@
 package userInterface;
 
 import board.Color;
+import board.PieceType;
 
 import javax.swing.*;
 
 public class TestPromotionChoice {
     public static void main(String[] args) {
          System.out.println(getPromotionPiece());
-         System.out.println(getGameSettings(true).playerColor);
     }
-    public static String getPromotionPiece() {
+
+    public static PieceType getPromotionPiece() {
         String[] options = {"Queen", "Rook", "Bishop", "Knight"};
+        PieceType[] pieceTypes = {PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT};
         int choice = JOptionPane.showOptionDialog(
                 null, //Parent Component
                 "Choose your promotion piece:",
@@ -23,9 +25,9 @@ public class TestPromotionChoice {
         );
 
         if (choice == JOptionPane.CLOSED_OPTION) {
-            return "Queen"; // Default to Queen if the user closes the dialog
+            return PieceType.QUEEN; // Default to Queen if the user closes the dialog
         }
-        return options[choice];
+        return pieceTypes[choice];
     }
 
 

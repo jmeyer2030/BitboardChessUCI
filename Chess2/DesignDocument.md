@@ -1,6 +1,34 @@
 ## Joshua Meyer 2024
 # Bitboard Chess Design Document:
+
+## Todo:
+
+### Priority:
+
+how should checks be handled. Moves and positions should certainly have checks.
+we check if a move is a check when we check if it puts our own king in check and update it as such.
+if it is a check, when we apply it, we update position's check status.
+
+Solution: during generation of strictly legal, check if a move is a check or not
+
+
+- add check to position (look for both enemy and us check)
+  - will allow castle rejection
+  - will allow move rejection (if self in check)
+  - allows check label to moves
+- Add flipboard option
+- Add promotion piece type
+- Look for checks in move generation
+- Add game ending
+ 
+### Looking forward:
+
+- Add negamax
+- Add quiescence
+- Fix whatever make/unmake bug
+
 ## Overview:
+
 This engine primarily uses bitboards, representations of a board as a 64bit long 
 to indicate the presence or absence of something on a board.
 
