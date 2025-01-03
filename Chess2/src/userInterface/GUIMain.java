@@ -17,21 +17,22 @@ public class GUIMain {
 	*/
 	public static void main(String[] args) {
 		String gameType = gameType();
-		if (gameType =="no choice") {
+		if (gameType.equals("no choice")) {
 			return;
 		}
 
 		GameSettings gameSettings;
 
-		if (gameType == engineChoiceTxt) {
+		if (gameType.equals(engineChoiceTxt)) {
 			gameSettings = getGameSettings(true);
-		} else if (gameType == noEngineChoiceTxt) {
+		} else if (gameType.equals(noEngineChoiceTxt)) {
 			gameSettings = getGameSettings(false);
 		} else {
             gameSettings = null;
         }
 
         try {
+        	assert gameSettings != null;
 			gameSettings.print();
 			new MoveGenerator();
 			Position position = new Position();

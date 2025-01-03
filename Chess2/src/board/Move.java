@@ -13,15 +13,18 @@ public class Move {
     public final PieceType promotionType; // Null for non-promotion moves
     public final PieceType captureType;
     public final PieceType movePiece;
-    public boolean whiteInCheck;
-    public boolean blackInCheck;
 
     //Position details:
     public final int halfMoveCount;
     public final byte castleRights;
     public final int enPassant;
-    public final boolean prevWhiteInCheck;
-    public final boolean prevBlackInCheck;
+
+    //fields added in move generator:
+
+    public boolean prevWhiteInCheck;
+    public boolean prevBlackInCheck;
+    public boolean resultWhiteInCheck;
+    public boolean resultBlackInCheck;
 
 /*
 * Constructors
@@ -40,6 +43,12 @@ public class Move {
         this.castleRights = castleRights;
         this.movePiece = movePiece;
         this.enPassant = enPassant;
+
+        //These are initialized so that the move can be made / unmade, but are updated in MoveGenerator
+        prevWhiteInCheck = false;
+        prevBlackInCheck = false;
+        resultWhiteInCheck = false;
+        resultBlackInCheck = false;
     }
 /*
 * Factory Methods
@@ -103,7 +112,7 @@ public class Move {
     public String toString() {
         String moveDescription = "";
         moveDescription += Testing.notation(this.start) + " -> " + Testing.notation(this.destination);
-        /*
+
         moveDescription += "Start: " + this.start + " \n";
         moveDescription += "Destination: " + this.destination + " \n";
         moveDescription += "MoveType: " + this.moveType + " \n";
@@ -111,7 +120,7 @@ public class Move {
         moveDescription += "CaptureType: " + this.captureType + " \n";
         moveDescription += "HalfMoveCount: " + this.halfMoveCount + " \n";
         moveDescription += "CastleRights: " + this.castleRights + " \n";
-        */
+        
         return moveDescription;
     }
 }

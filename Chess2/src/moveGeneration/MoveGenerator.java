@@ -50,14 +50,12 @@ public class MoveGenerator{
 	public static List<Move> generateStrictlyLegal(Position position) {
 		List<Move> allMoves = generateAllMoves(position);
 		List<Move> legalMoves = allMoves.stream().filter(move -> {
-			position.makeMove(move);
-			boolean opponentInCheck = kingInCheck(position, position.activePlayer);
-			if (opponentInCheck) {
-				move.isCheck = true;
+			moveUpdateChecks(move, position);
+			if (position.activePlayer == board.Color.WHITE) {
+				return !move.resultWhiteInCheck;
+			} else {
+				return !move.resultBlackInCheck;
 			}
-			boolean selfInCheck = kingInCheck(position, Color.flipColor(position.activePlayer));
-			position.unMakeMove(move);
-            return !selfInCheck;
         }).collect(Collectors.toList());
 		return legalMoves;
 	}
@@ -342,7 +340,6 @@ public class MoveGenerator{
 	public static long getPawnAttacks(Position position, int square, Color attackColor)  {
 		return pl.getAttackBoard(square, attackColor);
 	}
-
 	public static long getKnightAttacks(Position position, int square) {
 		return nl.getAttackBoard(square, position);
 	}
@@ -368,6 +365,13 @@ public class MoveGenerator{
 	*/
 	private static boolean castleSquaresAttacked(Position position, int destination) {
 		boolean squareAttacked = false;
+		if (position.activePlayer == Color.WHITE && position.whiteInCheck) {
+			return true;
+		}
+		if (position.activePlayer == Color.BLACK && position.blackInCheck) {
+			return true;
+		}
+
 		if (destination == 2) {
 			squareAttacked |= squareAttackedBy(position, 4, Color.BLACK);
 			squareAttacked |= squareAttackedBy(position, 3, Color.BLACK);
@@ -427,9 +431,13 @@ public class MoveGenerator{
 	/**
 	* Does check detection on a move
 	*/
-	public static void moveCheckDetection(Move move, Position position) {
-		move.whiteInCheck = kingInCheck(position, Color.WHITE);
-		move.blackInCheck = kingInCheck(position, Color.BLACK);
+	public static void moveUpdateChecks(Move move, Position position) {
+		move.prevWhiteInCheck = position.whiteInCheck;
+		move.prevBlackInCheck = position.blackInCheck;
+		position.makeMove(move);
+		move.resultWhiteInCheck = kingInCheck(position, Color.WHITE);
+		move.resultBlackInCheck = kingInCheck(position, Color.BLACK);
+		position.unMakeMove(move);
 	}
 }
 

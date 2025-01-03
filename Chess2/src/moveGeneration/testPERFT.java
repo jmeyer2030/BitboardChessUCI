@@ -18,7 +18,7 @@ public class testPERFT {
         position1.printBoard();
         */
         long start = System.currentTimeMillis();
-        int depth = 6;
+        int depth = 7;
 
         System.out.println(StaticEvaluation.evaluatePosition(position));
         Testing.perft(depth, position);

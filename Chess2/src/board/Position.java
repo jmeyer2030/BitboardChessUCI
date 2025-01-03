@@ -267,9 +267,9 @@ public class Position {
 	    }
 
 	    // Update castle rights for king move
-	    castleRights &= (byte) (destinationMask & pieces[5]) != 0 ?
-                (byte) (activePlayer == Color.WHITE ? 0b0000_0011 : 0b0000_1100) :
-	    	0b0000_1111;
+	    castleRights &= ((destinationMask & pieces[5]) != 0) ?
+                 (activePlayer == Color.WHITE ? (byte) 0b0000_0011 : (byte) 0b0000_1100) :
+				(byte) 0b0000_1111;
 
 	    // Update castle rights for rook move
 	    castleRights &= (move.movePiece == PieceType.ROOK) ? //If a rook move, we change rights depending on start
@@ -289,6 +289,9 @@ public class Position {
 
 	    // Switch active player
 	    activePlayer = activePlayer == Color.WHITE ? Color.BLACK : Color.WHITE;
+
+	    whiteInCheck = move.resultWhiteInCheck;
+	    blackInCheck = move.resultBlackInCheck;
 
 	    looseValidatePosition(move);
 	}
@@ -387,6 +390,9 @@ public class Position {
 		//increment moveCounter
 		if (activePlayer == Color.BLACK)
 			fullMoveCount--;
+
+		this.whiteInCheck = move.prevWhiteInCheck;
+		this.blackInCheck = move.prevBlackInCheck;
 	}
 
 /*
