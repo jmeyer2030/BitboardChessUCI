@@ -197,6 +197,7 @@ public class GameGUI implements ActionListener{
 	private void applyMove(Move move) {
 		legalMoves.clear();
 		position.makeMove(move);
+		System.out.println(move);
 		//System.out.println("BOARD AFTER MOVE:");
 		//position.printBoard();
 		updateDisplay();

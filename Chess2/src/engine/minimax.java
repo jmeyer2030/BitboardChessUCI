@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.concurrent.*;
 import board.Move;
+import board.MoveType;
 import board.Position;
 import moveGeneration.MoveGenerator;
 import board.Color;
@@ -177,9 +178,31 @@ public class minimax {
         return isMaximizingPlayer ? alpha : beta; // Return best score for the current player
     }
 
-
+/*
+Move ordering with selection sort? e.g. choose
+*/
     public void moveOrder(List<Move> list) {
-   //     list.sort();
+        list.sort(Comparator.comparingInt(move -> -moveValue(move)));
+    }
+    /**
+    * Returns an integer value for a move used for sorting.
+    */
+    public int moveValue(Move move) {
+       int value = 0;
+
+       if (move.moveType == MoveType.PROMOTION) {
+           value += 500_000;
+       }
+
+       if (move.resultWhiteInCheck || move.resultBlackInCheck) {
+           value += 1_000_000;
+       }
+
+       if (move.moveType == MoveType.CAPTURE) {
+           value += 100_000 + StaticEvaluation.evaluateExchange(move);
+       }
+
+       return value * 0;
     }
 
     // movst valuable victim/ least valuable agressor

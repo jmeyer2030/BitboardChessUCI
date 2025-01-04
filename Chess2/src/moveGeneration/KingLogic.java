@@ -35,6 +35,7 @@ public class KingLogic {
 		long result = 0L;
 		//queen side
 		if (((position.castleRights & (1 << 3)) != 0) &&
+				(((position.pieces[3] & position.pieceColors[0]) & (1L << 0)) != 0L) &&
 				((position.occupancy & (1L << 1)) == 0L) &&
 				((position.occupancy & (1L << 2)) == 0L) &&
 				((position.occupancy & (1L << 3)) == 0L) &&
@@ -42,9 +43,10 @@ public class KingLogic {
 			result |= (1L << 2);
 		//king side
 		if (((position.castleRights & (1 << 2)) != 0) &&
+				(((position.pieces[3] & position.pieceColors[0]) & (1L << 7)) != 0L) &&
 				((position.occupancy & (1L << 5)) == 0L) &&
 				((position.occupancy & (1L << 6)) == 0L) &&
-				((position.pieceColors[0] & (1L << 0)) != 0L))
+				((position.pieceColors[0] & (1L << 7)) != 0L))
 			result |= (1L << 6);
 		return result;
 	}
@@ -53,6 +55,7 @@ public class KingLogic {
 		long result = 0L;
 		//queenside
 		if (((position.castleRights & (1 << 1)) != 0) &&
+				(((position.pieces[3] & position.pieceColors[1]) & (1L << 56)) != 0L) &&
 				((position.occupancy & (1L << 57)) == 0L) &&
 				((position.occupancy & (1L << 58)) == 0L) &&
 				((position.occupancy & (1L << 59)) == 0L) &&
@@ -60,6 +63,7 @@ public class KingLogic {
 			result |= (1L << 58);
 		//kingside
 		if (((position.castleRights & (1 << 0)) != 0) &&
+				(((position.pieces[3] & position.pieceColors[1]) & (1L << 63)) != 0L) &&
 				((position.occupancy & (1L << 61)) == 0L) &&
 				((position.occupancy & (1L << 62)) == 0L) &&
 				((position.pieceColors[1] & (1L << 63)) != 0L))

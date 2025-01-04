@@ -279,6 +279,8 @@ public class Position {
 						move.start == 63 ? 0b0000_1110 : 0b0000_1111)
 						: 0b0000_1111;
 
+		// Update castle rights for rook square move
+
 	    // Set en passant square
 	    enPassant = ((pieces[0] & destinationMask) != 0 && Math.abs(move.start - move.destination) == 16) ?
 	    	activePlayer == Color.WHITE ? move.destination - 8 : move.destination + 8 : 0;

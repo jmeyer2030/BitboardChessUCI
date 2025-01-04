@@ -198,7 +198,8 @@ public class StaticEvaluation {
 
    public static int evaluateExchange(Move move) {
         if (move.captureType == null) {
-          return -pieceValues[0][move.movePiece.ordinal()];
+          throw new IllegalStateException();
+          //return -pieceValues[0][move.movePiece.ordinal()];
         }
         return pieceValues[0][move.captureType.ordinal()] - pieceValues[0][move.movePiece.ordinal()];
    }

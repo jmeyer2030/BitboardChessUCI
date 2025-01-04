@@ -1,0 +1,4 @@
+Search results and times:
+
+depth 7, 15395 ms, 140 eval
+

@@ -120,7 +120,7 @@ public class Move {
         moveDescription += "CaptureType: " + this.captureType + " \n";
         moveDescription += "HalfMoveCount: " + this.halfMoveCount + " \n";
         moveDescription += "CastleRights: " + this.castleRights + " \n";
-        
+
         return moveDescription;
     }
 }
