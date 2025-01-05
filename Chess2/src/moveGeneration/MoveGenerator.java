@@ -48,6 +48,7 @@ public class MoveGenerator{
 	 * @return Move list List<Move>
 	 */
 	public static List<Move> generateStrictlyLegal(Position position) {
+		Position copy = new Position(position); //DEBUG CODE
 		List<Move> allMoves = generateAllMoves(position);
 		List<Move> legalMoves = allMoves.stream().filter(move -> {
 			moveUpdateChecks(move, position);
@@ -57,6 +58,9 @@ public class MoveGenerator{
 				return !move.resultBlackInCheck;
 			}
         }).collect(Collectors.toList());
+        if (!copy.equals(position)) {
+			throw new RuntimeException("COPY IS NOT EQUAL!!!");
+		}
 		return legalMoves;
 	}
 
@@ -66,13 +70,20 @@ public class MoveGenerator{
 	* @return Move list
 	*/
 	public static List<Move> generateAllMoves(Position position) {
+		Position copy = new Position(position);
 		List<Move> generatedMoves = new ArrayList<Move>();
 		generatedMoves.addAll(generatePawnMoves(position));
+		if (!copy.equals(position)) throw new RuntimeException("PAWNS");
 		generatedMoves.addAll(generateRookMoves(position));
+		if (!copy.equals(position)) throw new RuntimeException("ROOKS");
 		generatedMoves.addAll(generateBishopMoves(position));
+		if (!copy.equals(position)) throw new RuntimeException("BISHOPS");
 		generatedMoves.addAll(generateKnightMoves(position));
+		if (!copy.equals(position)) throw new RuntimeException("KNIGHTS");
 		generatedMoves.addAll(generateQueenMoves(position));
+		if (!copy.equals(position)) throw new RuntimeException("QUEENS");
 		generatedMoves.addAll(generateKingMoves(position));
+		if (!copy.equals(position)) throw new RuntimeException("KINGS");
 		return generatedMoves;
 	}
 /*
@@ -432,12 +443,17 @@ public class MoveGenerator{
 	* Does check detection on a move
 	*/
 	public static void moveUpdateChecks(Move move, Position position) {
+		Position copy = new Position(position);
 		move.prevWhiteInCheck = position.whiteInCheck;
 		move.prevBlackInCheck = position.blackInCheck;
 		position.makeMove(move);
 		move.resultWhiteInCheck = kingInCheck(position, Color.WHITE);
 		move.resultBlackInCheck = kingInCheck(position, Color.BLACK);
 		position.unMakeMove(move);
+		if (!position.equals(copy)) {
+			System.out.println(move);
+			throw new RuntimeException("ok brol....");
+		}
 	}
 }
 

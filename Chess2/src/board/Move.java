@@ -69,7 +69,9 @@ public class Move {
         if (captureType == null) {
             System.out.println("CAPTURE WITH NO TARGET");
             position.printBoard();
+
             System.out.println(start + " -> " + destination);
+            System.out.println(movePiece);
 
         }
         return new Move(start, destination, MoveType.CAPTURE, null, captureType,

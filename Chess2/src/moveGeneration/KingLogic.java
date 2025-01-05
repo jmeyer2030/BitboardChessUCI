@@ -87,7 +87,7 @@ public class KingLogic {
 	 */
 	private long generateMoveBoard(int square) {
 		assert square < 64;
-		assert square > 0;
+		assert square >= 0;
 		int rankLoc = square / 8;
 		int fileLoc = square % 8;
 		

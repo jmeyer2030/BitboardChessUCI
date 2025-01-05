@@ -1,6 +1,8 @@
 package engine;
 
+import board.Color;
 import board.Move;
+import board.MoveType;
 import board.Position;
 
 public class StaticEvaluation {
@@ -193,11 +195,18 @@ public class StaticEvaluation {
        if (mgPhase > 24) mgPhase = 24;
 
        return (mgScore * mgPhase + egScore * egPhase) / 24;
-
    }
 
-   public static int evaluateExchange(Move move) {
+    public static int negamaxEvaluatePosition(Position position) {
+        if (position.activePlayer == Color.BLACK)
+            return -evaluatePosition(position);
+        return evaluatePosition(position);
+    }
+
+   public static int evaluateExchange(Move move) throws IllegalStateException{
+        assert move.moveType == MoveType.CAPTURE;
         if (move.captureType == null) {
+            System.out.println(move);
           throw new IllegalStateException();
           //return -pieceValues[0][move.movePiece.ordinal()];
         }

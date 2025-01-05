@@ -295,7 +295,7 @@ public class Position {
 	    whiteInCheck = move.resultWhiteInCheck;
 	    blackInCheck = move.resultBlackInCheck;
 
-	    looseValidatePosition(move);
+	    //looseValidatePosition(move);
 	}
 
 	/**
@@ -526,6 +526,42 @@ public class Position {
 		System.out.println("FullMoveCount: " + fullMoveCount);
 	}
 
+	public void printDisplayBoard() {
+		if (!validPosition())
+			throw new IllegalStateException();
+		char[] board = new char[64];
+		char[] pieceSymbols = {'p', 'n', 'b', 'r', 'q', 'k'};
+		Arrays.fill(board, '*');
+		for (int i = 0; i < 6; i++) {
+			long currentPieceType = pieces[i];
+			while (currentPieceType != 0L) {
+				int loc = Long.numberOfTrailingZeros(currentPieceType);
+				currentPieceType &= (currentPieceType - 1);
+				board[loc] = pieceSymbols[i];
+			}
+		}
+
+		long shiftCase = pieceColors[0];
+		while (shiftCase != 0L) {
+			int loc = Long.numberOfTrailingZeros(shiftCase);
+			shiftCase &= (shiftCase - 1);
+			board[loc] = Character.toUpperCase(board[loc]);
+		}
+
+		String singleLine = new String(board);
+
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < singleLine.length(); i += 8) {
+			if (i + 8 <= singleLine.length()) {
+				result.append(singleLine, i, i + 8).append("\n");
+			} else {
+				result.append(singleLine.substring(i)).append("\n");
+			}
+		}
+
+		System.out.println(result.toString());
+	}
+
 
 	protected void looseValidatePosition(Move move) {
 		long generatedOccupancy = 0L | pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
@@ -534,7 +570,13 @@ public class Position {
 			printBoard();
 			System.out.println(move.toString());
 		}
+	}
 
-
+	public boolean validPosition() {
+		long generatedOccupancy = 0L | pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
+		if (occupancy != generatedOccupancy) {
+			return false;
+		}
+		return true;
 	}
 }
