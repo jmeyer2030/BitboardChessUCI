@@ -345,8 +345,6 @@ public class Position {
 				int enPassantCaptureSquare = activePlayer == Color.WHITE ? move.destination - 8 : move.destination + 8;
 				long enPassantCaptureMask = 1L << enPassantCaptureSquare;
 
-				this.enPassant = move.destination;
-
 				//add the pawn back
 				occupancy ^= enPassantCaptureMask; //add the pawn back
 				pieces[0] ^= enPassantCaptureMask;
@@ -355,7 +353,7 @@ public class Position {
 				break;
 			case PROMOTION:
 				//remove promoted piece (if promotion type != capture type
-				if (move.promotionType != move.captureType) // CONSIDER FOR ISSUES????
+				if (move.promotionType != move.captureType)
 					pieces[move.promotionType.ordinal()] &= ~destinationMask;
 				//at this point, the promotion piece (QKRB) is back on the start square and the occupancy/color is correct
 				//just need to remove the piece and add a pawn.
@@ -563,9 +561,11 @@ public class Position {
 		System.out.println(result.toString());
 	}
 
-
+	/**
+	*
+	*/
 	protected void looseValidatePosition(Move move) {
-		long generatedOccupancy = 0L | pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
+		long generatedOccupancy = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
 		if (occupancy != generatedOccupancy) {
 			System.out.println("Occupancy doesn't match!!!");
 			printBoard();
@@ -574,7 +574,7 @@ public class Position {
 	}
 
 	public boolean validPosition() {
-		long generatedOccupancy = 0L | pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
+		long generatedOccupancy = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
 		if (occupancy != generatedOccupancy) {
 			return false;
 		}

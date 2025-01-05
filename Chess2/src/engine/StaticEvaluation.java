@@ -197,20 +197,27 @@ public class StaticEvaluation {
        return (mgScore * mgPhase + egScore * egPhase) / 24;
    }
 
+    /**
+    * Returns the evaluation from the perspective of the active player
+    * @param position position
+    * @return evaluation from active player's perspective
+    */
     public static int negamaxEvaluatePosition(Position position) {
         if (position.activePlayer == Color.BLACK)
             return -evaluatePosition(position);
         return evaluatePosition(position);
     }
 
-   public static int evaluateExchange(Move move) throws IllegalStateException{
+    /**
+    * Returns the net value of a capture if the capturer is then taken
+    * @param move
+    * @return exchange evaluation
+    */
+    public static int evaluateExchange(Move move) {
         assert move.moveType == MoveType.CAPTURE;
-        if (move.captureType == null) {
-            System.out.println(move);
-          throw new IllegalStateException();
-          //return -pieceValues[0][move.movePiece.ordinal()];
-        }
+        assert move.captureType != null;
+
         return pieceValues[0][move.captureType.ordinal()] - pieceValues[0][move.movePiece.ordinal()];
-   }
+    }
 
 }

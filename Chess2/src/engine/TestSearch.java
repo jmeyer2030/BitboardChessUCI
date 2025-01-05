@@ -22,12 +22,5 @@ public class TestSearch {
         long elapsed = end - start;
         System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\n");
 
-
-        System.out.println("Minimax: ");
-        start = System.currentTimeMillis();
-        result = minimax.minimax(position, true, depth, minimax.NEGINFINITY, minimax.POSINFINITY);
-        end = System.currentTimeMillis();
-        elapsed = end - start;
-        System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value);
     }
 }

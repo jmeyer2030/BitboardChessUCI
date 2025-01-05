@@ -72,59 +72,6 @@ public class minimax {
         return searchResults.get(searchResults.size() - 1);
     }
 
-
-    public static MoveValue minimax(Position position, boolean isMaximizingPlayer, int depth, int alpha, int beta) {
-        if (depth == 0) {
-            //return new MoveValue(quiesce(alpha, beta, position, isMaximizingPlayer), null);
-            return new MoveValue(StaticEvaluation.evaluatePosition(position), null);
-        }
-
-        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
-        if (children.size() == 0) {
-            if (position.rule50 >= 50)
-                return new MoveValue(0, null);
-            if (MoveGenerator.kingInCheck(position, Color.WHITE))
-                return new MoveValue(NEGINFINITY + 1000 - depth, null); //prefer a higher depth (mate earlier)
-            return new MoveValue(POSINFINITY - 1000 + depth, null);// prefer a higher depth
-        }
-        moveOrder(children);
-        MoveValue bestMoveValue;
-
-        if (isMaximizingPlayer) {
-            bestMoveValue = new MoveValue(NEGINFINITY, null);
-            for (Move move : children) {
-                //if (depth == 6)
-                //    System.out.println(move);
-                position.makeMove(move);
-                MoveValue value = minimax(position, !isMaximizingPlayer, depth - 1, alpha, beta);
-                if (value.value > bestMoveValue.value) {
-                    bestMoveValue.value = value.value;
-                    bestMoveValue.bestMove = move;
-                }
-                alpha = Math.max(alpha, bestMoveValue.value);
-                position.unMakeMove(move);
-                if (beta <= alpha)
-                    break;
-            }
-        } else {
-            bestMoveValue = new MoveValue(Integer.MAX_VALUE, null);
-            for (Move move : children) {
-                position.makeMove(move);
-                MoveValue value = minimax(position, !isMaximizingPlayer, depth - 1, alpha, beta);
-                if (value.value < bestMoveValue.value) {
-                    bestMoveValue.value = value.value;
-                    bestMoveValue.bestMove = move;
-                }
-                beta = Math.min(beta, bestMoveValue.value);
-                position.unMakeMove(move);
-                if (beta <= alpha)
-                    break;
-            }
-        }
-
-        return bestMoveValue;
-    }
-
     public static MoveValue negaMax(int alpha, int beta, int depthLeft, Position position) {
         if (depthLeft == 0) {
             return new MoveValue(quiescenceSearch(alpha, beta, position), null);
@@ -145,7 +92,7 @@ public class minimax {
 
         if (children.size() == 0) { // Game ended by no moves to make
             if (position.whiteInCheck) // Black wins by checkmate
-                return new MoveValue(NEGINFINITY + 1000 - depthLeft, null); //prefer a higher depth (mate earlier)
+                return new MoveValue(POSINFINITY + 1000 - depthLeft, null); //prefer a higher depth (mate earlier)
             if (position.blackInCheck) // White wins by checkmate
                 return new MoveValue(POSINFINITY - 1000 + depthLeft, null);// prefer a higher depth
             return new MoveValue(0, null); // Stalemate
@@ -222,6 +169,95 @@ public class minimax {
         return bestValue;
     }
 
+
+/*
+Move ordering with selection sort? e.g. choose
+*/
+    public static void moveOrder(List<Move> list) {
+        list.sort(Comparator.comparingInt(move -> -moveValue(move)));
+    }
+    /**
+    * Returns an integer value for a move used for sorting.
+    */
+    public static int moveValue(Move move) {
+       int value = 0;
+
+       if (move.moveType == MoveType.PROMOTION) {
+           value += 500_000;
+       }
+
+       if (move.resultWhiteInCheck || move.resultBlackInCheck) {
+           value += 1_000_000;
+       }
+
+       if (move.moveType == MoveType.CAPTURE) {
+           assert move.captureType != null;
+           value += 100_000 + StaticEvaluation.evaluateExchange(move);
+       }
+
+       return value;
+    }
+
+    // most valuable victim/ least valuable agressor
+    public static void mVVLVA(List<Move> list) {
+        list.sort(Comparator.comparingInt(move -> -(StaticEvaluation.evaluateExchange(move))));
+    }
+
+
+
+}
+/* Legacy Code:
+    public static MoveValue minimax(Position position, boolean isMaximizingPlayer, int depth, int alpha, int beta) {
+        if (depth == 0) {
+            //return new MoveValue(quiesce(alpha, beta, position, isMaximizingPlayer), null);
+            return new MoveValue(StaticEvaluation.evaluatePosition(position), null);
+        }
+
+        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
+        if (children.size() == 0) {
+            if (position.rule50 >= 50)
+                return new MoveValue(0, null);
+            if (MoveGenerator.kingInCheck(position, Color.WHITE))
+                return new MoveValue(NEGINFINITY + 1000 - depth, null); //prefer a higher depth (mate earlier)
+            return new MoveValue(POSINFINITY - 1000 + depth, null);// prefer a higher depth
+        }
+        moveOrder(children);
+        MoveValue bestMoveValue;
+
+        if (isMaximizingPlayer) {
+            bestMoveValue = new MoveValue(NEGINFINITY, null);
+            for (Move move : children) {
+                //if (depth == 6)
+                //    System.out.println(move);
+                position.makeMove(move);
+                MoveValue value = minimax(position, !isMaximizingPlayer, depth - 1, alpha, beta);
+                if (value.value > bestMoveValue.value) {
+                    bestMoveValue.value = value.value;
+                    bestMoveValue.bestMove = move;
+                }
+                alpha = Math.max(alpha, bestMoveValue.value);
+                position.unMakeMove(move);
+                if (beta <= alpha)
+                    break;
+            }
+        } else {
+            bestMoveValue = new MoveValue(Integer.MAX_VALUE, null);
+            for (Move move : children) {
+                position.makeMove(move);
+                MoveValue value = minimax(position, !isMaximizingPlayer, depth - 1, alpha, beta);
+                if (value.value < bestMoveValue.value) {
+                    bestMoveValue.value = value.value;
+                    bestMoveValue.bestMove = move;
+                }
+                beta = Math.min(beta, bestMoveValue.value);
+                position.unMakeMove(move);
+                if (beta <= alpha)
+                    break;
+            }
+        }
+
+        return bestMoveValue;
+    }
     public static int quiesce(int alpha, int beta, Position position, boolean isMaximizingPlayer) {
         // Perform static evaluation (stand pat)
         int standPat = StaticEvaluation.negamaxEvaluatePosition(position);
@@ -279,42 +315,4 @@ public class minimax {
         return isMaximizingPlayer ? alpha : beta; // Return best score for the current player
     }
 
-/*
-Move ordering with selection sort? e.g. choose
 */
-    public static void moveOrder(List<Move> list) {
-        list.sort(Comparator.comparingInt(move -> -moveValue(move)));
-    }
-    /**
-    * Returns an integer value for a move used for sorting.
-    */
-    public static int moveValue(Move move) {
-       int value = 0;
-
-       if (move.moveType == MoveType.PROMOTION) {
-           value += 500_000;
-       }
-
-       if (move.resultWhiteInCheck || move.resultBlackInCheck) {
-           value += 1_000_000;
-       }
-
-       if (move.moveType == MoveType.CAPTURE) {
-           if (move.captureType == null) {
-               System.out.println("null capture type found");
-               System.out.println(move);
-           }
-           value += 100_000 + StaticEvaluation.evaluateExchange(move);
-       }
-
-       return value;
-    }
-
-    // most valuable victim/ least valuable agressor
-    public static void mVVLVA(List<Move> list) {
-        list.sort(Comparator.comparingInt(move -> -(StaticEvaluation.evaluateExchange(move))));
-    }
-
-
-
-}

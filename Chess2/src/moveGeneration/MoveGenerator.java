@@ -8,7 +8,6 @@ import board.Color;
 import board.Move;
 import board.PieceType;
 import board.Position;
-import system.BBO;
 
 
 public class MoveGenerator{
