@@ -452,6 +452,8 @@ public class MoveGenerator{
 		position.unMakeMove(move);
 		if (!position.equals(copy)) {
 			System.out.println(move);
+			position.printBoard();
+			copy.printBoard();
 			throw new RuntimeException("ok brol....");
 		}
 	}

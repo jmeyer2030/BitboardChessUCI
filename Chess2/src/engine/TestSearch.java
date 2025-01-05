@@ -11,7 +11,7 @@ public class TestSearch {
         FEN fen = new FEN("r1bqkb1r/3pnpp1/p3p2p/4B3/3P4/2N1P3/PP3PPP/R2QKB1R w KQkq - 1 11");
         Position position = new Position(fen);
         //Position position = new Position();
-        int depth = 6;
+        int depth = 4;
 
         position.printDisplayBoard();
 

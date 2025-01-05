@@ -46,7 +46,7 @@ public class minimax {
             Position copy = new Position(position);
 
             Callable<MoveValue> task = () -> {
-               MoveValue result = minimax(copy, isMaximizingPlayer, finalDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
+               MoveValue result = negaMax(NEGINFINITY, POSINFINITY, finalDepth, copy);
                return result;
             };
 

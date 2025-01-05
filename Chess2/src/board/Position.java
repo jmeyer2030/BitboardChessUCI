@@ -354,8 +354,9 @@ public class Position {
 				pieceColors[1] |= activePlayer == Color.WHITE ? enPassantCaptureMask : 0L;
 				break;
 			case PROMOTION:
-				//remove promoted piece
-				pieces[move.promotionType.ordinal()] &= ~destinationMask;
+				//remove promoted piece (if promotion type != capture type
+				if (move.promotionType != move.captureType) // CONSIDER FOR ISSUES????
+					pieces[move.promotionType.ordinal()] &= ~destinationMask;
 				//at this point, the promotion piece (QKRB) is back on the start square and the occupancy/color is correct
 				//just need to remove the piece and add a pawn.
 				pieces[move.promotionType.ordinal()] &= ~startMask;
