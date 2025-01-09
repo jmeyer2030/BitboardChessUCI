@@ -70,9 +70,11 @@ public abstract class MagicBitboard implements LogicInterface{
 	 * @return attackBoard of all attacks
 	 */
 	public long getAttackBoard(int square, Position position) {
-		long blockerBoard = position.occupancy & getBlockerMasks()[square];
-		int index = getIndexForBlocker(blockerBoard, square);
-		return getMoveBoards().get(square).get(index);
+
+		//long blockerBoard = position.occupancy & getBlockerMasks()[square];
+		//int index = getIndexForBlocker(blockerBoard, square);
+		//return getMoveBoards().get(square).get(index);
+		return getMoveBoards().get(square).get(getIndexForBlocker(position.occupancy & getBlockerMasks()[square], square));
 	}
 	
 	public long getAttackBoard(int square, long occupancy) {

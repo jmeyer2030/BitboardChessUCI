@@ -55,3 +55,13 @@ PERFT 6 Is good?
 PERFT 7:
 3,195,905,546 in 243195
 3,195,905,546 in 237784
+
+
+perft 6 speed
+27s,
+
+changing getattackboard with no variables, 24.50s
+
+changing square attacked by to get rid of ifs, 26.94s
+
+removing some debugging code 20.05s

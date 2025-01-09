@@ -1,4 +1,4 @@
-package testing;
+package testing.testMoveGeneration;
 
 import org.junit.jupiter.api.BeforeEach;
 

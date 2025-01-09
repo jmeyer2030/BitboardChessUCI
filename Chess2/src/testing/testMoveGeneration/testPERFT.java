@@ -1,11 +1,14 @@
-package moveGeneration;
+package testing.testMoveGeneration;
 
 import engine.StaticEvaluation;
 import board.*;
+import moveGeneration.MoveGenerator;
+import zobrist.ZobristHashing;
 
 public class testPERFT {
     public static void main(String[] args) {
         new MoveGenerator();
+        ZobristHashing.initializeRandomNumbers();
 
         Position position = new Position();
         /*
@@ -18,7 +21,7 @@ public class testPERFT {
         position1.printBoard();
         */
         long start = System.currentTimeMillis();
-        int depth = 7;
+        int depth = 6;
 
         System.out.println(StaticEvaluation.evaluatePosition(position));
         Testing.perft(depth, position);

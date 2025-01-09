@@ -1,4 +1,4 @@
-package testing;
+package testing.testMoveGeneration;
 
 import board.FEN;
 import board.Position;

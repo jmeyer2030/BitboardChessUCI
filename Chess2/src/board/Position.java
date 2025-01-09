@@ -1,7 +1,7 @@
 package board;
 
 import moveGeneration.MoveGenerator;
-import moveGeneration.Testing;
+import testing.testMoveGeneration.Testing;
 
 import java.util.Arrays;
 

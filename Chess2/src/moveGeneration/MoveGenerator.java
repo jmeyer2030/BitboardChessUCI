@@ -93,7 +93,6 @@ public class MoveGenerator{
 	* @param position
 	* @return Move list
 	*/
-
 	private static List<Move> generatePawnMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
 		long pawnList = position.pieces[0] & position.pieceColors[position.activePlayer.ordinal()];
@@ -406,9 +405,9 @@ public class MoveGenerator{
 	*/
 	public static boolean kingInCheck(Position position, Color kingColor) {
 		int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & position.pieceColors[kingColor.ordinal()]);
-		if (kingLoc == 64) {
-			return true;
-		}
+		//if (kingLoc == 64) { I'm not sure what this code validates?
+		//	return true;
+		//}
 		return squareAttackedBy(position, kingLoc, Color.flipColor(kingColor));
 	}
 
@@ -420,41 +419,27 @@ public class MoveGenerator{
 	* @return squareAttacked if square is attacked by specified color
 	*/
 	public static boolean squareAttackedBy(Position position, int square, Color attackColor) {
-	long potentialAttackers = position.pieceColors[attackColor.ordinal()];
-		if ((pl.getAttackBoard(square, Color.flipColor(attackColor)) & potentialAttackers & position.pieces[0]) != 0) {
-			return true;
-		}
-		if ((bl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) {
-			return true;
-		}
-		if ((rl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) {
-			return true;
-		}
-		if ((nl.getAttackBoard(square, position) & potentialAttackers & position.pieces[1]) != 0) {
-			return true;
-		}
-		if ((kl.getKingAttacks(square) & potentialAttackers & position.pieces[5]) != 0) {
+		long potentialAttackers = position.pieceColors[attackColor.ordinal()];
+		if (((pl.getAttackBoard(square, Color.flipColor(attackColor)) & potentialAttackers & position.pieces[0]) != 0) ||
+			 ((bl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) ||
+			 ((rl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) ||
+			 ((nl.getAttackBoard(square, position) & potentialAttackers & position.pieces[1]) != 0) ||
+			 ((kl.getKingAttacks(square) & potentialAttackers & position.pieces[5]) != 0)) {
 			return true;
 		}
 		return false;
 	}
+
 	/**
 	* Does check detection on a move
 	*/
 	public static void moveUpdateChecks(Move move, Position position) {
-		Position copy = new Position(position);
 		move.prevWhiteInCheck = position.whiteInCheck;
 		move.prevBlackInCheck = position.blackInCheck;
 		position.makeMove(move);
 		move.resultWhiteInCheck = kingInCheck(position, Color.WHITE);
 		move.resultBlackInCheck = kingInCheck(position, Color.BLACK);
 		position.unMakeMove(move);
-		if (!position.equals(copy)) {
-			System.out.println(move);
-			position.printBoard();
-			copy.printBoard();
-			throw new RuntimeException("ok brol....");
-		}
 	}
 }
 

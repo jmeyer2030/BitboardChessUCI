@@ -2,7 +2,6 @@ package moveGeneration;
 
 import board.Color;
 import board.Position;
-import system.BBO;
 
 public class KingLogic {
 	

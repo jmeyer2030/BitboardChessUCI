@@ -1,7 +1,20 @@
 package board;
-import moveGeneration.Testing;
+import testing.testMoveGeneration.Testing;
 
 public class Move {
+/*
+* 0-5 : start
+* 6-11 : end
+* 12-14 : moveType
+* 15-16 : promotionType
+* 17-19 : moved piece
+* 20-22 : captured piece
+*
+*
+*
+*
+*/
+//0-5 (start) 6-11 (end) 12-14 (moveType) 15-
 
 /*
 * Fields

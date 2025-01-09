@@ -1,6 +1,6 @@
-package moveGeneration;
+package testing.testMoveGeneration;
 import board.*;
-import testing.TestPositions;
+import moveGeneration.MoveGenerator;
 
 public class TestMakeUnmake {
     public static void main(String[] args) {

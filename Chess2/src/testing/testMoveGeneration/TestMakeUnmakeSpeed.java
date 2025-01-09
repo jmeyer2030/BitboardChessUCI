@@ -1,15 +1,11 @@
-package moveGeneration;
+package testing.testMoveGeneration;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
-import board.FEN;
 import board.Move;
 import board.Position;
-import system.BBO;
+import moveGeneration.MoveGenerator;
+
 public class TestMakeUnmakeSpeed {
 	public static void main(String[] args) {
 		new MoveGenerator();

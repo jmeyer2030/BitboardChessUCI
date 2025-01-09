@@ -1,8 +1,4 @@
-package moveGeneration;
-
-import board.Position;
-import moveGeneration.MoveGenerator;
-import moveGeneration.Testing;
+package testing.testMoveGeneration;
 
 public class DebugPerft {
     public static void main(String[] args) {
@@ -64,6 +60,5 @@ public class DebugPerft {
                 "e1e2: 34\n" +
                 "e1g1: 34";
         Testing.perftDiff(stockFishPerft, myPerft);
-
     }
 }

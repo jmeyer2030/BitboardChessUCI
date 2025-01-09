@@ -1,7 +1,8 @@
-package engine;
+package testing.testEngine;
 
 import board.FEN;
 import board.Position;
+import engine.minimax;
 import moveGeneration.MoveGenerator;
 
 public class TestSearch {

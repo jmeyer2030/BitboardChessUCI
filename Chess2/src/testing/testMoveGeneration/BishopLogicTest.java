@@ -1,4 +1,4 @@
-package testing;
+package testing.testMoveGeneration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
