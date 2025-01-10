@@ -99,7 +99,6 @@ public class ZobristHashing {
         if (position.enPassant != 0) {
             zobrist ^= enPassant[position.enPassant / 8]; // file of the enPassant square
         }
-
         return zobrist;
     }
 }

@@ -3,6 +3,8 @@ package userInterface;
 import board.Color;
 import board.Position;
 import moveGeneration.MoveGenerator;
+import zobrist.ZobristHashing;
+
 import javax.swing.*;
 
 public class GUIMain {
@@ -35,6 +37,7 @@ public class GUIMain {
         	assert gameSettings != null;
 			gameSettings.print();
 			new MoveGenerator();
+			ZobristHashing.initializeRandomNumbers();
 			Position position = new Position();
 			SwingUtilities.invokeLater(() -> new GameGUI(position, gameSettings));
 		} catch (Exception e) {

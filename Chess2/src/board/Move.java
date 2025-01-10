@@ -138,4 +138,17 @@ public class Move {
 
         return moveDescription;
     }
+
+    public boolean equals(Move move) {
+        boolean equal = true;
+        equal &= this.start == move.start;
+        equal &= this.destination == move.destination;
+        equal &= this.moveType == move.moveType;
+        equal &= this.promotionType == move.promotionType;
+        equal &= this.captureType == move.captureType;
+        equal &= this.halfMoveCount == move.halfMoveCount;
+        equal &= this.movePiece == move.movePiece;
+
+        return equal;
+    }
 }

@@ -3,28 +3,49 @@ package testing.testMoveGeneration;
 import engine.StaticEvaluation;
 import board.*;
 import moveGeneration.MoveGenerator;
+import zobrist.TranspositionTable;
 import zobrist.ZobristHashing;
 
 public class testPERFT {
     public static void main(String[] args) {
+        // Initialize requisite data
         new MoveGenerator();
         ZobristHashing.initializeRandomNumbers();
 
-        Position position = new Position();
-        /*
-        FEN fenP = new FEN("rnbqk2r/pppp1ppp/7n/2b1p3/4P3/3B1N2/PPPP1PPP/RNBQK2R w KQkq - 4 4");
-        position = new Position(fenP);
-        position.makeMove(new Move(4, 6, MoveType.CASTLE, null, null, position.rule50, position.castleRights, PieceType.KING, position.enPassant));
-        position.printBoard();
-        FEN fenP2 = new FEN("rnbqk2r/pppp1ppp/7n/2b1p3/4P3/3B1N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4");
-        Position position1 = new Position(fenP2);
-        position1.printBoard();
-        */
-        long start = System.currentTimeMillis();
-        int depth = 6;
+        // Change this variable
+        int depth = 7;
+        boolean useTTs = true;
 
-        System.out.println(StaticEvaluation.evaluatePosition(position));
-        Testing.perft(depth, position);
+        perftStartingPosition(depth, useTTs);
+        //perftFromFen("", depth, useTTs);
+    }
+
+    public static void perftStartingPosition(int depth, boolean useTTs) {
+        Position position = new Position();
+        long start = System.currentTimeMillis();
+
+        if (useTTs) {
+            Testing.ttPerft(depth, position);
+        } else {
+            Testing.perft(depth, position);
+        }
+
+        long end = System.currentTimeMillis();
+
+        System.out.println("Total time: " + (end - start));
+    }
+
+    public static void perftFromFen(String fen, int depth, boolean useTTs) {
+        FEN fenP = new FEN(fen);
+        Position position = new Position(fenP);
+        long start = System.currentTimeMillis();
+
+         if (useTTs) {
+             Testing.ttPerft(depth, position);
+         } else {
+             Testing.perft(depth, position);
+         }
+
         long end = System.currentTimeMillis();
 
         System.out.println("Total time: " + (end - start));

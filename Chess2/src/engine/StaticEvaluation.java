@@ -159,7 +159,8 @@ public class StaticEvaluation {
            -74, -35, -18, -18, -11,  15,   4, -17,
     };
 
-    public static int gameStageInc[] = {0,0,1,1,1,1,2,2,4,4,0,0};
+    public static int[] gameStageInc = {0,1,1,2,4,0,0};
+    //public static int[] gameStageInc = {0,0,1,1,1,1,2,2,4,4,0,0};
 
     public static final int[][] mgTables = {mgPawnTable, mgKnightTable, mgBishopTable, mgRookTable, mgQueenTable, mgKingTable};
     public static final int[][] egTables = {egPawnTable, egKnightTable, egBishopTable, egRookTable, egQueenTable, egKingTable};

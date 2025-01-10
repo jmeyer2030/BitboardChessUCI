@@ -10,6 +10,8 @@ import board.MoveType;
 import board.Position;
 import moveGeneration.MoveGenerator;
 import board.Color;
+import zobrist.TranspositionTable;
+import zobrist.ZobristHashing;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +32,18 @@ public class minimax {
         }
     }
 
+    public static void repeatedttNegaMax(Position position, int depth) {
+        for (int i = 1; i <= depth; i++) {
+            ttNegaMax(NEGINFINITY, POSINFINITY, depth, position);
+        }
+    }
+
+    public static void repeatedNegaMax(Position position, int depth) {
+        for (int i = 1; i <= depth; i++) {
+            negaMax(NEGINFINITY, POSINFINITY, depth, position);
+        }
+    }
+
 
     public static MoveValue iterativeDeepening(Position position, long limitMillis) {
         boolean isMaximizingPlayer = position.activePlayer == Color.WHITE;
@@ -46,7 +60,7 @@ public class minimax {
             Position copy = new Position(position);
 
             Callable<MoveValue> task = () -> {
-               MoveValue result = negaMax(NEGINFINITY, POSINFINITY, finalDepth, copy);
+               MoveValue result = ttNegaMax(NEGINFINITY, POSINFINITY, finalDepth, copy);
                return result;
             };
 
@@ -72,23 +86,36 @@ public class minimax {
         return searchResults.get(searchResults.size() - 1);
     }
 
-    public static MoveValue negaMax(int alpha, int beta, int depthLeft, Position position) {
+    public static MoveValue ttNegaMax(int alpha, int beta, int depthLeft, Position position) {
+        int alphaOrig = alpha;
+
         if (depthLeft == 0) {
             return new MoveValue(quiescenceSearch(alpha, beta, position), null);
-            //return new MoveValue(StaticEvaluation.negamaxEvaluatePosition(position), null);
         }
+
+        long hash = ZobristHashing.computeZobrist(position);
+        TranspositionTable.TTElement ttEntry = TranspositionTable.getElement(hash);
+
+        if (ttEntry != null && ttEntry.zobristHash == hash && ttEntry.depth >= depthLeft) {
+            if (ttEntry.nodeType == NodeType.EXACT) {
+                return new MoveValue(ttEntry.score, ttEntry.bestMove);
+            } else if (ttEntry.nodeType == NodeType.LOWER_BOUND) {
+                alpha = Math.max(alpha, ttEntry.score);
+            } else {
+                beta = Math.min(beta, ttEntry.score);
+            }
+
+            if (alpha > beta) {
+                return new MoveValue(ttEntry.score, ttEntry.bestMove);
+            }
+        }
+
 
         if (position.rule50 >= 50)
             return new MoveValue(0, null);
-        Position copy = new Position(position);
+
+
         List<Move> children = MoveGenerator.generateStrictlyLegal(position);
-        List<Move> childrenCopy = MoveGenerator.generateStrictlyLegal(position);
-        //System.out.println("position changes?" + position.equals(copy));
-        if (!position.equals(copy)) {
-           System.out.println("Positions not equal!");
-           position.printBoard();
-           copy.printBoard();
-        }
 
         if (children.size() == 0) { // Game ended by no moves to make
             if (position.whiteInCheck) // Black wins by checkmate
@@ -98,28 +125,79 @@ public class minimax {
             return new MoveValue(0, null); // Stalemate
         }
 
-        try {
-            moveOrder(children);
-        } catch (Exception e) {
-            System.out.println("valid pos? " + position.validPosition());
-            position.printDisplayBoard();
-            position.printBoard();
-            System.out.println("children copy");
-            System.out.println(childrenCopy.size());
-            //childrenCopy.stream().filter(move -> move.moveType == MoveType.CAPTURE).forEach(move -> System.out.println(move));
-            childrenCopy.stream().filter(move -> move.start == 28).forEach(move -> System.out.println(move));
-            System.out.println("children");
-            System.out.println(children.size());
-            //children.stream().filter(move -> move.moveType == MoveType.CAPTURE).forEach(move -> System.out.println(move));
-            children.stream().filter(move -> move.start == 28).forEach(move -> System.out.println(move));
-            //MoveGenerator.generateStrictlyLegal(position).stream().filter(move -> move.moveType == MoveType.CAPTURE).forEach(move -> System.out.println(move));
-            throw new IllegalStateException();
-        }
+        moveOrder(children, hash);
 
         MoveValue bestMoveValue = new MoveValue(NEGINFINITY, null);
 
         for (Move move : children) {
             position.makeMove(move);
+
+            int score = -negaMax(-beta, -alpha, depthLeft - 1, position).value;
+            position.unMakeMove(move);
+
+            // Update best move when score is better
+            if (score > bestMoveValue.value) {
+                bestMoveValue.value = score;
+                bestMoveValue.bestMove = move;
+            }
+
+            // Update alpha when score is better
+            if (score > alpha) {
+                alpha = score;
+            }
+            // Prune when alpha >= beta
+            if (alpha >= beta) {
+                break;
+            }
+        }
+
+        ttEntry = new TranspositionTable.TTElement();
+        ttEntry.score = bestMoveValue.value;
+        ttEntry.depth = depthLeft;
+        ttEntry.age = position.rule50;
+        ttEntry.zobristHash = hash;
+        ttEntry.bestMove = bestMoveValue.bestMove;
+
+        if (bestMoveValue.value <= alphaOrig) {
+            ttEntry.nodeType = NodeType.UPPER_BOUND;
+        } else if (bestMoveValue.value >= beta) {
+            ttEntry.nodeType = NodeType.LOWER_BOUND;
+        } else {
+            ttEntry.nodeType = NodeType.EXACT;
+        }
+
+        TranspositionTable.tt[TranspositionTable.getTTIndex(hash)] = ttEntry;
+
+        return bestMoveValue;
+    }
+
+    public static MoveValue negaMax(int alpha, int beta, int depthLeft, Position position) {
+        if (depthLeft == 0) {
+            return new MoveValue(quiescenceSearch(alpha, beta, position), null);
+            //return new MoveValue(StaticEvaluation.negamaxEvaluatePosition(position), null);
+        }
+
+        if (position.rule50 >= 50)
+            return new MoveValue(0, null);
+
+
+        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
+
+        if (children.size() == 0) { // Game ended by no moves to make
+            if (position.whiteInCheck) // Black wins by checkmate
+                return new MoveValue(POSINFINITY + 1000 - depthLeft, null); //prefer a higher depth (mate earlier)
+            if (position.blackInCheck) // White wins by checkmate
+                return new MoveValue(POSINFINITY - 1000 + depthLeft, null);// prefer a higher depth
+            return new MoveValue(0, null); // Stalemate
+        }
+
+        moveOrder(children, 0);
+
+        MoveValue bestMoveValue = new MoveValue(NEGINFINITY, null);
+
+        for (Move move : children) {
+            position.makeMove(move);
+
             int score = -negaMax(-beta, -alpha, depthLeft - 1, position).value;
             position.unMakeMove(move);
 
@@ -173,14 +251,22 @@ public class minimax {
 /*
 Move ordering with selection sort? e.g. choose
 */
-    public static void moveOrder(List<Move> list) {
-        list.sort(Comparator.comparingInt(move -> -moveValue(move)));
+    public static void moveOrder(List<Move> list, long zobristHash) {
+        list.sort(Comparator.comparingInt(move -> -moveValue(move, zobristHash)));
     }
     /**
     * Returns an integer value for a move used for sorting.
     */
-    public static int moveValue(Move move) {
+    public static int moveValue(Move move, long zobristHash) {
        int value = 0;
+
+       TranspositionTable.TTElement element = TranspositionTable.getElement(zobristHash);
+       if (element != null) {
+           if (element.bestMove.equals(move)) {
+               System.out.println("Found pv!");
+               value+= 10_000_000;
+           }
+       }
 
        if (move.moveType == MoveType.PROMOTION) {
            value += 500_000;
@@ -316,3 +402,22 @@ Move ordering with selection sort? e.g. choose
     }
 
 */
+/*
+        try {
+            moveOrder(children);
+        } catch (Exception e) {
+            System.out.println("valid pos? " + position.validPosition());
+            position.printDisplayBoard();
+            position.printBoard();
+            System.out.println("children copy");
+            System.out.println(childrenCopy.size());
+            //childrenCopy.stream().filter(move -> move.moveType == MoveType.CAPTURE).forEach(move -> System.out.println(move));
+            childrenCopy.stream().filter(move -> move.start == 28).forEach(move -> System.out.println(move));
+            System.out.println("children");
+            System.out.println(children.size());
+            //children.stream().filter(move -> move.moveType == MoveType.CAPTURE).forEach(move -> System.out.println(move));
+            children.stream().filter(move -> move.start == 28).forEach(move -> System.out.println(move));
+            //MoveGenerator.generateStrictlyLegal(position).stream().filter(move -> move.moveType == MoveType.CAPTURE).forEach(move -> System.out.println(move));
+            throw new IllegalStateException();
+        }
+        */

@@ -12,6 +12,7 @@ import zobrist.TranspositionTable;
 import zobrist.ZobristHashing;
 
 public class Testing {
+	public static long numTranspositions = 0;
 /*
  * Public methods
  */
@@ -54,6 +55,22 @@ public class Testing {
 		System.out.println("Total: " + total);
 	}
 
+	public static void ttPerft(int depth, Position position) {
+		if (depth < 1)
+			return;
+		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
+		long total = 0;
+		for (Move move : initial) {
+			Position copy = new Position(position);
+			copy.makeMove(move);
+			long thisMove = ttPerftRecursion(depth - 1, copy);
+			System.out.println(notation(move.start) + notation(move.destination) + ": " + thisMove);
+			total += thisMove;
+		}
+		System.out.println("Total: " + total);
+		System.out.println("Transpositions: " + numTranspositions);
+	}
+
 	/**
 	 * prints the board in Little-endian rank-file representation
 	 * @Param bitboard
@@ -93,22 +110,34 @@ public class Testing {
 		if (depth == 0)
 			return 1;
 		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
-			//Position appliedMove = new Position(position);
-			//appliedMove.makeMove(move);
 			position.makeMove(move);
-			//long hash = ZobristHashing.computeZobrist(position);
-			//long result;
-			//if (TranspositionTable.getPerftElement(hash) != null &&
-			//	TranspositionTable.getPerftElement(hash).zobristHash == hash &&
-			//	TranspositionTable.getPerftElement(hash).depth == depth) {
-			//	result = TranspositionTable.getPerftElement(hash).perftResult;
-			//} else {
-			//	result = perftRecursion(depth - 1, position);
-			//	TranspositionTable.addPerftElement(hash, depth, result);
-			//}
 			long result = perftRecursion(depth - 1, position);
 			position.unMakeMove(move);
 			return result;
 		}).sum();
 	}
+
+	private static long ttPerftRecursion(int depth, Position position) {
+		if (depth == 0)
+			return 1;
+		if (depth == 1)
+			return MoveGenerator.generateStrictlyLegal(position).size();
+		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
+			position.makeMove(move);
+			long hash = ZobristHashing.computeZobrist(position);
+			long result;
+			if (TranspositionTable.getPerftElement(hash) != null &&
+				TranspositionTable.getPerftElement(hash).zobristHash == hash &&
+				TranspositionTable.getPerftElement(hash).depth == depth) {
+				numTranspositions++;
+				result = TranspositionTable.getPerftElement(hash).perftResult;
+			} else {
+				result = ttPerftRecursion(depth - 1, position);
+				TranspositionTable.addPerftElement(hash, depth, result);
+			}
+			position.unMakeMove(move);
+			return result;
+		}).sum();
+	}
+
 }
