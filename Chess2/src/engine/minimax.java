@@ -32,19 +32,6 @@ public class minimax {
         }
     }
 
-    public static void repeatedttNegaMax(Position position, int depth) {
-        for (int i = 1; i <= depth; i++) {
-            ttNegaMax(NEGINFINITY, POSINFINITY, depth, position);
-        }
-    }
-
-    public static void repeatedNegaMax(Position position, int depth) {
-        for (int i = 1; i <= depth; i++) {
-            negaMax(NEGINFINITY, POSINFINITY, depth, position);
-        }
-    }
-
-
     public static MoveValue iterativeDeepening(Position position, long limitMillis) {
         boolean isMaximizingPlayer = position.activePlayer == Color.WHITE;
         List<MoveValue> searchResults = new ArrayList<MoveValue>();
@@ -69,6 +56,7 @@ public class minimax {
             try {
                 MoveValue result = future.get(limitMillis, TimeUnit.MILLISECONDS); // Timeout in seconds
                 searchResults.add(result);
+                System.out.println("Depth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove.toString());
             } catch (TimeoutException e) {
                 System.out.println("Function timed out!");
                 future.cancel(true); // Attempts to terminate the thread
@@ -77,7 +65,7 @@ public class minimax {
                 e.printStackTrace();
             }
 
-            System.out.println("Depth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove.toString());
+
         }
         executor.shutdown();
 
@@ -89,7 +77,17 @@ public class minimax {
     public static MoveValue ttNegaMax(int alpha, int beta, int depthLeft, Position position) {
         int alphaOrig = alpha;
 
-        if (depthLeft == 0) {
+        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
+
+        if (children.size() == 0) { // Game ended by no moves to make
+            if (position.whiteInCheck) // Black wins by checkmate
+                return new MoveValue(NEGINFINITY - depthLeft, null); //prefer a higher depth (mate earlier)
+            if (position.blackInCheck) // White wins by checkmate
+                return new MoveValue(NEGINFINITY - depthLeft, null);// prefer a higher depth
+            return new MoveValue(0, null); // Stalemate
+        }
+
+        if (depthLeft == 0) { // This should probably or with terminal
             return new MoveValue(quiescenceSearch(alpha, beta, position), null);
         }
 
@@ -104,26 +102,15 @@ public class minimax {
             } else {
                 beta = Math.min(beta, ttEntry.score);
             }
-
             if (alpha > beta) {
                 return new MoveValue(ttEntry.score, ttEntry.bestMove);
             }
         }
 
-
         if (position.rule50 >= 50)
             return new MoveValue(0, null);
 
 
-        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
-
-        if (children.size() == 0) { // Game ended by no moves to make
-            if (position.whiteInCheck) // Black wins by checkmate
-                return new MoveValue(POSINFINITY + 1000 - depthLeft, null); //prefer a higher depth (mate earlier)
-            if (position.blackInCheck) // White wins by checkmate
-                return new MoveValue(POSINFINITY - 1000 + depthLeft, null);// prefer a higher depth
-            return new MoveValue(0, null); // Stalemate
-        }
 
         moveOrder(children, hash);
 
@@ -132,7 +119,7 @@ public class minimax {
         for (Move move : children) {
             position.makeMove(move);
 
-            int score = -negaMax(-beta, -alpha, depthLeft - 1, position).value;
+            int score = -ttNegaMax(-beta, -alpha, depthLeft - 1, position).value;
             position.unMakeMove(move);
 
             // Update best move when score is better
@@ -171,53 +158,7 @@ public class minimax {
         return bestMoveValue;
     }
 
-    public static MoveValue negaMax(int alpha, int beta, int depthLeft, Position position) {
-        if (depthLeft == 0) {
-            return new MoveValue(quiescenceSearch(alpha, beta, position), null);
-            //return new MoveValue(StaticEvaluation.negamaxEvaluatePosition(position), null);
-        }
 
-        if (position.rule50 >= 50)
-            return new MoveValue(0, null);
-
-
-        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
-
-        if (children.size() == 0) { // Game ended by no moves to make
-            if (position.whiteInCheck) // Black wins by checkmate
-                return new MoveValue(POSINFINITY + 1000 - depthLeft, null); //prefer a higher depth (mate earlier)
-            if (position.blackInCheck) // White wins by checkmate
-                return new MoveValue(POSINFINITY - 1000 + depthLeft, null);// prefer a higher depth
-            return new MoveValue(0, null); // Stalemate
-        }
-
-        moveOrder(children, 0);
-
-        MoveValue bestMoveValue = new MoveValue(NEGINFINITY, null);
-
-        for (Move move : children) {
-            position.makeMove(move);
-
-            int score = -negaMax(-beta, -alpha, depthLeft - 1, position).value;
-            position.unMakeMove(move);
-
-            // Update best move when score is better
-            if (score > bestMoveValue.value) {
-                bestMoveValue.value = score;
-                bestMoveValue.bestMove = move;
-            }
-
-            // Update alpha when score is better
-            if (score > alpha) {
-                alpha = score;
-            }
-            // Prune when alpha >= beta
-            if (alpha >= beta) {
-                break;
-            }
-        }
-        return bestMoveValue;
-    }
 
     public static int quiescenceSearch(int alpha, int beta, Position position) {
         int standPat = StaticEvaluation.negamaxEvaluatePosition(position);
@@ -263,7 +204,6 @@ Move ordering with selection sort? e.g. choose
        TranspositionTable.TTElement element = TranspositionTable.getElement(zobristHash);
        if (element != null) {
            if (element.bestMove.equals(move)) {
-               System.out.println("Found pv!");
                value+= 10_000_000;
            }
        }
@@ -288,9 +228,70 @@ Move ordering with selection sort? e.g. choose
     public static void mVVLVA(List<Move> list) {
         list.sort(Comparator.comparingInt(move -> -(StaticEvaluation.evaluateExchange(move))));
     }
+/*
+* Testing related methods
+*/
+    public static void repeatedttNegaMax(Position position, int depth) {
+        for (int i = 1; i <= depth; i++) {
+            ttNegaMax(NEGINFINITY, POSINFINITY, depth, position);
+        }
+    }
 
+    public static void repeatedNegaMax(Position position, int depth) {
+        for (int i = 1; i <= depth; i++) {
+            negaMax(NEGINFINITY, POSINFINITY, depth, position);
+        }
+    }
 
+    /**
+    * negamax without transposition tables
+    */
+    public static MoveValue negaMax(int alpha, int beta, int depthLeft, Position position) {
+        if (depthLeft == 0) {
+            return new MoveValue(quiescenceSearch(alpha, beta, position), null);
+            //return new MoveValue(StaticEvaluation.negamaxEvaluatePosition(position), null);
+        }
 
+        if (position.rule50 >= 50)
+            return new MoveValue(0, null);
+
+        List<Move> children = MoveGenerator.generateStrictlyLegal(position);
+
+        if (children.size() == 0) { // Game ended by no moves to make
+            if (position.whiteInCheck) // Black wins by checkmate
+                return new MoveValue(POSINFINITY + 1000 - depthLeft, null); //prefer a higher depth (mate earlier)
+            if (position.blackInCheck) // White wins by checkmate
+                return new MoveValue(POSINFINITY - 1000 + depthLeft, null);// prefer a higher depth
+            return new MoveValue(0, null); // Stalemate
+        }
+
+        moveOrder(children, 0);
+
+        MoveValue bestMoveValue = new MoveValue(NEGINFINITY, null);
+
+        for (Move move : children) {
+            position.makeMove(move);
+
+            int score = -negaMax(-beta, -alpha, depthLeft - 1, position).value;
+            position.unMakeMove(move);
+
+            // Update best move when score is better
+            if (score > bestMoveValue.value) {
+                bestMoveValue.value = score;
+                bestMoveValue.bestMove = move;
+            }
+
+            // Update alpha when score is better
+            if (score > alpha) {
+                alpha = score;
+            }
+            // Prune when alpha >= beta
+            if (alpha >= beta) {
+                break;
+            }
+        }
+        return bestMoveValue;
+    }
 }
 /* Legacy Code:
     public static MoveValue minimax(Position position, boolean isMaximizingPlayer, int depth, int alpha, int beta) {

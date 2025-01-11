@@ -11,12 +11,11 @@ public class TestSearch {
     public static void main(String[] args) {
         new MoveGenerator();
         ZobristHashing.initializeRandomNumbers();
-        FEN fen = new FEN("r1bqkb1r/3pnpp1/p3p2p/4B3/3P4/2N1P3/PP3PPP/R2QKB1R w KQkq - 1 11");
+        FEN fen = new FEN("8/6k1/K7/8/8/8/2r5/1r6 b - - 0 1");
         Position position = new Position(fen);
+        System.out.println(MoveGenerator.generateStrictlyLegal(position).size());
         //Position position = new Position();
-        int depth = 6;
-
-        position = new Position();
+        int depth = 1;
 
         negaMax(position, depth);
         ttNegaMax(position, depth);

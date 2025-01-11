@@ -20,12 +20,21 @@ Solution: during generation of strictly legal, check if a move is a check or not
 - Add promotion piece type
 - Look for checks in move generation
 - Add game ending
+
+## Static Evaluation
+
+How do we consider piece activity/development in evaluation?
+
+IDEA: Since we need to compute all legal moves for check validation, can we use the number of legal moves as a metric?
+
+IDEA: Create better opening/middle/endgame detection and clearer piece square tables.
  
 ### Looking forward:
 
 - Add negamax
 - Add quiescence
 - Fix whatever make/unmake bug
+- 
 
 ## Overview:
 

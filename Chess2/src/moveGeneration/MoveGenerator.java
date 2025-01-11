@@ -405,9 +405,10 @@ public class MoveGenerator{
 	*/
 	public static boolean kingInCheck(Position position, Color kingColor) {
 		int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & position.pieceColors[kingColor.ordinal()]);
-		//if (kingLoc == 64) { I'm not sure what this code validates?
-		//	return true;
-		//}
+		if (kingLoc > 63 || kingLoc < 0) { //I'm not sure what this code validates?
+			System.out.println("King CAPTURED!");
+			return true;
+		}
 		return squareAttackedBy(position, kingLoc, Color.flipColor(kingColor));
 	}
 
