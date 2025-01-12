@@ -12,8 +12,8 @@ public class testPERFT {
         new MoveGenerator();
         ZobristHashing.initializeRandomNumbers();
 
-        // Change this variable
-        int depth = 7;
+        // Configure run settings with here:
+        int depth = 6;
         boolean useTTs = true;
 
         perftStartingPosition(depth, useTTs);

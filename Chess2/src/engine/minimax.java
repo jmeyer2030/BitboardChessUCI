@@ -1,7 +1,5 @@
 package engine;
 
-
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.concurrent.*;
@@ -15,6 +13,18 @@ import zobrist.ZobristHashing;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+/*
+add a stack that stores moves explored in negamax.
+add a table that stores zobristkeys, number of times position reached
+update the table after making and umaking
+
+in negamax, syncronize making a move, adding to position table, and adding it to the stack, as well as unmaking and popping.
+
+then after negamax is run, pop all from the stack, unmake them, and remove from the position table.
+
+
+*/
 
 public class minimax {
 
@@ -33,7 +43,6 @@ public class minimax {
     }
 
     public static MoveValue iterativeDeepening(Position position, long limitMillis) {
-        boolean isMaximizingPlayer = position.activePlayer == Color.WHITE;
         List<MoveValue> searchResults = new ArrayList<MoveValue>();
         long start = System.currentTimeMillis();
 
@@ -203,7 +212,7 @@ Move ordering with selection sort? e.g. choose
 
        TranspositionTable.TTElement element = TranspositionTable.getElement(zobristHash);
        if (element != null) {
-           if (element.bestMove.equals(move)) {
+           if (move.equals(element.bestMove)) {
                value+= 10_000_000;
            }
        }

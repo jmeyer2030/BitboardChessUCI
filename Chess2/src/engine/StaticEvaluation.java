@@ -8,7 +8,7 @@ import board.Position;
 public class StaticEvaluation {
 
     // Piece values (pawn, knight, bishop, rook, queen, king)
-    public static final int[] mgValue = {82, 337, 365, 477, 1025, 0};
+    public static final int[] mgValue = {82, 347, 365, 477, 1025, 0};
     public static final int[] egValue = {94, 281, 297, 512, 936, 0};
 
     /* The flip array is used to calculate the piece/square
@@ -191,9 +191,10 @@ public class StaticEvaluation {
                 }
             }
        }
+
        int mgPhase = gamePhase;
-       int egPhase = gamePhase;
        if (mgPhase > 24) mgPhase = 24;
+       int egPhase = 24 - mgPhase;
 
        return (mgScore * mgPhase + egScore * egPhase) / 24;
    }
