@@ -3,11 +3,12 @@ package userInterface;
 import board.Color;
 import board.Position;
 import moveGeneration.MoveGenerator;
-import zobrist.ZobristHashing;
+import testing.testUserInterface.GameGUI;
+import zobrist.Hashing;
 
 import javax.swing.*;
 
-public class GUIMain {
+public class PlayInGUI {
 
 	private static final String engineChoiceTxt = "Play against engine";
 	private static final String noEngineChoiceTxt = "No engine";
@@ -15,7 +16,7 @@ public class GUIMain {
 	/**
 	* Ask if playing against an engine
 	*   if true -> get time control/color -> launch
-	*   if false -> 
+	*   if false -> get time contro
 	*/
 	public static void main(String[] args) {
 		String gameType = gameType();
@@ -37,13 +38,12 @@ public class GUIMain {
         	assert gameSettings != null;
 			gameSettings.print();
 			new MoveGenerator();
-			ZobristHashing.initializeRandomNumbers();
+			Hashing.initializeRandomNumbers();
 			Position position = new Position();
 			SwingUtilities.invokeLater(() -> new GameGUI(position, gameSettings));
 		} catch (Exception e) {
 			System.out.println("Game settings must not be null!");
-			return;
-		}
+        }
 	}
 
 	public static String gameType() {
@@ -65,8 +65,9 @@ public class GUIMain {
 	}
 	
 	/**
-	* 
-	* 
+	* gets time control and color depending on if they are playing against the engine
+	* @param engineOpponent true if playing against an engine
+	* @return GameSettings describing gui launch/startup options
 	*/
 	public static GameSettings getGameSettings(boolean engineOpponent) {
 		String[] timeOptions = {};
@@ -98,6 +99,9 @@ public class GUIMain {
 		return null;
 	}
 
+	/**
+	* Converts drop down selections into useful game settings
+	*/
 	private static GameSettings evaluateDropDowns(boolean engineOpponent, JComboBox<String> colorDD, JComboBox<String> timeDD) {
 		String color = (String) colorDD.getSelectedItem();
 		String timeControl = (String) timeDD.getSelectedItem();

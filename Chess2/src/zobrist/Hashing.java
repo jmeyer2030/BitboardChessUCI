@@ -23,7 +23,7 @@ import board.Position;
 
 import java.util.Random;
 
-public class ZobristHashing {
+public class Hashing {
     private static long seed = "JoshuaMeyer".hashCode();
 
     private static long pieceSquare[][][]; // use with: pieceSquare[square][color.ordinal][piece.ordinal]

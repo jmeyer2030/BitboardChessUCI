@@ -8,8 +8,8 @@ import java.util.Set;
 import board.Move;
 import board.Position;
 import moveGeneration.MoveGenerator;
-import zobrist.TranspositionTable;
-import zobrist.ZobristHashing;
+import zobrist.HashTables;
+import zobrist.Hashing;
 
 public class Testing {
 	public static long numTranspositions = 0;
@@ -124,16 +124,16 @@ public class Testing {
 			return MoveGenerator.generateStrictlyLegal(position).size();
 		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
 			position.makeMove(move);
-			long hash = ZobristHashing.computeZobrist(position);
+			long hash = Hashing.computeZobrist(position);
 			long result;
-			if (TranspositionTable.getPerftElement(hash) != null &&
-				TranspositionTable.getPerftElement(hash).zobristHash == hash &&
-				TranspositionTable.getPerftElement(hash).depth == depth) {
+			if (HashTables.getPerftElement(hash) != null &&
+				HashTables.getPerftElement(hash).zobristHash == hash &&
+				HashTables.getPerftElement(hash).depth == depth) {
 				numTranspositions++;
-				result = TranspositionTable.getPerftElement(hash).perftResult;
+				result = HashTables.getPerftElement(hash).perftResult;
 			} else {
 				result = ttPerftRecursion(depth - 1, position);
-				TranspositionTable.addPerftElement(hash, depth, result);
+				HashTables.addPerftElement(hash, depth, result);
 			}
 			position.unMakeMove(move);
 			return result;

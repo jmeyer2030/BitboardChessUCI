@@ -1,6 +1,7 @@
-package userInterface;
+package testing.testUserInterface;
 
 import board.Color;
+import userInterface.GameSettings;
 
 import javax.swing.*;
 

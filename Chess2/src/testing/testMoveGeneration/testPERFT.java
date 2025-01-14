@@ -1,16 +1,14 @@
 package testing.testMoveGeneration;
 
-import engine.StaticEvaluation;
 import board.*;
 import moveGeneration.MoveGenerator;
-import zobrist.TranspositionTable;
-import zobrist.ZobristHashing;
+import zobrist.Hashing;
 
 public class testPERFT {
     public static void main(String[] args) {
         // Initialize requisite data
         new MoveGenerator();
-        ZobristHashing.initializeRandomNumbers();
+        Hashing.initializeRandomNumbers();
 
         // Configure run settings with here:
         int depth = 6;

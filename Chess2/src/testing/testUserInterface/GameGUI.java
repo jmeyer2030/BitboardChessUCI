@@ -1,4 +1,4 @@
-package userInterface;
+package testing.testUserInterface;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -12,10 +12,13 @@ import javax.swing.Timer;
 
 import board.PieceType;
 import engine.TimeManagement;
-import engine.minimax;
+import engine.Search;
 import board.Move;
 import board.Position;
 import moveGeneration.MoveGenerator;
+import userInterface.GameSettings;
+import zobrist.HashTables;
+import zobrist.Hashing;
 
 
 public class GameGUI implements ActionListener{
@@ -197,6 +200,7 @@ public class GameGUI implements ActionListener{
 	private void applyMove(Move move) {
 		legalMoves.clear();
 		position.makeMove(move);
+		HashTables.incrementThreeFold(Hashing.computeZobrist(position));
 		System.out.println(move);
 		//System.out.println("BOARD AFTER MOVE:");
 		//position.printBoard();
@@ -210,7 +214,7 @@ public class GameGUI implements ActionListener{
 		SwingWorker<Move, Void> worker = new SwingWorker<>() {
 			@Override
 			protected Move doInBackground() throws Exception {
-				return minimax.iterativeDeepening(position, TimeManagement.millisForMove(
+				return Search.iterativeDeepening(new Position(position), TimeManagement.millisForMove(
 					position.activePlayer == board.Color.WHITE ? whiteTime : blackTime)).bestMove;
 			}
 
@@ -219,11 +223,14 @@ public class GameGUI implements ActionListener{
 				try {
 					Move computerMove = get();
 					position.makeMove(computerMove);
+					HashTables.incrementThreeFold(Hashing.computeZobrist(position));
 					updateDisplay();
 					legalMoves.clear();
 					legalMoves.addAll(MoveGenerator.generateStrictlyLegal(position));
 					resetSquares();
 				} catch (Exception e) {
+					System.out.println(e.getMessage());
+					System.out.println("CAUGHT IN GAME GUI?");
 					e.printStackTrace();
 				}
 			}

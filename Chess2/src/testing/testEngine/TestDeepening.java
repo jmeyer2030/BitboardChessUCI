@@ -1,22 +1,24 @@
 package testing.testEngine;
 
-import board.FEN;
 import board.Position;
-import engine.minimax;
+import engine.Search;
 import moveGeneration.MoveGenerator;
-import zobrist.ZobristHashing;
+import zobrist.Hashing;
+
+import static testing.testEngine.TestHelpSearch.repeatedNegaMax;
+import static testing.testEngine.TestHelpSearch.repeatedttNegaMax;
 
 public class TestDeepening {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         new MoveGenerator();
-        ZobristHashing.initializeRandomNumbers();
+        Hashing.initializeRandomNumbers();
 
         Position position = new Position();
         int depth = 6;
 
         System.out.println("ttNegaMax repeated");
         long start = System.currentTimeMillis();
-        minimax.repeatedttNegaMax(position, depth);
+        repeatedttNegaMax(position, depth);
         long end = System.currentTimeMillis();
         long elapsed = end - start;
         System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + "\n");
@@ -24,7 +26,7 @@ public class TestDeepening {
 
         System.out.println("NegaMax repeated");
         start = System.currentTimeMillis();
-        minimax.repeatedNegaMax(position, depth);
+        repeatedNegaMax(position, depth);
         end = System.currentTimeMillis();
         elapsed = end - start;
         System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + "\n");

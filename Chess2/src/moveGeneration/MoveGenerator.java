@@ -58,6 +58,19 @@ public class MoveGenerator{
 			}
         }).collect(Collectors.toList());
         if (!copy.equals(position)) {
+			StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+
+			// The calling method is at index 2 in the stack trace (0 is getStackTrace itself, 1 is methodB)
+			StackTraceElement caller = stackTrace[2];
+
+			// Get information about the source of the call
+			System.out.println("Called from:");
+			System.out.println("Class Name: " + caller.getClassName());
+			System.out.println("Method Name: " + caller.getMethodName());
+			System.out.println("File Name: " + caller.getFileName());
+			System.out.println("Line Number: " + caller.getLineNumber());
+
+        	System.out.println("SOURCE IS IN MOVE GENERATOR");
 			throw new RuntimeException("COPY IS NOT EQUAL!!!");
 		}
 		return legalMoves;
@@ -72,18 +85,19 @@ public class MoveGenerator{
 		Position copy = new Position(position);
 		List<Move> generatedMoves = new ArrayList<Move>();
 		generatedMoves.addAll(generatePawnMoves(position));
-		if (!copy.equals(position)) throw new RuntimeException("PAWNS");
+		//if (!copy.equals(position)) throw new RuntimeException("PAWNS");
 		generatedMoves.addAll(generateRookMoves(position));
-		if (!copy.equals(position)) throw new RuntimeException("ROOKS");
+		//if (!copy.equals(position)) throw new RuntimeException("ROOKS");
 		generatedMoves.addAll(generateBishopMoves(position));
-		if (!copy.equals(position)) throw new RuntimeException("BISHOPS");
+		//if (!copy.equals(position)) throw new RuntimeException("BISHOPS");
 		generatedMoves.addAll(generateKnightMoves(position));
-		if (!copy.equals(position)) throw new RuntimeException("KNIGHTS");
+		//if (!copy.equals(position)) throw new RuntimeException("KNIGHTS");
 		generatedMoves.addAll(generateQueenMoves(position));
-		if (!copy.equals(position)) throw new RuntimeException("QUEENS");
+		//if (!copy.equals(position)) throw new RuntimeException("QUEENS");
 		generatedMoves.addAll(generateKingMoves(position));
-		if (!copy.equals(position)) throw new RuntimeException("KINGS");
+		//if (!copy.equals(position)) throw new RuntimeException("KINGS");
 		return generatedMoves;
+
 	}
 /*
 * Private methods
@@ -94,7 +108,7 @@ public class MoveGenerator{
 	* @return Move list
 	*/
 	private static List<Move> generatePawnMoves(Position position) {
-		List<Move> generatedMoves = new ArrayList<Move>();
+		List<Move> generatedMoves = new ArrayList<>();
 		long pawnList = position.pieces[0] & position.pieceColors[position.activePlayer.ordinal()];
 
 		while (pawnList != 0L) {
@@ -405,7 +419,7 @@ public class MoveGenerator{
 	*/
 	public static boolean kingInCheck(Position position, Color kingColor) {
 		int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & position.pieceColors[kingColor.ordinal()]);
-		if (kingLoc > 63 || kingLoc < 0) { //I'm not sure what this code validates?
+		if (kingLoc > 63 || kingLoc < 0) { // Checks if generated move was a king capture (we just return false so it's illegal)
 			System.out.println("King CAPTURED!");
 			return true;
 		}

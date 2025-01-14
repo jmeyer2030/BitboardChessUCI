@@ -140,6 +140,10 @@ public class Move {
     }
 
     public boolean equals(Move move) {
+        if (move == null) {
+            System.out.println("move is null?");
+            return false;
+        }
         boolean equal = true;
         equal &= this.start == move.start;
         equal &= this.destination == move.destination;
