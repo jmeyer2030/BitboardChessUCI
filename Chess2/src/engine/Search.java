@@ -91,7 +91,11 @@ public class Search {
             try {
                 MoveValue result = future.get(limitMillis, TimeUnit.MILLISECONDS); // Timeout in ms, should throw a timeout exception
                 searchResults.add(result);
-                System.out.println("\nDepth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove.toString());
+                if (result.bestMove == null) {
+                    System.out.println("Game ended with result: " + result.value);
+                } else {
+                    System.out.println("\nDepth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove.toString());
+                }
             } catch (TimeoutException te) {
                 System.out.println("Function timed out!");
                 future.cancel(true); // Tells the thread that it was interrupted
@@ -107,8 +111,8 @@ public class Search {
                 System.out.println("ready to remove from stack!");
                 while (!moveStack.isEmpty()) { // Unmake moves from copy, and remove items from the position hash table
                     System.out.println("unmaking moves, stack size: " + moveStack.size());
-                    decrementThreeFold(Hashing.computeZobrist(copy));
-                    copy.unMakeMove(moveStack.pop());
+                    decrementThreeFold(Hashing.computeZobrist(position));
+                    position.unMakeMove(moveStack.pop());
                 }
 
                 //System.out.println(position.equals(copy));
@@ -162,7 +166,7 @@ public class Search {
 
         long hash = Hashing.computeZobrist(position);
         HashTables.TTElement ttEntry = HashTables.getTranspositionElement(hash);
-
+        /*
         if (ttEntry != null && ttEntry.zobristHash == hash && ttEntry.depth >= depthLeft) {
             if (ttEntry.nodeType == NodeType.EXACT) {
                 return new MoveValue(ttEntry.score, ttEntry.bestMove);
@@ -175,7 +179,7 @@ public class Search {
                 return new MoveValue(ttEntry.score, ttEntry.bestMove);
             }
         }
-
+        */
         if (position.rule50 >= 50)
             return new MoveValue(0, null);
 
@@ -188,15 +192,19 @@ public class Search {
                 throw new InterruptedException("Negamax was interrupted by iterative deepening");
             }
 
-            position.makeMove(move);
-            moveStack.push(move);
-            incrementThreeFold(Hashing.computeZobrist(position));
+            position.makeMove(moveStack.push(move));
+            long zobrist = Hashing.computeZobrist(position);
+            incrementThreeFold(zobrist);
 
             int score = -negamax(-beta, -alpha, depthLeft - 1, position).value;
 
-            decrementThreeFold(Hashing.computeZobrist(position));
-            position.unMakeMove(move);
-            moveStack.pop();
+            long zobrist2 = Hashing.computeZobrist(position);
+
+            if (zobrist != zobrist2) {
+                throw new IllegalStateException("Zobrist 1 != zobrist 2");
+            }
+            decrementThreeFold(zobrist2);
+            position.unMakeMove(moveStack.pop());
 
             // Update best move when score is better
             if (score > bestMoveValue.value) {

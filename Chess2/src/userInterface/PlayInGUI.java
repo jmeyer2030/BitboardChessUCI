@@ -7,35 +7,31 @@ import testing.testUserInterface.GameGUI;
 import zobrist.Hashing;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class PlayInGUI {
 
-	private static final String engineChoiceTxt = "Play against engine";
-	private static final String noEngineChoiceTxt = "No engine";
+	private static final String engineChoiceMsg = "Play against engine";
+	private static final String noEngineChoiceMsg = "No engine";
 
 	/**
 	* Ask if playing against an engine
 	*   if true -> get time control/color -> launch
-	*   if false -> get time contro
+	*   if false -> get time control/color -> launch
 	*/
 	public static void main(String[] args) {
+		// Retrieve if playing against an engine
 		String gameType = gameType();
+
 		if (gameType.equals("no choice")) {
 			return;
 		}
 
-		GameSettings gameSettings;
-
-		if (gameType.equals(engineChoiceTxt)) {
-			gameSettings = getGameSettings(true);
-		} else if (gameType.equals(noEngineChoiceTxt)) {
-			gameSettings = getGameSettings(false);
-		} else {
-            gameSettings = null;
-        }
+		boolean playingEngine = gameType.equals(engineChoiceMsg);
+		GameSettings gameSettings = getGameSettings(playingEngine);
 
         try {
-        	assert gameSettings != null;
+			Objects.requireNonNull(gameSettings);
 			gameSettings.print();
 			new MoveGenerator();
 			Hashing.initializeRandomNumbers();
@@ -46,8 +42,12 @@ public class PlayInGUI {
         }
 	}
 
+	/**
+	* Gets user input about playing against an engine or not
+	* @return string of either engineChoiceMsg, noEngineChoiceMsg, or "no choice"
+	*/
 	public static String gameType() {
-		String[] options = {engineChoiceTxt, noEngineChoiceTxt};
+		String[] options = {engineChoiceMsg, noEngineChoiceMsg};
 		int choice = JOptionPane.showOptionDialog(
 				null,
 				"Choose to play options:",
@@ -67,7 +67,7 @@ public class PlayInGUI {
 	/**
 	* gets time control and color depending on if they are playing against the engine
 	* @param engineOpponent true if playing against an engine
-	* @return GameSettings describing gui launch/startup options
+	* @return GameSettings describing gui launch/startup options. If canceled returns null.
 	*/
 	public static GameSettings getGameSettings(boolean engineOpponent) {
 		String[] timeOptions = {};
@@ -90,7 +90,8 @@ public class PlayInGUI {
 		panel.add(new JLabel("Select a time control"));
 		panel.add(timeDD);
 
-		int result = JOptionPane.showConfirmDialog(null, panel, "Choose game setup", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+		int result = JOptionPane.showConfirmDialog(null, panel, "Choose game setup",
+			JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
 		if (result == JOptionPane.OK_OPTION) {
 			GameSettings chosen = evaluateDropDowns(engineOpponent, colorDD, timeDD);
@@ -101,6 +102,10 @@ public class PlayInGUI {
 
 	/**
 	* Converts drop down selections into useful game settings
+	* @param engineOpponent if playing vs engine
+	* @param colorDD color dropdown
+	* @param timeDD time control dropdown
+	* @return GameSettings
 	*/
 	private static GameSettings evaluateDropDowns(boolean engineOpponent, JComboBox<String> colorDD, JComboBox<String> timeDD) {
 		String color = (String) colorDD.getSelectedItem();
