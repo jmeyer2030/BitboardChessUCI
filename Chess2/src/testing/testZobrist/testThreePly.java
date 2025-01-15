@@ -48,7 +48,7 @@ public class testThreePly {
 
         long zobristHash = Hashing.computeZobrist(position);
 
-        //HashTables.incrementThreeFold(zobristHash);
+        HashTables.incrementThreeFold(zobristHash);
 
         Search.MoveValue mv = Search.iterativeDeepening(position, 5_000);
 

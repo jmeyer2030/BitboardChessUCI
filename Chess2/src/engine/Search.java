@@ -154,7 +154,6 @@ public class Search {
                 return new MoveValue(NEGINFINITY - depthLeft, null);// prefer a higher depth
             case STALEMATE:
             case REPETITION:
-                System.out.println("repetition detected!");
             case RULE50:
                 return new MoveValue(0, null);
             default:
@@ -166,20 +165,27 @@ public class Search {
 
         long hash = Hashing.computeZobrist(position);
         HashTables.TTElement ttEntry = HashTables.getTranspositionElement(hash);
-        /*
-        if (ttEntry != null && ttEntry.zobristHash == hash && ttEntry.depth >= depthLeft) {
-            if (ttEntry.nodeType == NodeType.EXACT) {
-                return new MoveValue(ttEntry.score, ttEntry.bestMove);
-            } else if (ttEntry.nodeType == NodeType.LOWER_BOUND) {
-                alpha = Math.max(alpha, ttEntry.score);
-            } else {
-                beta = Math.min(beta, ttEntry.score);
-            }
-            if (alpha > beta) {
-                return new MoveValue(ttEntry.score, ttEntry.bestMove);
+
+        if (ttEntry != null && ttEntry.zobristHash == hash && ttEntry.depth >= depthLeft && ttEntry.bestMove != null) {
+
+            position.makeMove(ttEntry.bestMove);
+            HashTables.ThreeFoldElement tfEntry = HashTables.getThreeFoldElement(Hashing.computeZobrist(position));
+            position.unMakeMove(ttEntry.bestMove);
+
+            if (tfEntry == null || tfEntry.numRepetitions == 0) {
+                if (ttEntry.nodeType == NodeType.EXACT) {
+                    return new MoveValue(ttEntry.score, ttEntry.bestMove);
+                } else if (ttEntry.nodeType == NodeType.LOWER_BOUND) {
+                    alpha = Math.max(alpha, ttEntry.score);
+                } else {
+                    beta = Math.min(beta, ttEntry.score);
+                }
+                if (alpha > beta) {
+                    return new MoveValue(ttEntry.score, ttEntry.bestMove);
+                }
             }
         }
-        */
+
         if (position.rule50 >= 50)
             return new MoveValue(0, null);
 
@@ -221,6 +227,7 @@ public class Search {
                 break;
             }
         }
+
 
         ttEntry = new HashTables.TTElement();
         ttEntry.score = bestMoveValue.value;
