@@ -25,15 +25,13 @@ update the table after making and umaking
 in negamax, syncronize making a move, adding to position table, and adding it to the stack, as well as unmaking and popping.
 
 then after negamax is run, pop all from the stack, unmake them, and remove from the position table.
-
-
 */
 
 public class Search {
 
     // Values representing very high scores minimizing risk of over/underflow
-    public static final int POSINFINITY = 100_000_000;
-    public static final int NEGINFINITY = -100_000_000;
+    public static final int POS_INFINITY = 100_000_000;
+    public static final int NEG_INFINITY = -100_000_000;
 
     // A stack that stores moves in case of negamax thread interruption
     public static final Stack<Move> moveStack = new Stack<Move>();
@@ -52,7 +50,10 @@ public class Search {
     }
 
     /**
-    *
+    * Runs negamax on increasing depths until the time limit is exceeded
+    * @param position position to run the search on
+    * @param limitMillis time  limit in milliseconds for the search
+    * @return moveValue associated with the deepest search of the position
     */
     public static MoveValue iterativeDeepening(Position position, long limitMillis) {
         // Create a list representing the best moves generated at each depth
@@ -60,7 +61,6 @@ public class Search {
 
         // Store the current time so we know when to stop searching
         long start = System.currentTimeMillis();
-
 
         // Initialize the initial search depth
         int depth = 0;
@@ -79,7 +79,7 @@ public class Search {
 
             Callable<MoveValue> task = () -> {
                try {
-                   return negamax(NEGINFINITY, POSINFINITY, finalDepth, position);
+                   return negamax(NEG_INFINITY, POS_INFINITY, finalDepth, position);
                } catch (InterruptedException e) {
                    System.out.println("Negamax was interrupted.");
                    throw e;
@@ -89,7 +89,9 @@ public class Search {
             Future<MoveValue> future = executor.submit(task);
 
             try {
-                MoveValue result = future.get(limitMillis, TimeUnit.MILLISECONDS); // Timeout in ms, should throw a timeout exception
+                // Compute the maximal amount of time this search can take
+                long maxTimeForSearch = System.currentTimeMillis() - start;
+                MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS); // Timeout in ms, should throw a timeout exception
                 searchResults.add(result);
                 if (result.bestMove == null) {
                     System.out.println("Game ended with result: " + result.value);
@@ -109,6 +111,7 @@ public class Search {
                 }
 
                 System.out.println("ready to remove from stack!");
+
                 while (!moveStack.isEmpty()) { // Unmake moves from copy, and remove items from the position hash table
                     System.out.println("unmaking moves, stack size: " + moveStack.size());
                     decrementThreeFold(Hashing.computeZobrist(position));
@@ -117,15 +120,9 @@ public class Search {
 
                 //System.out.println(position.equals(copy));
                 break; //Exit the search loop
-            } catch (ExecutionException | InterruptedException e) {
-                 // Get the cause of the exception
+            } catch (ExecutionException | InterruptedException e) { // This should never happen so we throw an exception
                 Throwable cause = e.getCause();
-                if (cause instanceof NullPointerException) {
-                    System.out.println("NullPointerException caught: " + cause.getMessage());
-                    cause.printStackTrace(); // Print the stack trace of the NullPointerException
-                } else {
-                    System.out.println("Other exception caught: " + cause);
-                }
+                throw new RuntimeException();
             }
         }
 
@@ -136,10 +133,28 @@ public class Search {
         return searchResults.get(searchResults.size() - 1);
     }
 
+    /**
+    * Performs the negamax algorithm with some additional features:
+    *  - alpha-beta pruning
+    *  - move ordering
+    *  - quiescence search
+    *  - transposition table
+    *
+    *  This is designed to be compatible with iterative deepening by handling interruptions
+    *
+    * @param alpha the highest value that the maximizing player has found so far
+    * @param beta the lowest value that the minimizing player has found so far
+    * @param depthLeft depth of the search
+    * @param position position to search
+    * @return moveValue, a pairing of the evaluation of the position and the best move.
+    */
     public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position) throws InterruptedException {
+        // Check for signal to interrupt the search
         if (Thread.currentThread().isInterrupted()) {
             throw new InterruptedException("Negamax was interrupted by iterative deepening");
         }
+
+        // Store alpha at the start of the search
         int alphaOrig = alpha;
 
         List<Move> children = MoveGenerator.generateStrictlyLegal(position);
@@ -151,7 +166,7 @@ public class Search {
                 break;
             case WHITE_WIN:
             case BLACK_WIN:
-                return new MoveValue(NEGINFINITY - depthLeft, null);// prefer a higher depth
+                return new MoveValue(NEG_INFINITY - depthLeft, null);// prefer a higher depth
             case STALEMATE:
             case REPETITION:
             case RULE50:
@@ -186,8 +201,6 @@ public class Search {
             }
         }
 
-        if (position.rule50 >= 50)
-            return new MoveValue(0, null);
 
         moveOrder(children, hash);
 
@@ -248,6 +261,7 @@ public class Search {
 
         return bestMoveValue;
     }
+
 
     public static GameStatus gameStatus(int moveListSize, Position position) {
         if (moveListSize == 0) {

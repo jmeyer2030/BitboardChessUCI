@@ -25,7 +25,7 @@ public class TestSearch {
     public static void noTTNegaMaxTimeTest(Position position, int depth) {
         System.out.println("Standard Negamax: ");
         long start = System.currentTimeMillis();
-        Search.MoveValue result = LegacySearch.negaMax(Search.NEGINFINITY, Search.POSINFINITY, depth, position);
+        Search.MoveValue result = LegacySearch.negaMax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position);
         long end = System.currentTimeMillis();
         long elapsed = end - start;
         System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\n");
@@ -34,7 +34,7 @@ public class TestSearch {
     public static void negaMaxTimeTest(Position position, int depth) throws InterruptedException {
         System.out.println("Transposition Table Negamax: ");
         long start = System.currentTimeMillis();
-        Search.MoveValue result = Search.negamax(Search.NEGINFINITY, Search.POSINFINITY, depth, position);
+        Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position);
         long end = System.currentTimeMillis();
         long elapsed = end - start;
         System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\n");

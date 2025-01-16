@@ -24,11 +24,12 @@ import board.Position;
 import java.util.Random;
 
 public class Hashing {
-    private static long seed = "JoshuaMeyer".hashCode();
+    public static long seed = 5;
 
     private static long pieceSquare[][][]; // use with: pieceSquare[square][color.ordinal][piece.ordinal]
     private static long[] castleRights;
     private static long[] enPassant;
+    private static long[] sideToMove;
 
     /**
     * Generates the pseudorandom numbers for zobrist hashing and initializes
@@ -60,6 +61,11 @@ public class Hashing {
         for (int i = 0; i < 8; i++) {
             enPassant[i] = random.nextLong();
         }
+
+        // Init sideToMove
+        sideToMove = new long[2];
+        sideToMove[0] = random.nextLong();
+        sideToMove[1] = random.nextLong();
     }
 
     /**
@@ -99,6 +105,10 @@ public class Hashing {
         if (position.enPassant != 0) {
             zobrist ^= enPassant[position.enPassant / 8]; // file of the enPassant square
         }
+
+        // SideToMove
+        zobrist ^= sideToMove[position.activePlayer.ordinal()];
+
         return zobrist;
     }
 }

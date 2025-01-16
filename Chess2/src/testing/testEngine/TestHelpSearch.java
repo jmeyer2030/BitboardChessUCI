@@ -12,13 +12,13 @@ public class TestHelpSearch {
      */
     public static void repeatedttNegaMax(Position position, int depth) throws InterruptedException {
         for (int i = 1; i <= depth; i++) {
-            Search.negamax(NEGINFINITY, POSINFINITY, depth, position);
+            Search.negamax(NEG_INFINITY, POS_INFINITY, depth, position);
         }
     }
 
     public static void repeatedNegaMax(Position position, int depth) {
         for (int i = 1; i <= depth; i++) {
-            negaMax(NEGINFINITY, POSINFINITY, depth, position);
+            negaMax(NEG_INFINITY, POS_INFINITY, depth, position);
         }
     }
 

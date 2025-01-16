@@ -31,15 +31,15 @@ public class LegacySearch {
 
         if (children.size() == 0) { // Game ended by no moves to make
             if (position.whiteInCheck) // Black wins by checkmate
-                return new Search.MoveValue(POSINFINITY + 1000 - depthLeft, null); //prefer a higher depth (mate earlier)
+                return new Search.MoveValue(POS_INFINITY + 1000 - depthLeft, null); //prefer a higher depth (mate earlier)
             if (position.blackInCheck) // White wins by checkmate
-                return new Search.MoveValue(POSINFINITY - 1000 + depthLeft, null);// prefer a higher depth
+                return new Search.MoveValue(POS_INFINITY - 1000 + depthLeft, null);// prefer a higher depth
             return new Search.MoveValue(0, null); // Stalemate
         }
 
         moveOrder(children, 0);
 
-        Search.MoveValue bestMoveValue = new Search.MoveValue(NEGINFINITY, null);
+        Search.MoveValue bestMoveValue = new Search.MoveValue(NEG_INFINITY, null);
 
         for (Move move : children) {
             position.makeMove(move);

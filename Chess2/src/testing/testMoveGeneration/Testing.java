@@ -117,7 +117,7 @@ public class Testing {
 		}).sum();
 	}
 
-	private static long ttPerftRecursion(int depth, Position position) {
+	public static long ttPerftRecursion(int depth, Position position) {
 		if (depth == 0)
 			return 1;
 		if (depth == 1)
