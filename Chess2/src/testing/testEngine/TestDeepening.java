@@ -1,6 +1,7 @@
 package testing.testEngine;
 
 import board.Position;
+import customExceptions.InvalidPositionException;
 import engine.Search;
 import moveGeneration.MoveGenerator;
 import zobrist.Hashing;
@@ -9,7 +10,7 @@ import static testing.testEngine.TestHelpSearch.repeatedNegaMax;
 import static testing.testEngine.TestHelpSearch.repeatedttNegaMax;
 
 public class TestDeepening {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, InvalidPositionException {
         new MoveGenerator();
         Hashing.initializeRandomNumbers();
 

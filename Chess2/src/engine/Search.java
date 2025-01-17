@@ -7,7 +7,9 @@ import java.util.concurrent.*;
 import board.Move;
 import board.MoveType;
 import board.Position;
+import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
+import system.SearchMonitor;
 import zobrist.HashTables;
 import zobrist.Hashing;
 
@@ -76,6 +78,7 @@ public class Search {
 
             depth++;
             int finalDepth = depth;
+            SearchMonitor searchMonitor = new SearchMonitor(copy);
 
             Callable<MoveValue> task = () -> {
                try {
@@ -146,9 +149,15 @@ public class Search {
     * @param beta the lowest value that the minimizing player has found so far
     * @param depthLeft depth of the search
     * @param position position to search
+    *
     * @return moveValue, a pairing of the evaluation of the position and the best move.
+    *
+    * @throws InterruptedException if Interrupted by Iterative Deepening
+    * @throws InvalidPositionException if an invalid position is reached by either negamax or quiescence search
     */
-    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position) throws InterruptedException {
+    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position)
+           throws InterruptedException, InvalidPositionException {
+
         // Check for signal to interrupt the search
         if (Thread.currentThread().isInterrupted()) {
             throw new InterruptedException("Negamax was interrupted by iterative deepening");
@@ -211,6 +220,8 @@ public class Search {
                 throw new InterruptedException("Negamax was interrupted by iterative deepening");
             }
 
+            Position copy = new Position(position);
+
             position.makeMove(moveStack.push(move));
             long zobrist = Hashing.computeZobrist(position);
             incrementThreeFold(zobrist);
@@ -219,7 +230,7 @@ public class Search {
 
             long zobrist2 = Hashing.computeZobrist(position);
 
-            if (zobrist != zobrist2) {
+            if (zobrist != zobrist2 && position.equals(copy)) {
                 throw new IllegalStateException("Zobrist 1 != zobrist 2");
             }
             decrementThreeFold(zobrist2);
@@ -282,7 +293,7 @@ public class Search {
     }
 
 
-    public static synchronized int quiescenceSearch(int alpha, int beta, Position position) {
+    public static int quiescenceSearch(int alpha, int beta, Position position) throws InvalidPositionException{
         int standPat = StaticEvaluation.negamaxEvaluatePosition(position);
         int bestValue = standPat;
         if (standPat >= beta)
@@ -290,14 +301,29 @@ public class Search {
         if (alpha < standPat)
             alpha = standPat;
 
-        // Generate loud moves (captures, promotions, checks, etc.)
-        List<Move> loudMoves = MoveGenerator.generateStrictlyLegal(position).stream()
-                .filter(move -> move.captureType != null)
-                .collect(Collectors.toList());
+        List<Move> loudMoves = null;
 
+        // Generate loud moves (captures, promotions, checks, etc.)
+        try {
+            position.validPosition();
+        } catch (InvalidPositionException e) {
+
+        }
+
+        position.validPosition();
+
+        try {
+            loudMoves = MoveGenerator.generateStrictlyLegal(position).stream()
+                    .filter(move -> move.captureType != null)
+                    .collect(Collectors.toList());
+        } catch (InvalidPositionException ipe) {
+            throw ipe;
+        }
         for (Move move : loudMoves) {
             position.makeMove(move);
+            moveStack.push(move);
             int score = -quiescenceSearch(-beta, -alpha, position);
+            moveStack.pop();
             position.unMakeMove(move);
 
             if (score >= beta)

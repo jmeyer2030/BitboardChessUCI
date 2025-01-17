@@ -1,11 +1,12 @@
 package testing.testMoveGeneration;
 
 import board.*;
+import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
 import zobrist.Hashing;
 
 public class testPERFT {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InvalidPositionException {
         // Initialize requisite data
         new MoveGenerator();
         Hashing.initializeRandomNumbers();
@@ -18,7 +19,7 @@ public class testPERFT {
         //perftFromFen("", depth, useTTs);
     }
 
-    public static void perftStartingPosition(int depth, boolean useTTs) {
+    public static void perftStartingPosition(int depth, boolean useTTs) throws InvalidPositionException {
         Position position = new Position();
         long start = System.currentTimeMillis();
 
@@ -33,7 +34,7 @@ public class testPERFT {
         System.out.println("Total time: " + (end - start));
     }
 
-    public static void perftFromFen(String fen, int depth, boolean useTTs) {
+    public static void perftFromFen(String fen, int depth, boolean useTTs) throws InvalidPositionException {
         FEN fenP = new FEN(fen);
         Position position = new Position(fenP);
         long start = System.currentTimeMillis();

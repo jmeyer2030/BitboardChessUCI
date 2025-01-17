@@ -7,6 +7,7 @@ import java.util.Set;
 
 import board.Move;
 import board.Position;
+import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
 import zobrist.HashTables;
 import zobrist.Hashing;
@@ -40,7 +41,7 @@ public class Testing {
 	 * @Param depth
 	 * @Param position
 	 */
-	public static void perft(int depth, Position position) {
+	public static void perft(int depth, Position position) throws InvalidPositionException {
 		if (depth < 1)
 			return;
 		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
@@ -55,7 +56,7 @@ public class Testing {
 		System.out.println("Total: " + total);
 	}
 
-	public static void ttPerft(int depth, Position position) {
+	public static void ttPerft(int depth, Position position) throws InvalidPositionException {
 		if (depth < 1)
 			return;
 		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
@@ -106,38 +107,46 @@ public class Testing {
  	* @param position position to perft
  	* @return moves at that depth for the position
  	*/
-	private static long perftRecursion(int depth, Position position) {
+	private static long perftRecursion(int depth, Position position) throws InvalidPositionException {
 		if (depth == 0)
 			return 1;
-		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
+
+		long result = 0;
+		List<Move> legalMoves = MoveGenerator.generateStrictlyLegal(position);
+		for (Move move : legalMoves) {
 			position.makeMove(move);
-			long result = perftRecursion(depth - 1, position);
+			result += perftRecursion(depth - 1, position);
 			position.unMakeMove(move);
-			return result;
-		}).sum();
+		}
+		return result;
 	}
 
-	public static long ttPerftRecursion(int depth, Position position) {
+	public static long ttPerftRecursion(int depth, Position position) throws InvalidPositionException {
 		if (depth == 0)
 			return 1;
 		if (depth == 1)
 			return MoveGenerator.generateStrictlyLegal(position).size();
-		return MoveGenerator.generateStrictlyLegal(position).stream().mapToLong(move -> {
+		List<Move> legalMoves = MoveGenerator.generateStrictlyLegal(position);
+
+		long result = 0;
+		for (Move move : legalMoves) {
 			position.makeMove(move);
+
 			long hash = Hashing.computeZobrist(position);
-			long result;
 			if (HashTables.getPerftElement(hash) != null &&
 				HashTables.getPerftElement(hash).zobristHash == hash &&
 				HashTables.getPerftElement(hash).depth == depth) {
 				numTranspositions++;
-				result = HashTables.getPerftElement(hash).perftResult;
+				result += HashTables.getPerftElement(hash).perftResult;
 			} else {
-				result = ttPerftRecursion(depth - 1, position);
+				result += ttPerftRecursion(depth - 1, position);
 				HashTables.addPerftElement(hash, depth, result);
 			}
+
 			position.unMakeMove(move);
-			return result;
-		}).sum();
+		}
+
+		return result;
 	}
 
 }

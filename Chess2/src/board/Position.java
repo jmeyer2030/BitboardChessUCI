@@ -2,6 +2,7 @@ package board;
 
 import moveGeneration.MoveGenerator;
 import testing.testMoveGeneration.Testing;
+import customExceptions.InvalidPositionException;
 
 import java.util.Arrays;
 
@@ -525,9 +526,16 @@ public class Position {
 		System.out.println("FullMoveCount: " + fullMoveCount);
 	}
 
-	public void printDisplayBoard() {
-		if (!validPosition())
-			throw new IllegalStateException();
+	/**
+	* Prints a board in a human-readable format
+	*/
+	public String getDisplayBoard() {
+		try {
+			validPosition();
+		} catch (InvalidPositionException ipe) {
+			return "Position isn't valid!";
+		}
+
 		char[] board = new char[64];
 		char[] pieceSymbols = {'p', 'n', 'b', 'r', 'q', 'k'};
 		Arrays.fill(board, '*');
@@ -558,26 +566,35 @@ public class Position {
 			}
 		}
 
-		System.out.println(result.toString());
+		return result.toString();
 	}
 
 	/**
-	*
+	* A position is "valid" iff:
+	* - pieceColors[0-1] have no overlap AND
+	* - pieces[0-5] have no overlap AND
+	* - pieceColors[0-1] (with OR operator) is equivalent to occupancy
+	* - pieces[0-5] (with OR operator) is equivalent to occupancy
 	*/
-	protected void looseValidatePosition(Move move) {
-		long generatedOccupancy = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
-		if (occupancy != generatedOccupancy) {
-			System.out.println("Occupancy doesn't match!!!");
-			printBoard();
-			System.out.println(move.toString());
-		}
-	}
+	public void validPosition() throws InvalidPositionException {
+		// Test pieceColors no overlap
+		long pieceColorsAND = pieceColors[0] & pieceColors[1];
+		if (pieceColorsAND != 0)
+			throw new InvalidPositionException("Piece colors overlap");
 
-	public boolean validPosition() {
-		long generatedOccupancy = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
-		if (occupancy != generatedOccupancy) {
-			return false;
-		}
-		return true;
+		// Test pieces no overlap
+		long piecesAND = pieces[0] & pieces[1] & pieces[2] & pieces[3] & pieces[4] & pieces[5];
+		if (piecesAND != 0)
+			throw new InvalidPositionException("Piece types overlap");
+
+		// Test pieceColors OR == occupancy
+		long pieceColorsOR = pieceColors[0] | pieceColors[1];
+		if (occupancy != pieceColorsOR)
+			throw new InvalidPositionException("Piece colors aren't consistent with occupancy");
+
+		// Test pieces OR == occupancy
+		long piecesOR = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
+		if (occupancy != piecesOR)
+			throw new InvalidPositionException("Piece types aren't consistent with occupancy");
 	}
 }

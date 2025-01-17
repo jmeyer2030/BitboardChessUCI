@@ -4,10 +4,11 @@ import java.util.List;
 
 import board.Move;
 import board.Position;
+import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
 
 public class TestMakeUnmakeSpeed {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InvalidPositionException {
 		new MoveGenerator();
 		Position position = new Position();
 		long start = System.currentTimeMillis();

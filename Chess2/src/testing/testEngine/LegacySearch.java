@@ -2,6 +2,7 @@ package testing.testEngine;
 
 import board.Move;
 import board.Position;
+import customExceptions.InvalidPositionException;
 import engine.Search;
 import moveGeneration.MoveGenerator;
 
@@ -18,7 +19,8 @@ public class LegacySearch {
     /**
      * negamax without transposition tables
      */
-    public static Search.MoveValue negaMax(int alpha, int beta, int depthLeft, Position position) {
+     /*
+    public static Search.MoveValue negaMax(int alpha, int beta, int depthLeft, Position position) throws InvalidPositionException {
         if (depthLeft == 0) {
             return new Search.MoveValue(quiescenceSearch(alpha, beta, position), null);
             //return new MoveValue(StaticEvaluation.negamaxEvaluatePosition(position), null);
@@ -64,4 +66,5 @@ public class LegacySearch {
         }
         return bestMoveValue;
     }
+    */
 }

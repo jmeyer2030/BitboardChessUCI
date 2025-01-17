@@ -1,9 +1,10 @@
 package testing.testMoveGeneration;
 import board.*;
+import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
 
 public class TestMakeUnmake {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InvalidPositionException {
         new MoveGenerator();
         TestPositions.initializePositions();
         Position staticCopy = new Position(TestPositions.position1);

@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 
 import board.PieceType;
+import customExceptions.InvalidPositionException;
 import engine.TimeManagement;
 import engine.Search;
 import board.Move;
@@ -43,7 +44,7 @@ public class GameGUI implements ActionListener{
 
 	GameSettings gameSettings;
 
-	public GameGUI(Position position, GameSettings gameSettings) {
+	public GameGUI(Position position, GameSettings gameSettings) throws InvalidPositionException {
 		this.flipBoard = gameSettings.playerColor == board.Color.BLACK;
 		this.position = position;
 		this.gameSettings = gameSettings;
@@ -67,6 +68,7 @@ public class GameGUI implements ActionListener{
 
 		if (!gameSettings.engineOpponent) { //if no engine we always generate legal
 			legalMoves = MoveGenerator.generateStrictlyLegal(position);
+
 		} else if (gameSettings.playerColor == board.Color.WHITE) { //else if engine AND player color is white
 			legalMoves = MoveGenerator.generateStrictlyLegal(position);
 		} else if (gameSettings.playerColor == board.Color.BLACK) {
@@ -176,8 +178,12 @@ public class GameGUI implements ActionListener{
 					if (gameSettings.engineOpponent) {
 						computerMove();
 					} else {
-						legalMoves = MoveGenerator.generateStrictlyLegal(position);
-					}
+                        try {
+                            legalMoves = MoveGenerator.generateStrictlyLegal(position);
+                        } catch (InvalidPositionException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
 					resetSquares(); // Reset squares after applying the move
 					selectedSquare = -1;
 				} else {

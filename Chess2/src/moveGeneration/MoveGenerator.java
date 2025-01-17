@@ -8,6 +8,7 @@ import board.Color;
 import board.Move;
 import board.PieceType;
 import board.Position;
+import customExceptions.InvalidPositionException;
 
 
 public class MoveGenerator{
@@ -43,20 +44,46 @@ public class MoveGenerator{
 	}
 	/**
 	 * Generates a list of all legal moves in a position
+	 *
 	 * @param position Position
 	 * @return Move list List<Move>
+	 *
+	 * @throws InvalidPositionException if a move is generated that results in an invalid position
 	 */
-	public static List<Move> generateStrictlyLegal(Position position) {
+	public static List<Move> generateStrictlyLegal(Position position) throws InvalidPositionException {
+
 		Position copy = new Position(position); //DEBUG CODE
 		List<Move> allMoves = generateAllMoves(position);
-		List<Move> legalMoves = allMoves.stream().filter(move -> {
-			moveUpdateChecks(move, position);
-			if (position.activePlayer == board.Color.WHITE) {
-				return !move.resultWhiteInCheck;
-			} else {
-				return !move.resultBlackInCheck;
+
+		List<Move> legalMoves = new ArrayList<>();
+		for (Move move : allMoves) {
+			Position copy1 = new Position(copy); // Copy to test changes
+
+            try {
+                moveUpdateChecks(move, position); // Checks if move causes a check
+            } catch (InvalidPositionException ipe) { // if the move
+            	String message = "";
+            	message += ipe.getMessage();
+
+            	// Document what move caused the issue
+            	message += "\nMove that caused the issue: ";
+            	message += move.toString();
+            	message += "\nInitial position before move was applied: \n";
+            	message += copy.getDisplayBoard();
+
+				throw new InvalidPositionException(message);
+            }
+
+			// Should check if the positions are equal here
+
+			if (position.activePlayer == board.Color.WHITE && !move.resultWhiteInCheck ||
+				position.activePlayer == board.Color.BLACK && !move.resultBlackInCheck) {
+				legalMoves.add(move);
 			}
-        }).collect(Collectors.toList());
+        }
+
+		// This code should be refined if needed or discarded
+		/*
         if (!copy.equals(position)) {
 			StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 
@@ -73,6 +100,7 @@ public class MoveGenerator{
         	System.out.println("SOURCE IS IN MOVE GENERATOR");
 			throw new RuntimeException("COPY IS NOT EQUAL!!!");
 		}
+		*/
 		return legalMoves;
 	}
 
@@ -82,20 +110,13 @@ public class MoveGenerator{
 	* @return Move list
 	*/
 	public static List<Move> generateAllMoves(Position position) {
-		Position copy = new Position(position);
 		List<Move> generatedMoves = new ArrayList<Move>();
 		generatedMoves.addAll(generatePawnMoves(position));
-		//if (!copy.equals(position)) throw new RuntimeException("PAWNS");
 		generatedMoves.addAll(generateRookMoves(position));
-		//if (!copy.equals(position)) throw new RuntimeException("ROOKS");
 		generatedMoves.addAll(generateBishopMoves(position));
-		//if (!copy.equals(position)) throw new RuntimeException("BISHOPS");
 		generatedMoves.addAll(generateKnightMoves(position));
-		//if (!copy.equals(position)) throw new RuntimeException("KNIGHTS");
 		generatedMoves.addAll(generateQueenMoves(position));
-		//if (!copy.equals(position)) throw new RuntimeException("QUEENS");
 		generatedMoves.addAll(generateKingMoves(position));
-		//if (!copy.equals(position)) throw new RuntimeException("KINGS");
 		return generatedMoves;
 
 	}
@@ -447,14 +468,17 @@ public class MoveGenerator{
 
 	/**
 	* Does check detection on a move
+	* @throws InvalidPositionException if position becomes invalid after make/unmake
 	*/
-	public static void moveUpdateChecks(Move move, Position position) {
+	public static void moveUpdateChecks(Move move, Position position) throws InvalidPositionException {
 		move.prevWhiteInCheck = position.whiteInCheck;
 		move.prevBlackInCheck = position.blackInCheck;
 		position.makeMove(move);
 		move.resultWhiteInCheck = kingInCheck(position, Color.WHITE);
 		move.resultBlackInCheck = kingInCheck(position, Color.BLACK);
 		position.unMakeMove(move);
+
+		position.validPosition();
 	}
 }
 

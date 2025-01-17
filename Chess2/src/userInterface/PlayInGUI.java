@@ -2,6 +2,7 @@ package userInterface;
 
 import board.Color;
 import board.Position;
+import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
 import testing.testUserInterface.GameGUI;
 import zobrist.Hashing;
@@ -36,7 +37,13 @@ public class PlayInGUI {
 			new MoveGenerator();
 			Hashing.initializeRandomNumbers();
 			Position position = new Position();
-			SwingUtilities.invokeLater(() -> new GameGUI(position, gameSettings));
+			SwingUtilities.invokeLater(() -> {
+                try {
+                    new GameGUI(position, gameSettings);
+                } catch (InvalidPositionException e) {
+                    throw new RuntimeException(e);
+                }
+            });
 		} catch (Exception e) {
 			System.out.println("Game settings must not be null!");
         }

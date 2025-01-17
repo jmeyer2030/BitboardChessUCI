@@ -59,6 +59,28 @@ public class Move {
         resultWhiteInCheck = false;
         resultBlackInCheck = false;
     }
+
+    /**
+    * Clone constructor
+    */
+
+    public Move(Move move) {
+        this.start = move.start;
+        this.destination = move.destination;
+        this.moveType = move.moveType;
+        this.promotionType = move.promotionType;
+        this.captureType = move.captureType;
+        this.halfMoveCount = move.halfMoveCount;
+        this.castleRights = move.castleRights;
+        this.movePiece = move.movePiece;
+        this.enPassant = move.enPassant;
+
+        //These are initialized so that the move can be made / unmade, but are updated in MoveGenerator
+        this.prevWhiteInCheck = move.prevWhiteInCheck;
+        this.prevBlackInCheck = move.prevBlackInCheck;
+        this.resultWhiteInCheck = move.resultWhiteInCheck;
+        this.resultBlackInCheck = move.resultBlackInCheck;
+    }
 /*
 * Factory Methods
 */
@@ -121,9 +143,8 @@ public class Move {
     */
     @Override
     public String toString() {
-        String moveDescription = "";
-        moveDescription += Testing.notation(this.start) + " -> " + Testing.notation(this.destination);
-
+        String moveDescription = "\n";
+        moveDescription += Testing.notation(this.start) + " -> " + Testing.notation(this.destination) + "\n";
         moveDescription += "Start: " + this.start + " \n";
         moveDescription += "Destination: " + this.destination + " \n";
         moveDescription += "MoveType: " + this.moveType + " \n";
