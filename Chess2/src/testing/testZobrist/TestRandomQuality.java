@@ -19,10 +19,10 @@ public class TestRandomQuality {
 
     /**
     * finds a zobrist seed that sets positions uniquely enough to get correct perft 6 and 7 results.
-    * 0-5323 doesn't work
+    * 0-8789 doesn't work
     */
     public static void findZobristSeed() throws InvalidPositionException {
-        long seed = 1967;
+        long seed = 5324;
         Position position = new Position();
         boolean worksForPerft = false;
         while (!worksForPerft) {
