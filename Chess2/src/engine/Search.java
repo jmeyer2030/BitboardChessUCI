@@ -64,28 +64,28 @@ public class Search {
         // Store the current time so we know when to stop searching
         long start = System.currentTimeMillis();
 
-        // Initialize the initial search depth
-        int depth = 0;
+
 
         // Create a new thread to run the search on
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
-        // Iteratively deepen the search until time runs out
-
+        // Initialize search depth and search while time hasn't been exceeded
+        int depth = 0;
         while (System.currentTimeMillis() - start < limitMillis) {
-
             Position copy = new Position(position);
-
             depth++;
             int finalDepth = depth;
+
             SearchMonitor searchMonitor = new SearchMonitor(copy);
 
             Callable<MoveValue> task = () -> {
                try {
-                   return negamax(NEG_INFINITY, POS_INFINITY, finalDepth, position);
+                   return negamax(NEG_INFINITY, POS_INFINITY, finalDepth, position, searchMonitor);
                } catch (InterruptedException e) {
                    System.out.println("Negamax was interrupted.");
                    throw e;
+               } catch(InvalidPositionException ipe) {
+                   throw ipe;
                }
             };
 
@@ -155,7 +155,7 @@ public class Search {
     * @throws InterruptedException if Interrupted by Iterative Deepening
     * @throws InvalidPositionException if an invalid position is reached by either negamax or quiescence search
     */
-    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position)
+    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, SearchMonitor searchMonitor)
            throws InterruptedException, InvalidPositionException {
 
         // Check for signal to interrupt the search
@@ -184,11 +184,12 @@ public class Search {
         }
 
         if (depthLeft == 0) {
-            return new MoveValue(quiescenceSearch(alpha, beta, position), null);
+            return new MoveValue(quiescenceSearch(alpha, beta, position, searchMonitor), null);
         }
 
         long hash = Hashing.computeZobrist(position);
         HashTables.TTElement ttEntry = HashTables.getTranspositionElement(hash);
+
 
         if (ttEntry != null && ttEntry.zobristHash == hash && ttEntry.depth >= depthLeft && ttEntry.bestMove != null) {
 
@@ -220,21 +221,19 @@ public class Search {
                 throw new InterruptedException("Negamax was interrupted by iterative deepening");
             }
 
-            Position copy = new Position(position);
-
-            position.makeMove(moveStack.push(move));
+            // "open" the position
+            position.makeMove(move);
+            searchMonitor.addPair(move, position);
             long zobrist = Hashing.computeZobrist(position);
-            incrementThreeFold(zobrist);
+            HashTables.incrementThreeFold(zobrist);
 
-            int score = -negamax(-beta, -alpha, depthLeft - 1, position).value;
+            // compute it's score
+            int score = -negamax(-beta, -alpha, depthLeft - 1, position, searchMonitor).value;
 
-            long zobrist2 = Hashing.computeZobrist(position);
-
-            if (zobrist != zobrist2 && position.equals(copy)) {
-                throw new IllegalStateException("Zobrist 1 != zobrist 2");
-            }
-            decrementThreeFold(zobrist2);
-            position.unMakeMove(moveStack.pop());
+            // "close" the position
+            searchMonitor.popStack();
+            decrementThreeFold(zobrist);
+            position.unMakeMove(move);
 
             // Update best move when score is better
             if (score > bestMoveValue.value) {
@@ -293,7 +292,7 @@ public class Search {
     }
 
 
-    public static int quiescenceSearch(int alpha, int beta, Position position) throws InvalidPositionException{
+    public static int quiescenceSearch(int alpha, int beta, Position position, SearchMonitor searchMonitor) throws InvalidPositionException{
         int standPat = StaticEvaluation.negamaxEvaluatePosition(position);
         int bestValue = standPat;
         if (standPat >= beta)
@@ -320,11 +319,17 @@ public class Search {
             throw ipe;
         }
         for (Move move : loudMoves) {
+
+            // "open" the position
             position.makeMove(move);
-            moveStack.push(move);
-            int score = -quiescenceSearch(-beta, -alpha, position);
-            moveStack.pop();
+            searchMonitor.addPair(move, position);
+
+            // compute the score
+            int score = -quiescenceSearch(-beta, -alpha, position, searchMonitor);
+
+            // "close" the position
             position.unMakeMove(move);
+            searchMonitor.popStack();
 
             if (score >= beta)
                 return score;

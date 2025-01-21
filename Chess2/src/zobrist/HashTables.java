@@ -6,6 +6,10 @@ import engine.NodeType;
 public class HashTables {
 
 /*
+ @todo Should implement buckets probably to reduce overlap if that is occurring.
+*/
+
+/*
  * Set Size
  */
     // Transposition Table
@@ -48,15 +52,24 @@ public class HashTables {
  * Get Element
  */
     public static TTElement getTranspositionElement(long zobristHash) {
-        return transpositionTable[getTranspositionIndex(zobristHash)];
+        TTElement element = transpositionTable[getTranspositionIndex(zobristHash)];
+        if (element == null || element.zobristHash != zobristHash)
+            return null;
+        return element;
     }
 
     public static PerftElement getPerftElement(long zobristHash) {
-        return perftTable[getPerftIndex(zobristHash)];
+        PerftElement element = perftTable[getPerftIndex(zobristHash)];
+        if (element == null || element.zobristHash != zobristHash)
+            return null;
+        return element;
     }
 
     public static ThreeFoldElement getThreeFoldElement(long zobristHash) {
-        return threeFoldTable[getThreeFoldIndex(zobristHash)];
+        ThreeFoldElement element = threeFoldTable[getThreeFoldIndex(zobristHash)];
+        if (element == null || element.zobristHash != zobristHash)
+            return null;
+        return element;
     }
 
 /*

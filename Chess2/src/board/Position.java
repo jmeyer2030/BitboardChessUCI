@@ -5,6 +5,8 @@ import testing.testMoveGeneration.Testing;
 import customExceptions.InvalidPositionException;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /*
  * Represents a position with Bitboards
@@ -529,6 +531,26 @@ public class Position {
 	/**
 	* Prints a board in a human-readable format
 	*/
+/*
+    +---+---+---+---+---+---+---+---+
+  8 | r | n | b | q | k | b | n | r |
+    +---+---+---+---+---+---+---+---+
+  7 | p | p | p | p | p | p | p | p |
+    +---+---+---+---+---+---+---+---+
+  6 |   |   |   |   |   |   |   |   |
+    +---+---+---+---+---+---+---+---+
+  5 |   |   |   |   |   |   |   |   |
+    +---+---+---+---+---+---+---+---+
+  4 |   |   |   |   |   |   |   |   |
+    +---+---+---+---+---+---+---+---+
+  3 |   |   |   |   |   |   |   |   |
+    +---+---+---+---+---+---+---+---+
+  2 | P | P | P | P | P | P | P | P |
+    +---+---+---+---+---+---+---+---+
+  1 | R | N | B | Q | K | B | N | R |
+    +---+---+---+---+---+---+---+---+
+      A   B   C   D   E   F   G   H
+*/
 	public String getDisplayBoard() {
 		try {
 			validPosition();
@@ -538,7 +560,10 @@ public class Position {
 
 		char[] board = new char[64];
 		char[] pieceSymbols = {'p', 'n', 'b', 'r', 'q', 'k'};
-		Arrays.fill(board, '*');
+
+
+		// fill board with correct piece symbol
+		Arrays.fill(board, ' ');
 		for (int i = 0; i < 6; i++) {
 			long currentPieceType = pieces[i];
 			while (currentPieceType != 0L) {
@@ -548,25 +573,63 @@ public class Position {
 			}
 		}
 
+		// Shift case of the board array
 		long shiftCase = pieceColors[0];
 		while (shiftCase != 0L) {
 			int loc = Long.numberOfTrailingZeros(shiftCase);
 			shiftCase &= (shiftCase - 1);
 			board[loc] = Character.toUpperCase(board[loc]);
 		}
+		char[][] boardTemplate = new char[][]{
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"  8 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"  7 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"  6 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"  5 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"  4 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"  3 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"  2 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"  1 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+"	   A   B   C   D   E   F   G   H  \n".toCharArray()};
 
-		String singleLine = new String(board);
+		int firstSquare = 6;
+		int squareIncrement = 4;
 
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < singleLine.length(); i += 8) {
-			if (i + 8 <= singleLine.length()) {
-				result.append(singleLine, i, i + 8).append("\n");
-			} else {
-				result.append(singleLine.substring(i)).append("\n");
+		// Replace characters in template with their piece
+		for (int i = 0; i < 64; i++) {
+			int boardRow = 1 + (i / 8) * 2; // boardRow of boardTemplate
+			int boardCol = firstSquare + ((i % 8) * 4);
+
+			int row = 7 - i / 8;
+			int col = i % 8;
+			int index = row * 8 + col;
+
+			boardTemplate[boardRow][boardCol] = board[index];
+		}
+
+		// Convert char[][] to a list
+		List<Character> result = new LinkedList<>();
+		for (char[] arr : boardTemplate) {
+			for (char c : arr) {
+				result.add(c);
 			}
 		}
 
-		return result.toString();
+		StringBuilder bldr = new StringBuilder();
+
+		for (Character c : result) {
+			bldr.append(c);
+		}
+
+		return bldr.toString();
 	}
 
 	/**

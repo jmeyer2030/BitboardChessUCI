@@ -6,6 +6,7 @@ import board.Position;
 import customExceptions.InvalidPositionException;
 import engine.Search;
 import moveGeneration.MoveGenerator;
+import system.SearchMonitor;
 import zobrist.Hashing;
 
 import java.util.List;
@@ -45,10 +46,16 @@ public class TestSearch {
     public static void negaMaxTimeTest(Position position, int depth) throws InterruptedException, InvalidPositionException {
         System.out.println("Transposition Table Negamax: ");
         long start = System.currentTimeMillis();
-        Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position);
-        long end = System.currentTimeMillis();
-        long elapsed = end - start;
-        System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\n");
+        SearchMonitor searchMonitor = new SearchMonitor(position);
+        try {
+            Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, searchMonitor);
+            long end = System.currentTimeMillis();
+            long elapsed = end - start;
+            System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\n");
+        } catch (InvalidPositionException ipe) {
+            searchMonitor.logSearchStack();
+        }
+
     }
 
 }

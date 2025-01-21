@@ -7,16 +7,18 @@ import customExceptions.InvalidPositionException;
 import java.util.Objects;
 import java.util.Stack;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 /*
 * This class aims to monitor search to provide detailed insights about search results.
-*
+* Conceptually, this class should be more responsible for logging error issues than the exception itself.
 */
 public class SearchMonitor {
 
-    public Stack<BoardMovePair> searchStack;
-    public Logger logger;
-    public Position initialPosition;
+
+    public Stack<BoardMovePair> searchStack; // Stores the stack of searched positions and moves
+    public Logger logger; // Displays information to the user
+    public Position initialPosition; // The starting position of the search
 
     public SearchMonitor(Position initialPosition) {
         try {
@@ -26,18 +28,28 @@ public class SearchMonitor {
         }
         this.initialPosition = new Position(initialPosition);
         this.logger = Logging.getLogger(SearchMonitor.class);
+        this.searchStack = new Stack<BoardMovePair>();
     }
 
     public void addPair(Move move, Position position) {
-        searchStack.push(new BoardMovePair(move, position));
+        searchStack.push(new BoardMovePair(move, new Position(position)));
     }
 
-    public String searchToString() {
-        String str = "";
+    private String searchToString() {
+        String str = "\n";
+        str += initialPosition.getDisplayBoard() + "\n";
         for (BoardMovePair pair : searchStack) {
             str += pair;
         }
         return str;
+    }
+
+    public void logSearchStack() {
+        logger.log(Level.SEVERE, searchToString() + "end log");
+    }
+
+    public BoardMovePair popStack() {
+        return searchStack.pop();
     }
 
     /**
@@ -53,7 +65,7 @@ public class SearchMonitor {
         }
 
         public String toString() {
-            String str = this.move + "\n" + position.getDisplayBoard();
+            String str = this.move + "\n" + this.position.getDisplayBoard();
             return str;
         }
     }
