@@ -13,19 +13,7 @@ import board.Position;
 import system.Logging;
 
 public abstract class MagicBitboard implements LogicInterface{
-	
-	/*
-	 Little-Endian Rank-File Mapping:
-		56, 57, 58, 59, 60, 61, 62, 63
-		48, 49, 50, 51, 52, 53, 54, 55
-		40, 41, 42, 43, 44, 45, 46, 47
-		32, 33, 34, 35, 36, 37, 38, 39
-		24, 25, 26, 27, 28, 29, 30, 31
-		16, 17, 18, 19, 20, 21, 22, 23
-		8,  9,  10, 11, 12, 13, 14, 15
-		0,  1,  2,  3,  4,  5,  6,  7
-	*/
-	
+
 	private static final Logger LOGGER = Logging.getLogger(MagicBitboard.class);
 
 //Abstract Methods:
@@ -40,8 +28,6 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 	
 //Public Methods:
-
-	
 	/**
 	 * Returns a move board given a square and position
 	 * @param square square
@@ -70,7 +56,6 @@ public abstract class MagicBitboard implements LogicInterface{
 	 * @return attackBoard of all attacks
 	 */
 	public long getAttackBoard(int square, Position position) {
-
 		//long blockerBoard = position.occupancy & getBlockerMasks()[square];
 		//int index = getIndexForBlocker(blockerBoard, square);
 		//return getMoveBoards().get(square).get(index);
@@ -86,7 +71,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	
 //Implemented Methods:
 	/**
-	 * Generates an array of the blockerMasks
+	 * Generates an array of the blockerMasks, places where blockers could be for each square
 	 * @return array of blockerMasks
 	 */
 	protected long[] generateBlockerMasks() {
@@ -98,7 +83,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	}	
 	
 	/**
-	 *This method returns all blockerBoards for a given blockerMask 
+	 *This method returns all blockerBoards for a given blockerMask, each
 	 * @param blockerMask an arbitrary blocker-mask
 	 * @return list of all blockerBoards for a blockerMask
 	 */
@@ -173,13 +158,18 @@ public abstract class MagicBitboard implements LogicInterface{
 	} 
 	
 
-	//Get 
+	/**
+	* Given a blocker board and square, returns the index of the corresponding move board
+	*/
     protected int getIndexForBlocker(long blockerBoard, int square) {
         // Function to get the index
         return (int) ((getMagicNumbers()[square] * blockerBoard) >> (64 - getNumBits()[square]) 
                 & ((1 << getNumBits()[square]) - 1));
     }
 
+	/**
+	* Sorts
+	*/
     protected List<Long> sortMoveBoards(int square) {
     	List<Long> moveBoards = getMoveBoards().get(square);
     	List<Long> blockerBoards = getBlockerBoards().get(square);

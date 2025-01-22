@@ -7,6 +7,14 @@ public class HashTables {
 
 /*
  @todo Should implement buckets probably to reduce overlap if that is occurring.
+ @todo Should probably refactor classes into implementations of an abstract class
+*/
+
+/*
+ Idea for implementing three ply:
+ keep a stack of positions that have been reached with their zobrist hash. Pop/push when needed.
+ keep a stack of the ply of the last irreversible move.
+ to check if a node is a repetition, loop over the positions until the last position before an unrepeatable move is made.
 */
 
 /*
@@ -164,8 +172,8 @@ public class HashTables {
     }
 
     /**
-     * A class for use in the Three-Fold Table data structure
-     */
+    * A class for use in the Three-Fold Table data structure
+    */
     public static class ThreeFoldElement {
         public long zobristHash;
         public int numRepetitions;

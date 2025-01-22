@@ -35,6 +35,8 @@ public class Move {
     public boolean resultWhiteInCheck;
     public boolean resultBlackInCheck;
 
+    public boolean reversible; // Flag to tell if move can be undone (non-capture, non-pawn move)
+
 /*
 * Constructors
 */
@@ -58,6 +60,13 @@ public class Move {
         prevBlackInCheck = false;
         resultWhiteInCheck = false;
         resultBlackInCheck = false;
+
+        if (this.moveType == MoveType.CAPTURE || this.movePiece == PieceType.PAWN) {
+            this.reversible = false;
+        } else {
+            this.reversible = true;
+        }
+
     }
 
     /**

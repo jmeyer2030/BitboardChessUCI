@@ -3,6 +3,7 @@ package board;
 import moveGeneration.MoveGenerator;
 import testing.testMoveGeneration.Testing;
 import customExceptions.InvalidPositionException;
+import zobrist.Hashing;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -12,6 +13,8 @@ import java.util.List;
  * Represents a position with Bitboards
  */
 public class Position {
+	public long zobristHash;
+
 	//Piece Locations
 	public long occupancy;
 	public long[] pieceColors;
@@ -56,7 +59,10 @@ public class Position {
 		fullMoveCount = 1;
 		whiteInCheck = false;
 		blackInCheck = false;
+
+		zobristHash = Hashing.computeZobrist(this);
 	}
+
 	/**
 	* Copy a position
 	*/
@@ -72,6 +78,7 @@ public class Position {
 		this.whiteInCheck = position.whiteInCheck;
 		this.blackInCheck = position.blackInCheck;
 	}
+
 	/**
 	* Build from FEN
 	*/
@@ -195,7 +202,10 @@ public class Position {
 
 	    this.whiteInCheck = MoveGenerator.kingInCheck(this, Color.WHITE);
 	    this.blackInCheck = MoveGenerator.kingInCheck(this, Color.BLACK);
+
+	    this.zobristHash = Hashing.computeZobrist(this);
 	}
+
 /*
 * Make and unMake
 */
@@ -298,7 +308,7 @@ public class Position {
 	    whiteInCheck = move.resultWhiteInCheck;
 	    blackInCheck = move.resultBlackInCheck;
 
-	    //looseValidatePosition(move);
+		this.zobristHash = Hashing.computeZobrist(this);
 	}
 
 	/**
@@ -397,6 +407,8 @@ public class Position {
 
 		this.whiteInCheck = move.prevWhiteInCheck;
 		this.blackInCheck = move.prevBlackInCheck;
+
+		this.zobristHash = Hashing.computeZobrist(this);
 	}
 
 /*
@@ -427,65 +439,42 @@ public class Position {
 		return pieceType;
 	}
 
+	/**
+	* Returns if this position is equal to another
+	* @param position position
+	* @return true if they are equal
+	*/
 	public boolean equals(Position position) {
 		boolean equal = true;
-		if (this.occupancy != position.occupancy) {
-			System.out.println("occupancy diff");
-			equal = false;
-		}
-		if (this.pieces[0] != position.pieces[0]) {
-			System.out.println("pawn diff");
-			equal = false;
-		}
-		if (this.pieces[1] != position.pieces[1]) {
-			System.out.println("knight diff");
-			equal = false;
-		}
-		if (this.pieces[2] != position.pieces[2]) {
-			System.out.println("bishop diff");
-			equal = false;
-		}
-		if (this.pieces[3] != position.pieces[3]) {
-			System.out.println("rook diff");
-			equal = false;
-		}
-		if (this.pieces[4] != position.pieces[4]) {
-			System.out.println("queen diff");
-			equal = false;
-		}
-		if (this.pieces[5] != position.pieces[5]) {
-			System.out.println("king diff");
-			equal = false;
-		}
-		if (this.pieceColors[0] != position.pieceColors[0]) {
-			System.out.println("white diff");
-			equal = false;
-		}
-		if (this.pieceColors[1] != position.pieceColors[1]) {
-			System.out.println("black diff");
-			equal = false;
-		}
-		if (this.castleRights != position.castleRights) {
-			System.out.println("castle diff");
-			equal = false;
-		}
-		if (this.rule50 != position.rule50) {
-			System.out.println("rule50 diff");
-			equal = false;
-		}
-		if (this.enPassant != position.enPassant) {
-			System.out.println("en passant diff");
-			equal = false;
-		}
-		if (this.activePlayer != position.activePlayer) {
-			System.out.println("activePlayer diff");
-			equal = false;
-		}
-		if (this.fullMoveCount != position.fullMoveCount) {
-			System.out.println("full move diff");
-			equal = false;
-		}
+		equal &= compareValues(this.occupancy, position.occupancy, "Occupancy");
+		equal &= compareValues(this.pieces[0], position.pieces[0], "Pawns");
+		equal &= compareValues(this.pieces[1], position.pieces[1], "Knight");
+		equal &= compareValues(this.pieces[2], position.pieces[2], "Bishop");
+		equal &= compareValues(this.pieces[3], position.pieces[3], "Rook");
+		equal &= compareValues(this.pieces[4], position.pieces[4], "Queen");
+		equal &= compareValues(this.pieces[5], position.pieces[5], "King");
+		equal &= compareValues(this.pieceColors[0], position.pieceColors[0], "White Pieces");
+		equal &= compareValues(this.pieceColors[1], position.pieceColors[1], "Black Pieces");
+		equal &= compareValues(this.castleRights, position.castleRights, "Castle Rights");
+		equal &= compareValues(this.rule50, position.rule50, "Rule 50");
+		equal &= compareValues(this.enPassant, position.enPassant, "En Passant");
+		equal &= compareValues(this.activePlayer, position.activePlayer, "Active Player");
+		equal &= compareValues(this.fullMoveCount, position.fullMoveCount, "Full Move Count");
 		return equal;
+	}
+	/**
+	* Returns true if values are equal, else false
+	* @param value1 first value
+	* @param value2 value to compare to
+	* @param fieldName field name of these values
+	* @return if they are equal
+	*/
+	private boolean compareValues(Object value1, Object value2, String fieldName) {
+		if (!value1.equals(value2)) {
+			System.out.println(fieldName + " different");
+			return false;
+		}
+		return true;
 	}
 
 /*
@@ -581,24 +570,24 @@ public class Position {
 			board[loc] = Character.toUpperCase(board[loc]);
 		}
 		char[][] boardTemplate = new char[][]{
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"  8 |   |   |   |   |   |   |   |   |\n".toCharArray(),
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"  7 |   |   |   |   |   |   |   |   |\n".toCharArray(),
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"  6 |   |   |   |   |   |   |   |   |\n".toCharArray(),
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"  5 |   |   |   |   |   |   |   |   |\n".toCharArray(),
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"  4 |   |   |   |   |   |   |   |   |\n".toCharArray(),
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"  3 |   |   |   |   |   |   |   |   |\n".toCharArray(),
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"  2 |   |   |   |   |   |   |   |   |\n".toCharArray(),
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"  1 |   |   |   |   |   |   |   |   |\n".toCharArray(),
-"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-"	   A   B   C   D   E   F   G   H  \n".toCharArray()};
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"  8 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"  7 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"  6 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"  5 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"  4 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"  3 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"  2 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"  1 |   |   |   |   |   |   |   |   |\n".toCharArray(),
+			"    +---+---+---+---+---+---+---+---+\n".toCharArray(),
+			"	   A   B   C   D   E   F   G   H  \n".toCharArray()};
 
 		int firstSquare = 6;
 		int squareIncrement = 4;
@@ -606,7 +595,7 @@ public class Position {
 		// Replace characters in template with their piece
 		for (int i = 0; i < 64; i++) {
 			int boardRow = 1 + (i / 8) * 2; // boardRow of boardTemplate
-			int boardCol = firstSquare + ((i % 8) * 4);
+			int boardCol = firstSquare + ((i % 8) * squareIncrement);
 
 			int row = 7 - i / 8;
 			int col = i % 8;

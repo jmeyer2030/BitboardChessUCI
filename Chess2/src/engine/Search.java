@@ -12,6 +12,7 @@ import moveGeneration.MoveGenerator;
 import system.SearchMonitor;
 import zobrist.HashTables;
 import zobrist.Hashing;
+import zobrist.ThreePly;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -93,7 +94,7 @@ public class Search {
 
             try {
                 // Compute the maximal amount of time this search can take
-                long maxTimeForSearch = System.currentTimeMillis() - start;
+                long maxTimeForSearch = System.currentTimeMillis() - start + limitMillis;
                 MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS); // Timeout in ms, should throw a timeout exception
                 searchResults.add(result);
                 if (result.bestMove == null) {
@@ -116,9 +117,11 @@ public class Search {
                 System.out.println("ready to remove from stack!");
 
                 while (!moveStack.isEmpty()) { // Unmake moves from copy, and remove items from the position hash table
+                    Move move = moveStack.pop();
+
                     System.out.println("unmaking moves, stack size: " + moveStack.size());
-                    decrementThreeFold(Hashing.computeZobrist(position));
-                    position.unMakeMove(moveStack.pop());
+                    ThreePly.popPosition();
+                    position.unMakeMove(move);
                 }
 
                 //System.out.println(position.equals(copy));
@@ -167,8 +170,10 @@ public class Search {
         int alphaOrig = alpha;
 
         List<Move> children = MoveGenerator.generateStrictlyLegal(position);
-
         GameStatus status = gameStatus(children.size(), position);
+
+        long hash = Hashing.computeZobrist(position);
+
 
         switch (status) {
             case ONGOING :
@@ -187,27 +192,19 @@ public class Search {
             return new MoveValue(quiescenceSearch(alpha, beta, position, searchMonitor), null);
         }
 
-        long hash = Hashing.computeZobrist(position);
         HashTables.TTElement ttEntry = HashTables.getTranspositionElement(hash);
 
 
         if (ttEntry != null && ttEntry.zobristHash == hash && ttEntry.depth >= depthLeft && ttEntry.bestMove != null) {
-
-            position.makeMove(ttEntry.bestMove);
-            HashTables.ThreeFoldElement tfEntry = HashTables.getThreeFoldElement(Hashing.computeZobrist(position));
-            position.unMakeMove(ttEntry.bestMove);
-
-            if (tfEntry == null || tfEntry.numRepetitions == 0) {
-                if (ttEntry.nodeType == NodeType.EXACT) {
-                    return new MoveValue(ttEntry.score, ttEntry.bestMove);
-                } else if (ttEntry.nodeType == NodeType.LOWER_BOUND) {
-                    alpha = Math.max(alpha, ttEntry.score);
-                } else {
-                    beta = Math.min(beta, ttEntry.score);
-                }
-                if (alpha > beta) {
-                    return new MoveValue(ttEntry.score, ttEntry.bestMove);
-                }
+            if (ttEntry.nodeType == NodeType.EXACT) {
+                return new MoveValue(ttEntry.score, ttEntry.bestMove);
+            } else if (ttEntry.nodeType == NodeType.LOWER_BOUND) {
+                alpha = Math.max(alpha, ttEntry.score);
+            } else {
+                beta = Math.min(beta, ttEntry.score);
+            }
+            if (alpha > beta) {
+                return new MoveValue(ttEntry.score, ttEntry.bestMove);
             }
         }
 
@@ -224,15 +221,13 @@ public class Search {
             // "open" the position
             position.makeMove(move);
             searchMonitor.addPair(move, position);
-            long zobrist = Hashing.computeZobrist(position);
-            HashTables.incrementThreeFold(zobrist);
-
+            ThreePly.addPosition(Hashing.computeZobrist(position), true);
             // compute it's score
             int score = -negamax(-beta, -alpha, depthLeft - 1, position, searchMonitor).value;
 
             // "close" the position
             searchMonitor.popStack();
-            decrementThreeFold(zobrist);
+            ThreePly.popPosition();
             position.unMakeMove(move);
 
             // Update best move when score is better
@@ -284,7 +279,7 @@ public class Search {
             }
         } else if (position.rule50 >= 50) {
             return GameStatus.RULE50;
-        } else if (HashTables.repetitionsExceeded(Hashing.computeZobrist(position))) {
+        } else if (ThreePly.positionRepeated(Hashing.computeZobrist(position))) {
             return GameStatus.REPETITION;
         } else {
             return GameStatus.ONGOING;
@@ -323,6 +318,7 @@ public class Search {
             // "open" the position
             position.makeMove(move);
             searchMonitor.addPair(move, position);
+            ThreePly.addPosition(position.zobristHash, move.reversible);
 
             // compute the score
             int score = -quiescenceSearch(-beta, -alpha, position, searchMonitor);
@@ -330,6 +326,7 @@ public class Search {
             // "close" the position
             position.unMakeMove(move);
             searchMonitor.popStack();
+            ThreePly.popPosition();
 
             if (score >= beta)
                 return score;

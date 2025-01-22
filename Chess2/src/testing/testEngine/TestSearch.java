@@ -18,13 +18,14 @@ public class TestSearch {
         Hashing.initializeRandomNumbers();
 
 
-        FEN fen = new FEN("rnbqkbnr/1pp1pppp/8/p7/1PB1P3/8/P2P1PPP/RNBQK1NR b KQkq - 0 4");
+        FEN fen = new FEN("7k/5Q2/qq4pp/qq4q1/q5q1/8/8/7K w - - 0 1");
         Position position = new Position(fen);
         List<Move> moveList = MoveGenerator.generateStrictlyLegal(position);
         //System.out.println(moveList.size());
         //moveList.stream().forEach(move -> System.out.println(move));
 
-        position = new Position();
+        //position = new Position();
+        System.out.println("Position: \n" + position.getDisplayBoard());
         int depth = 6;
 
         negaMaxTimeTest(position, depth);

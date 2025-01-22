@@ -8,7 +8,8 @@ import system.Logging;
 public class BishopLogic extends MagicBitboard{
 	
 	private static final Logger LOGGER = Logging.getLogger(BishopLogic.class);
-	
+
+	// Number of potential blockers for each square
 	public static int[] numBits = new int[]
 					{6, 5, 5, 5, 5, 5, 5, 6, 
 					 5, 5, 5, 5, 5, 5, 5, 5,

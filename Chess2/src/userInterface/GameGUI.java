@@ -1,4 +1,4 @@
-package testing.testUserInterface;
+package userInterface;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -17,9 +17,9 @@ import engine.Search;
 import board.Move;
 import board.Position;
 import moveGeneration.MoveGenerator;
-import userInterface.GameSettings;
 import zobrist.HashTables;
 import zobrist.Hashing;
+import zobrist.ThreePly;
 
 
 public class GameGUI implements ActionListener{
@@ -206,7 +206,7 @@ public class GameGUI implements ActionListener{
 	private void applyMove(Move move) {
 		legalMoves.clear();
 		position.makeMove(move);
-		HashTables.incrementThreeFold(Hashing.computeZobrist(position));
+		ThreePly.addPosition(position.zobristHash, move.reversible);
 		System.out.println(move);
 		//System.out.println("BOARD AFTER MOVE:");
 		//position.printBoard();
@@ -229,7 +229,7 @@ public class GameGUI implements ActionListener{
 				try {
 					Move computerMove = get();
 					position.makeMove(computerMove);
-					HashTables.incrementThreeFold(Hashing.computeZobrist(position));
+					ThreePly.addPosition(position.zobristHash, computerMove.reversible);
 					updateDisplay();
 					legalMoves.clear();
 					legalMoves.addAll(MoveGenerator.generateStrictlyLegal(position));

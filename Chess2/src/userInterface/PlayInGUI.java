@@ -4,7 +4,6 @@ import board.Color;
 import board.Position;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
-import testing.testUserInterface.GameGUI;
 import zobrist.Hashing;
 
 import javax.swing.*;
