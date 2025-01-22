@@ -10,7 +10,6 @@ import board.PieceType;
 import board.Position;
 import customExceptions.InvalidPositionException;
 
-
 public class MoveGenerator{
 
 /*
