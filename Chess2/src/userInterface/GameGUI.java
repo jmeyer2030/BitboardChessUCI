@@ -17,8 +17,6 @@ import engine.Search;
 import board.Move;
 import board.Position;
 import moveGeneration.MoveGenerator;
-import zobrist.HashTables;
-import zobrist.Hashing;
 import zobrist.ThreePly;
 
 
@@ -37,8 +35,6 @@ public class GameGUI implements ActionListener{
 	long whiteTime;
 	long blackTime;
 	long initialTime;
-	int moveStart;
-	int moveDestination;
 	int selectedSquare;
 	boolean flipBoard;
 
@@ -220,8 +216,9 @@ public class GameGUI implements ActionListener{
 		SwingWorker<Move, Void> worker = new SwingWorker<>() {
 			@Override
 			protected Move doInBackground() throws Exception {
+				//return Search.iterativeDeepening(new Position(position), 10_000).bestMove;
 				return Search.iterativeDeepening(new Position(position), TimeManagement.millisForMove(
-					position.activePlayer == board.Color.WHITE ? whiteTime : blackTime)).bestMove;
+					position.activePlayer == board.Color.WHITE ? whiteTime : blackTime) + 2_000).bestMove;
 			}
 
 			@Override

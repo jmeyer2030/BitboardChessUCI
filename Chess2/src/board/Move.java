@@ -3,14 +3,16 @@ import testing.testMoveGeneration.Testing;
 
 public class Move {
 /*
-* 0-5 : start
-* 6-11 : end
-* 12-14 : moveType
-* 15-16 : promotionType
-* 17-19 : moved piece
-* 20-22 : captured piece
+* 0-5 : start (6 bits)
+* 6-11 : end (6 bits)
+* 12-14 : moveType (3 bits)
+* 15-16 : promotionType (2 bits)
+* 17-19 : moved piece (3 bits)
+* 20-22 : captured piece (3 bits)
+* 23-28 : half move count (6 bits)
+* 29-31 : enPassant square : (3 bits if side is computed)
+* 32 : Check
 */
-//0-5 (start) 6-11 (end) 12-14 (moveType) 15-
 
 /*
 * Fields

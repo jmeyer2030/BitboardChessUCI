@@ -17,18 +17,6 @@ import zobrist.ThreePly;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static zobrist.HashTables.decrementThreeFold;
-import static zobrist.HashTables.incrementThreeFold;
-
-/*
-add a stack that stores moves explored in negamax.
-add a table that stores zobristkeys, number of times position reached
-update the table after making and umaking
-
-in negamax, syncronize making a move, adding to position table, and adding it to the stack, as well as unmaking and popping.
-
-then after negamax is run, pop all from the stack, unmake them, and remove from the position table.
-*/
 
 public class Search {
 
@@ -65,45 +53,27 @@ public class Search {
         // Store the current time so we know when to stop searching
         long start = System.currentTimeMillis();
 
-
-
         // Create a new thread to run the search on
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         // Initialize search depth and search while time hasn't been exceeded
         int depth = 0;
-        while (System.currentTimeMillis() - start < limitMillis) {
+        while (true) {
+
             Position copy = new Position(position);
             depth++;
-            int finalDepth = depth;
-
-            SearchMonitor searchMonitor = new SearchMonitor(copy);
-
-            Callable<MoveValue> task = () -> {
-               try {
-                   return negamax(NEG_INFINITY, POS_INFINITY, finalDepth, position, searchMonitor);
-               } catch (InterruptedException e) {
-                   System.out.println("Negamax was interrupted.");
-                   throw e;
-               } catch(InvalidPositionException ipe) {
-                   throw ipe;
-               }
-            };
-
+            Callable<MoveValue> task = getMoveValueCallable(position, depth, copy);
             Future<MoveValue> future = executor.submit(task);
 
             try {
                 // Compute the maximal amount of time this search can take
-                long maxTimeForSearch = System.currentTimeMillis() - start + limitMillis;
-                MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS); // Timeout in ms, should throw a timeout exception
+                long maxTimeForSearch = limitMillis - (System.currentTimeMillis() - start);
+                MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS); // Throws timeout exception
                 searchResults.add(result);
-                if (result.bestMove == null) {
-                    System.out.println("Game ended with result: " + result.value);
-                } else {
-                    System.out.println("\nDepth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove.toString());
-                }
+                System.out.println("\nDepth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove);
             } catch (TimeoutException te) {
                 System.out.println("Function timed out!");
+
                 future.cancel(true); // Tells the thread that it was interrupted
 
                 try {
@@ -111,7 +81,7 @@ public class Search {
                 } catch (CancellationException ce) { // This is expected
                     System.out.println("Task Canceled.");
                 } catch (Exception e) {
-                    throw new RuntimeException("An unexpected error has occurred");
+                    System.out.println("An unexpected error has occurred");
                 }
 
                 System.out.println("ready to remove from stack!");
@@ -121,10 +91,11 @@ public class Search {
 
                     System.out.println("unmaking moves, stack size: " + moveStack.size());
                     ThreePly.popPosition();
-                    position.unMakeMove(move);
+                    copy.unMakeMove(move); // we should unmake from copy... right?
                 }
 
-                //System.out.println(position.equals(copy));
+                // consider adding a equal check for copy and position
+
                 break; //Exit the search loop
             } catch (ExecutionException | InterruptedException e) { // This should never happen so we throw an exception
                 Throwable cause = e.getCause();
@@ -134,9 +105,27 @@ public class Search {
 
         executor.shutdown();
 
-        System.out.println("Evaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove.toString() + ", " + searchResults.getLast().bestMove.moveType);
+        System.out.println("Evaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove + ", " + searchResults.getLast().bestMove.moveType);
 
         return searchResults.get(searchResults.size() - 1);
+    }
+
+    private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, Position copy) {
+        int finalDepth = depth;
+
+        SearchMonitor searchMonitor = new SearchMonitor(copy);
+
+        Callable<MoveValue> task = () -> {
+           try {
+               return negamax(NEG_INFINITY, POS_INFINITY, finalDepth, position, searchMonitor);
+           } catch (InterruptedException e) {
+               System.out.println("Negamax was interrupted.");
+               throw e;
+           } catch(InvalidPositionException ipe) {
+               throw ipe;
+           }
+        };
+        return task;
     }
 
     /**

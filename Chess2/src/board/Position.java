@@ -221,28 +221,30 @@ public class Position {
 		// Increment rule50, reset handled later
 		rule50++;
 
-		// Change occupancy of moved piece
+		// Occupancy remove start add destination
 	    occupancy &= ~startMask; //remove start square
 	    occupancy |= destinationMask; //add destination
 
-		// Change color pieces of moved piece
+		// Inactive color remove destination
 		pieceColors[Color.flipColor(activePlayer).ordinal()] &= ~destinationMask;
+
+		// Active color remove start add destination
 		pieceColors[activePlayer.ordinal()] ^= swapMask;
 
-		// Remove piece on destination square (case of capture)
+		// Pieces remove capture
 		if (move.captureType != null)
 			pieces[move.captureType.ordinal()] &= ~destinationMask;
 
-		// Add piece on destination square
+		// Pieces add destination
 		pieces[move.movePiece.ordinal()] |= destinationMask;
 
-		//  Remove piece on start square
+		// Pieces remove start
 		pieces[move.movePiece.ordinal()] &= ~startMask;
 
 	    // Handle specific move types
 	    switch (move.moveType) {
 	        case QUIET:
-	        	rule50 = (pieces[0] & destinationMask) != 0 ? 0 : rule50;
+	        	rule50 = move.movePiece == PieceType.PAWN ? 0 : rule50;
 	        	break;
 	        case CAPTURE:
 	        	rule50 = 0;
@@ -253,10 +255,10 @@ public class Position {
 	            int enPassantCaptureSquare = activePlayer == Color.WHITE ? enPassant - 8 : enPassant + 8;
 	            long enPassantCaptureMask = 1L << enPassantCaptureSquare;
 
-	            occupancy &= ~enPassantCaptureMask;
-				pieceColors[0] &= ~enPassantCaptureMask;
+	            occupancy &= ~enPassantCaptureMask; // remove capture from occupancy
+				pieceColors[0] &= ~enPassantCaptureMask; // remove capture from colors
 				pieceColors[1] &= ~enPassantCaptureMask;
-                pieces[0] &= ~enPassantCaptureMask;
+                pieces[0] &= ~enPassantCaptureMask; // remove capture piece from pawns
 	            break;
 	        case PROMOTION:
 	        	rule50 = 0;
@@ -295,9 +297,8 @@ public class Position {
 		// Update castle rights for rook square move
 
 	    // Set en passant square
-	    enPassant = ((pieces[0] & destinationMask) != 0 && Math.abs(move.start - move.destination) == 16) ?
+	    enPassant = ((move.movePiece == PieceType.PAWN) && Math.abs(move.start - move.destination) == 16) ?
 	    	activePlayer == Color.WHITE ? move.destination - 8 : move.destination + 8 : 0;
-
 
 	    //increment moveCounter
 	    fullMoveCount += activePlayer == Color.WHITE ? 0 : 1;

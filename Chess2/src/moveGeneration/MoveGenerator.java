@@ -21,7 +21,7 @@ public class MoveGenerator{
 	private static RookLogic rl;
 	private static BishopLogic bl;
 	private static KnightLogic nl;
-    /*
+/*
 * Constructor(s)
 */
 	/**

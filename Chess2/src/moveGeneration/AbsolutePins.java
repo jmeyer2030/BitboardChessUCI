@@ -6,10 +6,7 @@ public class AbsolutePins {
 	public void initializeAll() {
 		inBetween = generateInBetween();
 	}
-	
-	
-	
-	
+
 	public long[][] generateInBetween() {
 		long[][] inBetween = new long[64][64];
 		for (int i = 0; i < 64; i++) {
