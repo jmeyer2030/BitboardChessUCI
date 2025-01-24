@@ -5,7 +5,9 @@ import engine.NodeType;
 
 public class HashTables {
 
+
 /*
+ @todo Should not be static because different positions have different transposition tables.
  @todo Should implement buckets probably to reduce overlap if that is occurring.
  @todo Should probably refactor classes into implementations of an abstract class
 */
