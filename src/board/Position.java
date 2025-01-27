@@ -77,6 +77,7 @@ public class Position {
 		this.fullMoveCount = position.fullMoveCount;
 		this.whiteInCheck = position.whiteInCheck;
 		this.blackInCheck = position.blackInCheck;
+		this.zobristHash = position.zobristHash;
 	}
 
 	/**

@@ -1,13 +1,13 @@
 package userFeatures.commands.uci;
 
-import userFeatures.EngineState;
+import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
 public class Go implements Command {
-    public EngineState engineState;
+    public ChessEngine chessEngine;
 
-    public Go(EngineState engineState) {
-        this.engineState = engineState;
+    public Go(ChessEngine chessEngine) {
+        this.chessEngine = chessEngine;
     }
 
     @Override

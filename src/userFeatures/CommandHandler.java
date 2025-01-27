@@ -15,34 +15,34 @@ public class CommandHandler {
     private final Map<String, Command> uciCommands;
     private Map<String, Command> currentCommands;
 
-
-    private final EngineState engineState;
+    private final ChessEngine chessEngine;
 
     /**
     * Initializes lists of commands
     */
-    public CommandHandler() {
+    public CommandHandler(ChessEngine chessEngine) {
 
-        engineState = new EngineState();
+        this.chessEngine = chessEngine;
 
         uciCommands = new HashMap<String, Command>();
-        uciCommands.put("debug", new Debug(engineState));
-        uciCommands.put("go", new Go(engineState));
-        uciCommands.put("isready", new IsReady(engineState));
-        uciCommands.put("ponderhit", new PonderHit(engineState));
-        uciCommands.put("quit", new Quit(engineState));
-        uciCommands.put("register", new Register(engineState));
-        uciCommands.put("setoption", new SetOption(engineState));
-        uciCommands.put("setposition", new SetPosition(engineState));
-        uciCommands.put("stop", new Stop(engineState));
-        uciCommands.put("ucinewgame", new UCINewGame(engineState));
+        uciCommands.put("debug", new Debug(chessEngine));
+        uciCommands.put("go", new Go(chessEngine));
+        uciCommands.put("isready", new IsReady(chessEngine));
+        uciCommands.put("ponderhit", new PonderHit(chessEngine));
+        uciCommands.put("quit", new Quit(chessEngine));
+        uciCommands.put("register", new Register(chessEngine));
+        uciCommands.put("setoption", new SetOption(chessEngine));
+        uciCommands.put("setposition", new SetPosition(chessEngine));
+        uciCommands.put("stop", new Stop(chessEngine));
+        uciCommands.put("ucinewgame", new UCINewGame(chessEngine));
 
         initialCommands = new HashMap<String, Command>();
         initialCommands.put("sayhello", new SayHello());
-        initialCommands.put("uci", new UCIMode(engineState, this));
+        initialCommands.put("uci", new UCIMode(chessEngine, this));
 
         currentCommands = initialCommands;
     }
+
 
     /**
     * Loops infinitely reading from console input and executing these commands

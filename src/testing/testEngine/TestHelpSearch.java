@@ -14,7 +14,7 @@ public class TestHelpSearch {
      */
     public static void repeatedttNegaMax(Position position, int depth) throws InterruptedException, InvalidPositionException {
         for (int i = 1; i <= depth; i++) {
-            Search.negamax(NEG_INFINITY, POS_INFINITY, depth, position, new SearchMonitor(position));
+            //Search.negamax(NEG_INFINITY, POS_INFINITY, depth, position, new SearchMonitor(position));
         }
     }
 

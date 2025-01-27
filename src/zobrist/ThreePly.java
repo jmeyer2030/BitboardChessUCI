@@ -1,5 +1,8 @@
 package zobrist;
 
+import board.Move;
+import board.PieceType;
+
 import java.util.ArrayList;
 
 /*
@@ -8,19 +11,25 @@ Then, we can just increment through until the first irreversible position is hit
 */
 
 public class ThreePly {
-    public static ArrayList<ThreePlyElement> threePlyList = new ArrayList<>();
+    public final ArrayList<ThreePlyElement> threePlyList;
 
+
+
+    public ThreePly() {
+        this.threePlyList = new ArrayList<>();
+    }
     /**
     *
     */
-    public static void addPosition(long zobristHash, boolean reversible) {
+    public void addPosition(long zobristHash, Move move) {
+        boolean reversible = (move.movePiece != PieceType.PAWN && move.captureType == null);
         threePlyList.add(new ThreePlyElement(zobristHash, reversible));
     }
 
     /**
     *
     */
-    public static void popPosition() {
+    public void popPosition() {
         if (threePlyList.size() == 0) {
             throw new RuntimeException("Tried to pop a non existent element");
         }
@@ -30,7 +39,7 @@ public class ThreePly {
     /**
     *
     */
-    public static boolean positionRepeated(long zobristHash) {
+    public boolean positionRepeated(long zobristHash) {
         int repetitions = 0;
 
         int start = threePlyList.size() - 1;
@@ -50,7 +59,7 @@ public class ThreePly {
     }
 
 
-    public static class ThreePlyElement {
+    public class ThreePlyElement {
         public long zobristHash;
         public boolean reversible;
         public ThreePlyElement(long zobristHash, boolean reversible) {

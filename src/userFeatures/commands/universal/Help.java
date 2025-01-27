@@ -1,7 +1,6 @@
 package userFeatures.commands.universal;
 
 
-import userFeatures.EngineState;
 import userFeatures.commands.Command;
 
 public class Help implements Command {
@@ -17,6 +16,5 @@ public class Help implements Command {
             "Initial Commands:\n" +
             "UCI Commands:\n"
             ;
-        System.out.print(helpInstructions);
     }
 }

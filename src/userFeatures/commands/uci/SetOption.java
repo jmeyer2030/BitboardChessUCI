@@ -1,13 +1,13 @@
 package userFeatures.commands.uci;
 
-import userFeatures.EngineState;
+import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
 public class SetOption implements Command {
-    public EngineState engineState;
+    public ChessEngine chessEngine;
 
-    public SetOption(EngineState engineState) {
-        this.engineState = engineState;
+    public SetOption(ChessEngine chessEngine) {
+        this.chessEngine = chessEngine;
     }
 
     @Override

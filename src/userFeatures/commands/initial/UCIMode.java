@@ -1,16 +1,16 @@
 package userFeatures.commands.initial;
 
 import userFeatures.CommandHandler;
-import userFeatures.EngineState;
+import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
 public class UCIMode implements Command {
 
-    public EngineState engineState;
+    public ChessEngine chessEngine;
     public CommandHandler handler;
 
-    public UCIMode(EngineState engineState, CommandHandler handler) {
-        this.engineState = engineState;
+    public UCIMode(ChessEngine chessEngine, CommandHandler handler) {
+        this.chessEngine = chessEngine;
         this.handler = handler;
     }
 
@@ -22,9 +22,9 @@ public class UCIMode implements Command {
     */
     @Override
     public void execute(String[] arguments) {
-        engineState.setCommandMode(EngineState.CommandMode.UCI);
+        chessEngine.setCommandMode(ChessEngine.CommandMode.UCI);
         handler.acceptUCICommands();
-        System.out.print(engineState.getID());
+        System.out.print(chessEngine.getID());
         System.out.print("uciok\n");
     }
 }

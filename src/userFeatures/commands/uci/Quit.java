@@ -1,13 +1,13 @@
 package userFeatures.commands.uci;
 
-import userFeatures.EngineState;
+import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
 public class Quit implements Command {
-    public EngineState engineState;
+    public ChessEngine chessEngine;
 
-    public Quit(EngineState engineState) {
-        this.engineState = engineState;
+    public Quit(ChessEngine chessEngine) {
+        this.chessEngine = chessEngine;
     }
 
     @Override

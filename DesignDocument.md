@@ -3,6 +3,17 @@
 
 ## Todo:
 
+## How do we use OOP with a chess engine:
+
+
+Features we would like:
+
+ - Ability to change the search functionality
+  - 
+    - probably in
+
+
+
 ### Priority:
 
 how should checks be handled. Moves and positions should certainly have checks.

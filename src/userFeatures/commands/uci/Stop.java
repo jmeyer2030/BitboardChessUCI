@@ -1,13 +1,13 @@
 package userFeatures.commands.uci;
 
-import userFeatures.EngineState;
+import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
 public class Stop implements Command {
-    public EngineState engineState;
+    public ChessEngine chessEngine;
 
-    public Stop(EngineState engineState) {
-        this.engineState = engineState;
+    public Stop(ChessEngine chessEngine) {
+        this.chessEngine = chessEngine;
     }
 
     @Override

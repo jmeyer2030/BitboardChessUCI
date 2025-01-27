@@ -1,6 +1,7 @@
 package testing.testZobrist;
 import board.*;
 import engine.Search;
+import engine.SearchState;
 import moveGeneration.MoveGenerator;
 import org.junit.jupiter.api.*;
 import zobrist.*;
@@ -50,7 +51,10 @@ public class testThreePly {
 
         HashTables.incrementThreeFold(zobristHash);
 
-        Search.MoveValue mv = Search.iterativeDeepening(position, 5_000);
+
+        SearchState searchState = new SearchState(18, position);
+
+        Search.MoveValue mv = Search.iterativeDeepening(position, 5_000, searchState);
 
 
         //assertEquals(0, mv.value);

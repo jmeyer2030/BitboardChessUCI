@@ -51,12 +51,12 @@ public class MoveGenerator{
 	 */
 	public static List<Move> generateStrictlyLegal(Position position) throws InvalidPositionException {
 
-		Position copy = new Position(position); //DEBUG CODE
+		//Position copy = new Position(position); //DEBUG CODE
 		List<Move> allMoves = generateAllMoves(position);
 
 		List<Move> legalMoves = new ArrayList<>();
 		for (Move move : allMoves) {
-			Position copy1 = new Position(copy); // Copy to test changes
+			//Position copy1 = new Position(copy); // Copy to test changes
 
             try {
                 moveUpdateChecks(move, position); // Checks if move causes a check
@@ -68,7 +68,7 @@ public class MoveGenerator{
             	message += "\nMove that caused the issue: ";
             	message += move.toString();
             	message += "\nInitial position before move was applied: \n";
-            	message += copy.getDisplayBoard();
+            	//message += copy.getDisplayBoard();
 
 				throw new InvalidPositionException(message);
             }
@@ -477,7 +477,7 @@ public class MoveGenerator{
 		move.resultBlackInCheck = kingInCheck(position, Color.BLACK);
 		position.unMakeMove(move);
 
-		position.validPosition();
+		//position.validPosition();
 	}
 }
 

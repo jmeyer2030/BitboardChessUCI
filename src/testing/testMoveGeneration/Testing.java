@@ -62,9 +62,9 @@ public class Testing {
 		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
 		long total = 0;
 		for (Move move : initial) {
-			Position copy = new Position(position);
-			copy.makeMove(move);
-			long thisMove = ttPerftRecursion(depth - 1, copy);
+			position.makeMove(move);
+			long thisMove = ttPerftRecursion(depth - 1, position);
+			position.unMakeMove(move);
 			System.out.println(notation(move.start) + notation(move.destination) + ": " + thisMove);
 			total += thisMove;
 		}
@@ -126,25 +126,26 @@ public class Testing {
 			return 1;
 		if (depth == 1)
 			return MoveGenerator.generateStrictlyLegal(position).size();
+
+		long positionHash = position.zobristHash;
+
+		HashTables.PerftElement perftElement = HashTables.getPerftElement(positionHash, depth);
+
+		if (perftElement != null) {
+			numTranspositions++;
+			return perftElement.perftResult;
+		}
+
 		List<Move> legalMoves = MoveGenerator.generateStrictlyLegal(position);
 
 		long result = 0;
 		for (Move move : legalMoves) {
 			position.makeMove(move);
-
-			long hash = Hashing.computeZobrist(position);
-			if (HashTables.getPerftElement(hash) != null &&
-				HashTables.getPerftElement(hash).zobristHash == hash &&
-				HashTables.getPerftElement(hash).depth == depth) {
-				numTranspositions++;
-				result += HashTables.getPerftElement(hash).perftResult;
-			} else {
-				result += ttPerftRecursion(depth - 1, position);
-				HashTables.addPerftElement(hash, depth, result);
-			}
-
+			result += ttPerftRecursion(depth - 1, position);
 			position.unMakeMove(move);
 		}
+
+		HashTables.addPerftElement(position.zobristHash, depth, result);
 
 		return result;
 	}

@@ -1,13 +1,13 @@
 package userFeatures.commands.uci;
 
-import userFeatures.EngineState;
+import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
 public class Debug implements Command {
-    public EngineState engineState;
+    public ChessEngine chessEngine;
 
-    public Debug(EngineState engineState) {
-        this.engineState = engineState;
+    public Debug(ChessEngine chessEngine) {
+        this.chessEngine = chessEngine;
     }
 
     @Override
@@ -23,9 +23,9 @@ public class Debug implements Command {
 
 
         if (argument.equals("on")) {
-            engineState.debugActive = true;
+            chessEngine.debugActive = true;
         } else if (argument.equals("off")) {
-            engineState.debugActive = false;
+            chessEngine.debugActive = false;
         } else {
             //Throw new IllegalArgumentException("Expected 'on' or 'off' but got: " + arguments[0]);
         }

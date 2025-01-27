@@ -14,6 +14,7 @@ public class Move {
 * 32 : Check
 */
 
+
 /*
 * Fields
 */
@@ -38,6 +39,8 @@ public class Move {
     public boolean resultBlackInCheck;
 
     public boolean reversible; // Flag to tell if move can be undone (non-capture, non-pawn move)
+
+    public static final char[] pieceTypeToChar = new char[] {'p', 'n', 'b', 'r', 'q'};
 
 /*
 * Constructors
@@ -182,5 +185,15 @@ public class Move {
         equal &= this.movePiece == move.movePiece;
 
         return equal;
+    }
+
+    public String toLongAlgebraic() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(Testing.notation(this.start));
+        builder.append(Testing.notation(this.destination));
+        if (this.promotionType != null) {
+            builder.append(pieceTypeToChar[this.promotionType.ordinal()]);
+        }
+        return builder.toString();
     }
 }

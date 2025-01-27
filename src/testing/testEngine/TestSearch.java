@@ -5,6 +5,7 @@ import board.Move;
 import board.Position;
 import customExceptions.InvalidPositionException;
 import engine.Search;
+import engine.SearchState;
 import moveGeneration.MoveGenerator;
 import system.SearchMonitor;
 import zobrist.Hashing;
@@ -20,6 +21,7 @@ public class TestSearch {
 
         FEN fen = new FEN("7k/5Q2/qq4pp/qq4q1/q5q1/8/8/7K w - - 0 1");
         Position position = new Position(fen);
+        position = new Position();
         List<Move> moveList = MoveGenerator.generateStrictlyLegal(position);
         //System.out.println(moveList.size());
         //moveList.stream().forEach(move -> System.out.println(move));
@@ -47,14 +49,14 @@ public class TestSearch {
     public static void negaMaxTimeTest(Position position, int depth) throws InterruptedException, InvalidPositionException {
         System.out.println("Transposition Table Negamax: ");
         long start = System.currentTimeMillis();
-        SearchMonitor searchMonitor = new SearchMonitor(position);
+        SearchState searchState = new SearchState(0, position);
         try {
-            Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, searchMonitor);
+            Search.MoveValue result = Search.negamax1(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, searchState);
             long end = System.currentTimeMillis();
             long elapsed = end - start;
             System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\n");
         } catch (InvalidPositionException ipe) {
-            searchMonitor.logSearchStack();
+            searchState.searchMonitor.logSearchStack();
         }
 
     }

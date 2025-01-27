@@ -23,10 +23,10 @@ public class HashTables {
  * Set Size
  */
     // Transposition Table
-    public static int transpositionBitSize = 28;
+    public static int transpositionBitSize = 15;
     public static long transpositionIndexMask = (1L << transpositionBitSize) - 1;
     // Perft Table
-    public static int perftIndexBitSize = 28;
+    public static int perftIndexBitSize = 19;
     public static long perftIndexMask = (1L << perftIndexBitSize) - 1;
     // Three-fold table
     public static int threeFoldBitSize = 16;
@@ -68,9 +68,9 @@ public class HashTables {
         return element;
     }
 
-    public static PerftElement getPerftElement(long zobristHash) {
+    public static PerftElement getPerftElement(long zobristHash, int depth) {
         PerftElement element = perftTable[getPerftIndex(zobristHash)];
-        if (element == null || element.zobristHash != zobristHash)
+        if (element == null || element.zobristHash != zobristHash || element.depth != depth)
             return null;
         return element;
     }
@@ -86,10 +86,11 @@ public class HashTables {
  * Add Element
  */
     public static void addPerftElement(long zobristHash, int depth, long perftResult) {
-        perftTable[getTranspositionIndex(zobristHash)] = new PerftElement(zobristHash, depth, perftResult);
+        perftTable[getPerftIndex(zobristHash)] = new PerftElement(zobristHash, depth, perftResult);
     }
 
-    public static void addTranspositionElement(long zobristHash, Move bestMove, int depth, int score, NodeType nodeType, int age) {
+    public static void addTranspositionElement(long zobristHash, Move bestMove,
+            int depth, int score, NodeType nodeType, int age) {
         transpositionTable[getTranspositionIndex(zobristHash)] = new TTElement(zobristHash, bestMove, depth, score, nodeType, age);
     }
 

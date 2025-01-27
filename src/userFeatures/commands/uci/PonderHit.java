@@ -1,13 +1,13 @@
 package userFeatures.commands.uci;
 
-import userFeatures.EngineState;
+import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
 public class PonderHit implements Command {
-    public EngineState engineState;
+    public ChessEngine chessEngine;
 
-    public PonderHit(EngineState engineState) {
-        this.engineState = engineState;
+    public PonderHit(ChessEngine chessEngine) {
+        this.chessEngine = chessEngine;
     }
 
     @Override

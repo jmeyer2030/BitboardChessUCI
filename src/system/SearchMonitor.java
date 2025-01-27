@@ -35,6 +35,11 @@ public class SearchMonitor {
         searchStack.push(new BoardMovePair(move, new Position(position)));
     }
 
+
+    /**
+    *
+    *
+    */
     private String searchToString() {
         String str = "\n";
         str += initialPosition.getDisplayBoard() + "\n";

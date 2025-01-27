@@ -1,13 +1,13 @@
 package userFeatures.commands.uci;
 
-import userFeatures.EngineState;
+import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
 public class Register implements Command {
-    public EngineState engineState;
+    public ChessEngine chessEngine;
 
-    public Register(EngineState engineState) {
-        this.engineState = engineState;
+    public Register(ChessEngine chessEngine) {
+        this.chessEngine = chessEngine;
     }
 
     @Override
