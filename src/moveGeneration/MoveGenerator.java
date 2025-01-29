@@ -41,12 +41,36 @@ public class MoveGenerator{
 		nl.initializeAll();
 		ap.initializeAll();
 	}
+
+	/**
+	* Returns the move object from a description in long algebraic notation (LAN)
+	* @param lan move described in lan
+	* @param position position that the move would be played on
+	* @return the described move object
+	*/
+	public static Move getMoveFromLAN(String lan, Position position) {
+		List<Move> moves = null;
+        try {
+            moves = MoveGenerator.generateStrictlyLegal(position);
+        } catch (InvalidPositionException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (Move move : moves) {
+			if (move.toLongAlgebraic().equals(lan))
+				return move;
+		}
+
+		// Case that no generated move matches the lan description
+		return null;
+    }
+
+
+
 	/**
 	 * Generates a list of all legal moves in a position
-	 *
 	 * @param position Position
 	 * @return Move list List<Move>
-	 *
 	 * @throws InvalidPositionException if a move is generated that results in an invalid position
 	 */
 	public static List<Move> generateStrictlyLegal(Position position) throws InvalidPositionException {

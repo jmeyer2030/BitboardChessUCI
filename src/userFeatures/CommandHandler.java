@@ -9,7 +9,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-
+/*
+ UCI is designed to ignore bad commands, so don't worry about debug statements
+*/
 public class CommandHandler {
     private final Map<String, Command> initialCommands;
     private final Map<String, Command> uciCommands;
@@ -20,6 +22,7 @@ public class CommandHandler {
     /**
     * Initializes lists of commands
     */
+    @SuppressWarnings("SpellCheckingInspection")
     public CommandHandler(ChessEngine chessEngine) {
 
         this.chessEngine = chessEngine;
