@@ -1,0 +1,21 @@
+This document provides examples of uci in/out:
+
+2025-01-29 18:09:39.396-->1:uci
+2025-01-29 18:09:39.397<--1:uciok
+2025-01-29 18:09:39.409-->1:isready
+2025-01-29 18:09:39.884<--1:readyok
+2025-01-29 18:09:39.933-->1:ucinewgame
+2025-01-29 18:09:39.933-->1:isready
+2025-01-29 18:09:39.933<--1:readyok
+2025-01-29 18:09:39.940-->1:position startpos moves d2d4
+2025-01-29 18:09:39.940-->1:go wtime 300000 btime 300000 winc 0 binc 0
+2025-01-29 18:09:39.945<--1:bestmove g8f6
+2025-01-29 18:11:11.855-->1:position startpos moves d2d4 g8f6 c1g5
+2025-01-29 18:11:11.855-->1:go wtime 208531 btime 300000 winc 0 binc 0
+2025-01-29 18:11:11.858<--1:bestmove c7c5
+2025-01-29 18:11:43.254-->1:position startpos moves d2d4 g8f6 c1g5 c7c5 g5f6
+2025-01-29 18:11:43.255-->1:go wtime 177578 btime 300000 winc 0 binc 0
+2025-01-29 18:11:53.434<--1:bestmove g7f6 ponder d4c5
+2025-01-29 18:12:19.648-->1:position startpos moves d2d4 g8f6 c1g5 c7c5 g5f6 g7f6 d4c5
+2025-01-29 18:12:19.649-->1:go wtime 151813 btime 289833 winc 0 binc 0
+2025-01-29 18:12:24.037<--1:bestmove d8a5 ponder b1c3

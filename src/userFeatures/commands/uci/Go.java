@@ -1,10 +1,15 @@
 package userFeatures.commands.uci;
 
+import board.Color;
 import board.Move;
+import engine.Search;
+import engine.SearchState;
+import engine.TimeManagement;
 import moveGeneration.MoveGenerator;
 import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 import board.Position;
+import zobrist.TTElement;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -31,6 +36,8 @@ public class Go implements Command {
     public void execute(String[] arguments) {
         // Add arguments to fields
         this.fillSearchTerms(arguments);
+
+        this.executeSearch();
 
         // Reset fields to inital state
         this.startingParams();
@@ -86,14 +93,57 @@ public class Go implements Command {
     * Executes the search based on stored parameters
     */
     public void executeSearch() {
-        // First apply the search moves
+        applySearchMoves();
+        Position position = chessEngine.positionState.position;
+
+        String activeTimeStr;
+        if (position.activePlayer == Color.WHITE) {
+            activeTimeStr = subCommands.get("wtime");
+        } else {
+            activeTimeStr = subCommands.get("btime");
+        }
+        long time = Long.parseLong(activeTimeStr);
+        long computeTime = TimeManagement.millisForMove(time, 0);
+
+        SearchState searchState = new SearchState(chessEngine.positionState);
+
+
+        System.out.println("Beginning search:");
+        Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime,searchState);
+
+        System.out.println("bestmove " + moveValue.bestMove.toLongAlgebraic());
+
+    }
+
+
+    public void applySearchMoves() {
         Position position = chessEngine.positionState.position;
 
         for (String lan : searchMoves) {
             Move move = MoveGenerator.getMoveFromLAN(lan, position);
             chessEngine.positionState.applyMove(move);
         }
-
-        
     }
+
+
+    /*public void getBestMove() {
+        Position position = chessEngine.positionState.position;
+        Position copy = new Position(position);
+
+        TTElement bestElement = chessEngine.positionState.tt.getElement(position.zobristHash);
+        if (bestElement == null) {
+            System.out.println("Best element not found in the transposition table!");
+        }
+
+        Move bestMove = null;
+        Move refutationMove = null;
+
+        if (bestElement != null && bestElement.bestMove() != null) {
+            bestMove = bestElement.bestMove();
+
+        }
+        copy.makeMove(bestMove);
+
+        Move bestResponse = chessEngine.positionState.tt.getElement(copy.zobristHash).bestMove();
+    }*/
 }

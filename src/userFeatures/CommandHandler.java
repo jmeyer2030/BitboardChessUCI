@@ -35,7 +35,7 @@ public class CommandHandler {
         uciCommands.put("quit", new Quit(chessEngine));
         uciCommands.put("register", new Register(chessEngine));
         uciCommands.put("setoption", new SetOption(chessEngine));
-        uciCommands.put("setposition", new SetPosition(chessEngine));
+        uciCommands.put("position", new SetPosition(chessEngine));
         uciCommands.put("stop", new Stop(chessEngine));
         uciCommands.put("ucinewgame", new UCINewGame(chessEngine));
 

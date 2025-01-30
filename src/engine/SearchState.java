@@ -2,6 +2,7 @@ package engine;
 
 import board.Move;
 import board.Position;
+import board.PositionState;
 import system.SearchMonitor;
 import zobrist.ThreePly;
 import zobrist.TranspositionTable;
@@ -30,5 +31,12 @@ public class SearchState {
         this.searchMonitor = new SearchMonitor(position);
         this.searchStack = new Stack<Move>();
         this.threePly = new ThreePly();
+    }
+
+    public SearchState(PositionState positionState) {
+        this.tt = positionState.tt;
+        this.threePly = positionState.threePly;
+        this.searchStack = new Stack<Move>();
+        this.searchMonitor = new SearchMonitor(positionState.position);
     }
 }
