@@ -72,6 +72,11 @@ public class Search {
                 MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS); // Throws timeout exception
                 searchResults.add(result);
                 System.out.println("\nDepth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove);
+
+                // Stop searching if mate
+                if (Math.abs(searchResults.getLast().value) >= POS_INFINITY)
+                    return searchResults.getLast();
+
             } catch (TimeoutException te) {
                 System.out.println("Function timed out!");
 
@@ -256,6 +261,9 @@ public class Search {
         } catch (InvalidPositionException ipe) {
             throw ipe;
         }
+
+        moveOrder(loudMoves, position.zobristHash, searchState.tt);
+
         for (Move move : loudMoves) {
 
             // "open" the position

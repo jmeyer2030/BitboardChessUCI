@@ -55,7 +55,7 @@ public class CommandHandler {
 
         while (true) {
             // Read input and separate by spaces
-            String input = scanner.nextLine().toLowerCase();
+            String input = scanner.nextLine();
             String[] parts = input.split("\\s+");
 
 
@@ -76,7 +76,7 @@ public class CommandHandler {
     }
 
     public void executeCommand(String command, String[] arguments) {
-        Command action = currentCommands.get(command);
+        Command action = currentCommands.get(command.toLowerCase());
         if (action != null) {
             action.execute(arguments);
         } else {

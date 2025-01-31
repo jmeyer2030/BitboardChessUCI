@@ -121,7 +121,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	/**
 	 * This method searches for and returns a magic number for all the blockerBoards of a square
 	 * @param square that we want to generate the magic number for
-	 * @return a long that serves as an surjective mapping from a blockerBoard to the index associated with its moveBoard
+	 * @return a long that serves as a surjective mapping from a blockerBoard to the index associated with its moveBoard
 	 */
 	protected long generateMagicNumber(int square) {
 		//Retrieve pre-initialized data

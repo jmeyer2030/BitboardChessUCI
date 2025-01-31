@@ -12,6 +12,7 @@ public class Quit implements Command {
 
     @Override
     public void execute(String[] arguments) {
-
+        System.out.println("Exiting...");
+        System.exit(0);
     }
 }

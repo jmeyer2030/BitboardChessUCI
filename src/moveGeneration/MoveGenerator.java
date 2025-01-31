@@ -79,6 +79,7 @@ public class MoveGenerator{
 		List<Move> allMoves = generateAllMoves(position);
 
 		List<Move> legalMoves = new ArrayList<>();
+
 		for (Move move : allMoves) {
 			//Position copy1 = new Position(copy); // Copy to test changes
 
@@ -125,6 +126,7 @@ public class MoveGenerator{
 		}
 		*/
 		return legalMoves;
+
 	}
 
 	/**

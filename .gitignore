@@ -16,4 +16,6 @@ bin/
 #intellij specific
 .idea/
 .idea
+
+# compiled class files
 out/
