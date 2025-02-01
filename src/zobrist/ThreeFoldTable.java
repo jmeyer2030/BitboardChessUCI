@@ -52,6 +52,27 @@ public class ThreeFoldTable {
             }
         }
 
+        if (repetitions >= 2)
+            return true;
+        return false;
+    }
+
+
+
+    public boolean positionDrawn(long zobristHash) {
+        int repetitions = 0;
+        int start = searchedPositions.size() - 1;
+
+        for (int i = start; i >= 0; i--) {
+            if (searchedPositions.get(i).zobristHash == zobristHash) {
+                repetitions++;
+            }
+            // If we reach a position that has
+            if (!searchedPositions.get(i).reversible) {
+                break;
+            }
+        }
+
         if (repetitions >= 3)
             return true;
         return false;

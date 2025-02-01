@@ -24,7 +24,7 @@ import board.Position;
 import java.util.Random;
 
 public class Hashing {
-    public static long seed = 42069;
+    public static long seed = 24;
 
     private static long pieceSquare[][][]; // use with: pieceSquare[square][color.ordinal][piece.ordinal]
     private static long[] castleRights;
@@ -92,21 +92,11 @@ public class Hashing {
         }
 
         zobrist ^= castleRights[position.castleRights];
-        /*
-        // Castle rights
-        if ((position.castleRights & (1L << 0)) != 0)
-            zobrist ^= castleRights[0];
-        if ((position.castleRights & (1L << 1)) != 0)
-            zobrist ^= castleRights[1];
-        if ((position.castleRights & (1L << 2)) != 0)
-            zobrist ^= castleRights[2];
-        if ((position.castleRights & (1L << 3)) != 0)
-            zobrist ^= castleRights[3];
-*/
 
         // Enpassant
         if (position.enPassant != 0) {
-            zobrist ^= enPassant[position.enPassant / 8]; // file of the enPassant square
+            int file = position.enPassant % 8;
+            zobrist ^= enPassant[file]; // file of the enPassant square
         }
 
         // SideToMove

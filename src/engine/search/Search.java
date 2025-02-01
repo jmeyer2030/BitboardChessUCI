@@ -71,7 +71,7 @@ public class Search {
                 long maxTimeForSearch = limitMillis - (System.currentTimeMillis() - start);
                 MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS); // Throws timeout exception
                 searchResults.add(result);
-                System.out.println("info depth " + depth + " pv " + searchResults.getLast().bestMove.toLongAlgebraic() + " score " + searchResults.getLast().value);
+                System.out.println("info depth " + depth + " pv " + searchResults.getLast().bestMove.toLongAlgebraic() + " score cp " + searchResults.getLast().value);
                 //System.out.println("\nDepth: " + depth + "\nEvaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove);
 
                 // Stop searching if mate
@@ -132,7 +132,10 @@ public class Search {
         };
         return task;
     }
-
+    /**
+    * Assumes that this will not be called on 0 on a
+    *
+    */
     public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, SearchState searchState)
             throws InterruptedException, InvalidPositionException {
 
@@ -169,9 +172,9 @@ public class Search {
 
         if (searchState.tt != null) {
             // Get the tt entry for this position
-            TTElement ttEntry = searchState.tt.getElement(hash);
+            TTElement ttEntry = searchState.tt.getElement(hash, depthLeft);
 
-            if (ttEntry != null && ttEntry.depth() >= depthLeft && ttEntry.bestMove() != null) { // Null if position is terminal
+            if (ttEntry != null && ttEntry.bestMove() != null) { // Null if position is terminal
                 if (ttEntry.nodeType() == NodeType.EXACT) {
                     return new MoveValue(ttEntry.score(), ttEntry.bestMove());
                 } else if (ttEntry.nodeType() == NodeType.LOWER_BOUND) {
@@ -198,8 +201,15 @@ public class Search {
             position.makeMove(move);
             searchState.searchMonitor.addPair(move, position);
             searchState.threeFoldTable.addPosition(position.zobristHash, move);
-            // compute it's score
-            int score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState).value;
+
+            int score;
+            // If we repeat a position twice, consider it a draw.
+            if (searchState.threeFoldTable.positionRepeated(position.zobristHash)) {
+                score = 0;
+            } else {
+                // compute it's score
+                score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState).value;
+            }
 
             // "close" the position
             searchState.searchMonitor.popStack();
@@ -237,6 +247,8 @@ public class Search {
 
         return bestMoveValue;
     }
+
+
     public static int quiescenceSearch(int alpha, int beta, Position position, SearchState searchState) throws InvalidPositionException{
         int standPat = StaticEvaluation.negamaxEvaluatePosition(position);
         int bestValue = standPat;
@@ -302,7 +314,7 @@ public class Search {
             }
         } else if (position.rule50 >= 50) {
             return GameStatus.RULE50;
-        } else if (threeFoldTable.positionRepeated(Hashing.computeZobrist(position))) {
+        } else if (threeFoldTable.positionDrawn(Hashing.computeZobrist(position))) {
             return GameStatus.REPETITION;
         } else {
             return GameStatus.ONGOING;
@@ -375,7 +387,7 @@ public class Search {
        int value = 0;
 
        if (tt != null) {
-           TTElement element = tt.getElement(zobristHash);
+           TTElement element = tt.getElement(zobristHash, 0);
            if (element != null) {
                if (move.equals(element.bestMove())) {
                    value += 10_000_000;

@@ -6,9 +6,13 @@ public class PerftTable {
     private final PerftElement[] table;
 
     public PerftTable(int numBits) {
+        if (numBits < 1 || numBits > 30) {
+            throw new IllegalArgumentException();
+        }
+
         this.numBits = numBits;
         this.indexMask = (1L << numBits) - 1;
-        this.table = new PerftElement[(int) Math.pow(2, numBits)];
+        this.table = new PerftElement[1 << numBits];
     }
 
     public int getIndex(long zobristHash) {
@@ -18,7 +22,7 @@ public class PerftTable {
     public PerftElement getElement(long zobristHash, int depth) {
         PerftElement element = table[getIndex(zobristHash)];
 
-        if ((element == null) || (element.zobristHash() != zobristHash) || (depth != depth)) {
+        if ((element == null) || (element.zobristHash() != zobristHash) || (element.depth() != depth)) {
             return null;
         } else {
             return element;

@@ -123,6 +123,12 @@ public class testPERFT {
         assertEquals(perftResults[depth], result);
     }
 
+    @Test
+    public void testPerftDepth7TT() {
+        int depth = 7;
+        long result = perftStartingPosition(depth, true);
+        assertEquals(perftResults[depth], result);
+    }
 
     public static long perftStartingPosition(int depth, boolean useTTs) {
         Position position = new Position();

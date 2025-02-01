@@ -17,6 +17,6 @@ public class KingSafety {
         int whiteQueenAttacks = Long.bitCount(MoveGenerator.getQueenAttacks(position, whiteKingLoc));
         int blackQueenAttacks = Long.bitCount(MoveGenerator.getQueenAttacks(position, blackKingLoc));
 
-        return (blackQueenAttacks - whiteQueenAttacks) * 7;
+        return (blackQueenAttacks - whiteQueenAttacks) * 3;
     }
 }
