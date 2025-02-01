@@ -2,21 +2,10 @@ package testing.testMoveGeneration;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import board.Move;
-import board.Position;
-import customExceptions.InvalidPositionException;
-import moveGeneration.MoveGenerator;
-import zobrist.HashTables;
-import zobrist.Hashing;
-
 public class Testing {
-	public static long numTranspositions = 0;
-/*
- * Public methods
- */
+
 	/**
 	 * Prints the differences between perft results
 	 * @Param stockfish perft result
@@ -34,42 +23,6 @@ public class Testing {
 		diffs.removeAll(stockFishParse);
 		System.out.println("Differences: ");
 		diffs.stream().forEach(diff -> System.out.println(diff));
-	}
-
-	/**
-	 * Runs a perft test on a position and prints results for each legal move
-	 * @Param depth
-	 * @Param position
-	 */
-	public static void perft(int depth, Position position) throws InvalidPositionException {
-		if (depth < 1)
-			return;
-		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
-		long total = 0;
-		for (Move move : initial) {
-			Position copy = new Position(position);
-			copy.makeMove(move);
-			long thisMove = perftRecursion(depth - 1, copy);
-			System.out.println(notation(move.start) + notation(move.destination) + ": " + thisMove);
-			total += thisMove;
-		}
-		System.out.println("Total: " + total);
-	}
-
-	public static void ttPerft(int depth, Position position) throws InvalidPositionException {
-		if (depth < 1)
-			return;
-		List<Move> initial = MoveGenerator.generateStrictlyLegal(position);
-		long total = 0;
-		for (Move move : initial) {
-			position.makeMove(move);
-			long thisMove = ttPerftRecursion(depth - 1, position);
-			position.unMakeMove(move);
-			System.out.println(notation(move.start) + notation(move.destination) + ": " + thisMove);
-			total += thisMove;
-		}
-		System.out.println("Total: " + total);
-		System.out.println("Transpositions: " + numTranspositions);
 	}
 
 	/**
@@ -98,56 +51,6 @@ public class Testing {
 		return files[file] + ranks[rank] ;
 
 	}
-/*
- * Private Helper Methods
- */
- 	/**
- 	* Recursive component of perft
- 	* @param depth remaining depth
- 	* @param position position to perft
- 	* @return moves at that depth for the position
- 	*/
-	private static long perftRecursion(int depth, Position position) throws InvalidPositionException {
-		if (depth == 0)
-			return 1;
 
-		long result = 0;
-		List<Move> legalMoves = MoveGenerator.generateStrictlyLegal(position);
-		for (Move move : legalMoves) {
-			position.makeMove(move);
-			result += perftRecursion(depth - 1, position);
-			position.unMakeMove(move);
-		}
-		return result;
-	}
-
-	public static long ttPerftRecursion(int depth, Position position) throws InvalidPositionException {
-		if (depth == 0)
-			return 1;
-		if (depth == 1)
-			return MoveGenerator.generateStrictlyLegal(position).size();
-
-		long positionHash = position.zobristHash;
-
-		HashTables.PerftElement perftElement = HashTables.getPerftElement(positionHash, depth);
-
-		if (perftElement != null) {
-			numTranspositions++;
-			return perftElement.perftResult;
-		}
-
-		List<Move> legalMoves = MoveGenerator.generateStrictlyLegal(position);
-
-		long result = 0;
-		for (Move move : legalMoves) {
-			position.makeMove(move);
-			result += ttPerftRecursion(depth - 1, position);
-			position.unMakeMove(move);
-		}
-
-		HashTables.addPerftElement(position.zobristHash, depth, result);
-
-		return result;
-	}
 
 }

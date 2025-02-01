@@ -48,40 +48,23 @@ public class RookLogic extends MagicBitboard{
 	 * Initializes all static fields
 	 */
 	public void initializeAll() {
-		long start = System.currentTimeMillis();
 		LOGGER.log(Level.INFO, "RookMagicBitboard field initialization has begun.");
-		
-		LOGGER.log(Level.FINE, "Generating blocker masks...");
+
+		long start = System.currentTimeMillis();
 		RookLogic.blockerMasks = generateBlockerMasks();
-		LOGGER.log(Level.FINE, "Generating blocker masks complete!");
-		
-		LOGGER.log(Level.FINE, "Generating blocker boards...");
 		RookLogic.blockerBoards = generateAllBlockerBoards();
-		LOGGER.log(Level.FINE, "Generating blocker boards complete!");
-		
-		LOGGER.log(Level.FINE, "Generating move boards...");
 		RookLogic.moveBoards = generateAllMoveBoards();
-		LOGGER.log(Level.FINE, "Generating move boards complete!");
-		
-		//LOGGER.log(Level.FINE, "Generating magic numbers...");
-		//RookLogic.magicNumbers = generateAllMagicNumbers();
-		//System.out.println(Arrays.toString(magicNumbers));
-		//LOGGER.log(Level.FINE, "Generating magic numbers complete!");
-		
-		moveBoards = sortAllMoveBoards();
-		
+		RookLogic.moveBoards = sortAllMoveBoards();
 		long end = System.currentTimeMillis();
 		long elapsed = end - start;
+
 		LOGGER.log(Level.INFO, "Rook initialization complete! Time taken: " + elapsed + " ms.");
-
 	}
-	
 
-	
 //Getter methods
 	protected int[] getNumBits() {
 		assert numBits != null;
-		
+
 		return numBits;
 	}
 	

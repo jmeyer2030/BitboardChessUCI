@@ -2,14 +2,13 @@ package userFeatures.commands.uci;
 
 import board.Color;
 import board.Move;
-import engine.Search;
-import engine.SearchState;
+import engine.search.Search;
+import engine.search.SearchState;
 import engine.TimeManagement;
 import moveGeneration.MoveGenerator;
 import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 import board.Position;
-import zobrist.TTElement;
 
 import java.util.HashMap;
 import java.util.LinkedList;

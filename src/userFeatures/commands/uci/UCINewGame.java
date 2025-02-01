@@ -2,7 +2,6 @@ package userFeatures.commands.uci;
 
 import board.Position;
 import board.PositionState;
-import engine.SearchState;
 import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 

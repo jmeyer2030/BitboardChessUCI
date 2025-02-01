@@ -283,17 +283,44 @@ public class Position {
 	    }
 
 	    // Update castle rights for king move
+	    /*
 	    castleRights &= ((destinationMask & pieces[5]) != 0) ?
                  (activePlayer == Color.WHITE ? (byte) 0b0000_0011 : (byte) 0b0000_1100) :
 				(byte) 0b0000_1111;
+		*/
+
+		// If king move, update castle rights
+		if ((destinationMask & pieces[5]) != 0) {
+			if (activePlayer == Color.WHITE) {
+				castleRights &= 0b0000_0011;
+			} else {
+				castleRights &= 0b0000_1100;
+			}
+		}
+
 
 	    // Update castle rights for rook move
+	    /*
 	    castleRights &= (move.movePiece == PieceType.ROOK) ? //If a rook move, we change rights depending on start
                 (byte) (move.start == 0 ? 0b0000_0111 :
                         move.start == 7 ? 0b0000_1011 :
                         move.start == 56 ? 0b0000_1101 :
 						move.start == 63 ? 0b0000_1110 : 0b0000_1111)
 						: 0b0000_1111;
+		*/
+
+		// If rook move, update based on its start square
+		if ((destinationMask & pieces[3]) != 0) {
+			if (move.start == 0) {
+				castleRights &= 0b0000_0111;
+			} else if (move.start == 7) {
+				castleRights &= 0b0000_1011;
+			} else if (move.start == 56) {
+				castleRights &= 0b0000_1101;
+			} else if (move.start == 63) {
+				castleRights &= 0b0000_1110;
+			}
+		}
 
 		// Update castle rights for rook square move
 

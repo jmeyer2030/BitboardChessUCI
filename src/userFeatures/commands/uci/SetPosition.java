@@ -4,13 +4,11 @@ import board.FEN;
 import board.Move;
 import board.Position;
 import customExceptions.InvalidPositionException;
-import engine.SearchState;
 import moveGeneration.MoveGenerator;
 import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
-import zobrist.ThreePly;
+import zobrist.ThreeFoldTable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -56,7 +54,7 @@ public class SetPosition implements Command {
 
         // Reset threeply, add new position
         chessEngine.positionState.position = position;
-        chessEngine.positionState.threePly = new ThreePly();
+        chessEngine.positionState.threeFoldTable = new ThreeFoldTable();
 
         // Parse moves component
         boolean foundMoves = false;

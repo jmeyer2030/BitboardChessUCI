@@ -1,7 +1,7 @@
-package zobrist;
+package zobrist.transposition;
 
 import board.Move;
-import engine.NodeType;
+import engine.search.NodeType;
 
 public class TranspositionTable {
     private final int numBits;

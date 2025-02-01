@@ -1,4 +1,4 @@
-package engine;
+package engine.search;
 
 public enum NodeType {
     EXACT,

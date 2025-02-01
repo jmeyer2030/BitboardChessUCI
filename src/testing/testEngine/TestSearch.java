@@ -4,10 +4,9 @@ import board.FEN;
 import board.Move;
 import board.Position;
 import customExceptions.InvalidPositionException;
-import engine.Search;
-import engine.SearchState;
+import engine.search.Search;
+import engine.search.SearchState;
 import moveGeneration.MoveGenerator;
-import system.SearchMonitor;
 import zobrist.Hashing;
 
 import java.util.List;
@@ -15,7 +14,7 @@ import java.util.List;
 public class TestSearch {
 
     public static void main(String[] args) throws InterruptedException, InvalidPositionException {
-        new MoveGenerator();
+        MoveGenerator.initializeAll();
         Hashing.initializeRandomNumbers();
 
 
@@ -51,7 +50,7 @@ public class TestSearch {
         long start = System.currentTimeMillis();
         SearchState searchState = new SearchState(0, position);
         try {
-            Search.MoveValue result = Search.negamax1(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, searchState);
+            Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, searchState);
             long end = System.currentTimeMillis();
             long elapsed = end - start;
             System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\n");

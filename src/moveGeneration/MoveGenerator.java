@@ -26,13 +26,14 @@ public class MoveGenerator{
 	/**
 	* initializes static fields
 	*/
-	public MoveGenerator() {
+
+	public static void initializeAll() {
 		pl = new PawnLogic();
 		kl = new KingLogic();
 		rl = new RookLogic();
 		bl = new BishopLogic();
 		nl = new KnightLogic();
-        AbsolutePins ap = new AbsolutePins();
+		AbsolutePins ap = new AbsolutePins();
 
 		pl.initializeAll();
 		rl.initializeAll();
@@ -499,12 +500,23 @@ public class MoveGenerator{
 		move.prevWhiteInCheck = position.whiteInCheck;
 		move.prevBlackInCheck = position.blackInCheck;
 		position.makeMove(move);
+		/*
+		if (move.movePiece == PieceType.KING) {
+			// Check all pieces that could attack it
+		} else {
+			// Check if that piece attacks enemy king
+			// Check all sliding pieces
+		}
+		*/
 		move.resultWhiteInCheck = kingInCheck(position, Color.WHITE);
 		move.resultBlackInCheck = kingInCheck(position, Color.BLACK);
 		position.unMakeMove(move);
-
-		//position.validPosition();
 	}
+
+	/*
+	if king move, need to check all attackers
+	if non-king move, need to check sliders and that piece
+	*/
 }
 
 /*

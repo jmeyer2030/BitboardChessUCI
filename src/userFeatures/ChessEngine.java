@@ -1,8 +1,6 @@
 package userFeatures;
 
-import board.Position;
 import board.PositionState;
-import engine.SearchState;
 import moveGeneration.MoveGenerator;
 import system.Logging;
 
@@ -49,7 +47,7 @@ public class ChessEngine {
 
 
     private void initialize() {
-        new MoveGenerator();
+        MoveGenerator.initializeAll();
         zobrist.Hashing.initializeRandomNumbers();
         this.isReady = true;
     }

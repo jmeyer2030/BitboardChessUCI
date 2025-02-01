@@ -2,7 +2,7 @@ package testing.testMoveGeneration;
 
 public class DebugPerft {
     public static void main(String[] args) {
-        //new MoveGenerator();
+        //MoveGenerator.initializeAll();
         String stockFishPerft = "a2a3: 34\n" +
                 "a2a4: 34\n" +
                 "b2b3: 34\n" +

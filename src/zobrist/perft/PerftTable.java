@@ -1,4 +1,4 @@
-package zobrist;
+package zobrist.perft;
 
 public class PerftTable {
     private final int numBits;
@@ -15,13 +15,14 @@ public class PerftTable {
         return (int) (indexMask & zobristHash);
     }
 
-
     public PerftElement getElement(long zobristHash, int depth) {
         PerftElement element = table[getIndex(zobristHash)];
 
-        if (element == null || element.zobristHash() != zobristHash || depth != depth)
+        if ((element == null) || (element.zobristHash() != zobristHash) || (depth != depth)) {
             return null;
-        return element;
+        } else {
+            return element;
+        }
     }
 
     public void addElement(long zobristHash, int depth, long perftResult) {

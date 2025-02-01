@@ -1,7 +1,7 @@
 package board;
 
-import zobrist.ThreePly;
-import zobrist.TranspositionTable;
+import zobrist.ThreeFoldTable;
+import zobrist.transposition.TranspositionTable;
 
 /*
 Represents the internally stored position/state of a chess engine:
@@ -13,7 +13,7 @@ Represents the internally stored position/state of a chess engine:
 public class PositionState {
     public Position position;
     public final TranspositionTable tt;
-    public ThreePly threePly;
+    public ThreeFoldTable threeFoldTable;
 
     public PositionState(int numBits, Position position) {
         if (numBits == 0) {
@@ -23,12 +23,12 @@ public class PositionState {
         }
 
         this.position = new Position(position);
-        this.threePly = new ThreePly();
+        this.threeFoldTable = new ThreeFoldTable();
     }
 
     public void applyMove(Move move) {
         position.makeMove(move);
-        threePly.addPosition(position.zobristHash, move);
+        threeFoldTable.addPosition(position.zobristHash, move);
     }
 
 }

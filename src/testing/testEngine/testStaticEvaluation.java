@@ -2,7 +2,7 @@ package testing.testEngine;
 
 import board.FEN;
 import board.Position;
-import engine.StaticEvaluation;
+import engine.evaluation.StaticEvaluation;
 import moveGeneration.MoveGenerator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -13,7 +13,7 @@ public class testStaticEvaluation {
 
     @BeforeAll
     public static void initAll() {
-        new MoveGenerator();
+        MoveGenerator.initializeAll();
     }
 
     @Test
