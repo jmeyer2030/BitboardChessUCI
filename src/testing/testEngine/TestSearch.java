@@ -27,7 +27,7 @@ public class TestSearch {
 
         //position = new Position();
         System.out.println("Position: \n" + position.getDisplayBoard());
-        int depth = 6;
+        int depth = 9;
 
         negaMaxTimeTest(position, depth);
         //noTTNegaMaxTimeTest(position, depth);
