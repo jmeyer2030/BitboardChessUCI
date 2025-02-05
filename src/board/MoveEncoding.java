@@ -2,7 +2,7 @@ package board;
 
 public final class MoveEncoding {
 /*
- * Necessary:
+ * Core:
  * 0-5: start (6 bits 0-63)
  * 6-11: destination (6 bits 0-63)
  * 12-14: moved piece (3 bits)
@@ -24,11 +24,10 @@ public final class MoveEncoding {
  *
  * 30-31 unused
  *
- * Positions Stack:
+ * Positions Stack (removed functionality from Move class):
  * 50 move count
  * ep square value
  * castle rights
- *
  */
     // Core:
     public static final int startMask =         0b00000000_00000000_00000000_00111111;
@@ -134,7 +133,7 @@ public final class MoveEncoding {
     }
 
     public static int setIsQuiet(int move, int isQuiet) {
-        if (isQuiet != 0 || isQuiet != 1) {
+        if (isQuiet != 0 && isQuiet != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -149,7 +148,7 @@ public final class MoveEncoding {
     }
 
     public static int setIsCapture(int move, int isCapture) {
-        if (isCapture != 0 || isCapture != 1) {
+        if (isCapture != 0 && isCapture != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -164,7 +163,7 @@ public final class MoveEncoding {
     }
 
     public static int setIsEP(int move, int isEP) {
-        if (isEP != 0 || isEP != 1) {
+        if (isEP != 0 && isEP != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -180,7 +179,7 @@ public final class MoveEncoding {
     }
 
     public static int setIsPromotion(int move, int isPromotion) {
-        if (isPromotion != 0 || isPromotion != 1) {
+        if (isPromotion != 0 && isPromotion != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -196,7 +195,7 @@ public final class MoveEncoding {
     }
 
     public static int setIsCastle(int move, int isCastle) {
-        if (isCastle != 0 || isCastle != 1) {
+        if (isCastle != 0 && isCastle != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -212,7 +211,7 @@ public final class MoveEncoding {
     }
 
     public static int setIsCheck(int move, int isCheck) {
-        if (isCheck != 0 || isCheck != 1) {
+        if (isCheck != 0 && isCheck != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -227,7 +226,7 @@ public final class MoveEncoding {
     }
 
     public static int setIsDoublePush(int move, int isDoublePush) {
-        if (isDoublePush != 0 || isDoublePush != 1) {
+        if (isDoublePush != 0 && isDoublePush != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -242,7 +241,7 @@ public final class MoveEncoding {
     }
 
     public static int setIsReversible(int move, int isReversible) {
-        if (isReversible != 0 || isReversible != 1) {
+        if (isReversible != 0 && isReversible != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -257,7 +256,7 @@ public final class MoveEncoding {
     }
 
     public static int setCaptureColor(int move, int captureColor) {
-        if (captureColor != 0 || captureColor != 1) {
+        if (captureColor != 0 && captureColor != 1) {
             throw new IllegalArgumentException();
         }
 
@@ -273,7 +272,7 @@ public final class MoveEncoding {
     }
 
     public static int setCastleSide(int move, int castleSide) {
-        if (castleSide != 0 || castleSide != 1) {
+        if (castleSide != 0 && castleSide != 1) {
             throw new IllegalArgumentException();
         }
 

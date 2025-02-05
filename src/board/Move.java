@@ -110,8 +110,8 @@ public class Move {
     * Returns a new capture move
     */
     public static Move captureMove(int start, int destination, Position position, PieceType movePiece) {
-        PieceType captureType = position.getPieceType(destination);
-        if (captureType == null) {
+        int captureType = position.getPieceType(destination);
+        if (captureType == 6) {
             System.out.println("CAPTURE WITH NO TARGET");
             position.printBoard();
 
@@ -119,8 +119,9 @@ public class Move {
             System.out.println(movePiece);
 
         }
-        return new Move(start, destination, MoveType.CAPTURE, null, captureType,
-            position.rule50, position.castleRights, movePiece, position.enPassant);
+        return null; // ADDED LATE
+        //return new Move(start, destination, MoveType.CAPTURE, null, captureType,
+        //    position.rule50, position.castleRights, movePiece, position.enPassant);
     }
 
     /**
@@ -135,8 +136,8 @@ public class Move {
      * Returns a new promotion move
      */
     public static Move promotionMove(int start, int destination, Position position, PieceType promotionType) {
-        PieceType captureType = position.getPieceType(destination);
-        return new Move(start, destination, MoveType.PROMOTION, promotionType, captureType,
+        //PieceType captureType = position.getPieceType(destination); // EDITED TO MAKE WORK
+        return new Move(start, destination, MoveType.PROMOTION, promotionType, null,
             position.rule50, position.castleRights, PieceType.PAWN, position.enPassant);
     }
 

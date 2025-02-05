@@ -45,7 +45,7 @@ public class MoveGenerator{
 
 	/**
 	* Returns the move object from a description in long algebraic notation (LAN)
-	* @param lan move described in lan
+	* @param lan move described in Long Algebraic Notation
 	* @param position position that the move would be played on
 	* @return the described move object
 	*/
