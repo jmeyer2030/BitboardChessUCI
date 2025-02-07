@@ -100,7 +100,7 @@ public class Hashing {
         }
 
         // SideToMove
-        zobrist ^= sideToMove[position.activePlayer.ordinal()];
+        zobrist ^= sideToMove[position.activePlayer];
 
         return zobrist;
     }

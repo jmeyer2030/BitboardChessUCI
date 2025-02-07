@@ -50,10 +50,12 @@ public class TestSearch {
         long start = System.currentTimeMillis();
         SearchState searchState = new SearchState(18, position);
         try {
-            Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, searchState);
+            //Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, searchState);
             long end = System.currentTimeMillis();
             long elapsed = end - start;
-            System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\nand move: " + result.bestMove.toLongAlgebraic());
+
+            throw new InvalidPositionException("idk");
+            //System.out.println("Searched to depth: " + depth + "\nIn ms: " + elapsed + "\nwith result: " + result.value + "\nand move: " + result.bestMove.toLongAlgebraic());
         } catch (InvalidPositionException ipe) {
             searchState.searchMonitor.logSearchStack();
         }

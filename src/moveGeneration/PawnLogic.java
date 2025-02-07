@@ -42,8 +42,8 @@ public class PawnLogic {
 		blackPawnPushBlockerMask = generateBlackPawnPushes();
 	}
 	
-	public long getAttackBoard(int square, Color attackColor) {
-		if (attackColor == Color.WHITE) {
+	public long getAttackBoard(int square, int color) {
+		if (color == 0) {
 			return whitePawnAttacks[square];
 		}
 		return blackPawnAttacks[square];
@@ -65,7 +65,7 @@ public class PawnLogic {
 	
 	public long getEnPassant(int square, Position position) {
 		if (position.enPassant == 0 ||
-		(((1L << position.enPassant) & (position.activePlayer == Color.WHITE ? whitePawnAttacks[square] :
+		(((1L << position.enPassant) & (position.activePlayer == 0 ? whitePawnAttacks[square] :
 		blackPawnAttacks[square])) == 0))// ||//If square doesn't attack the enPassant square//(position.enPassant + 1 != square && position.enPassant - 1 != square) ||
 				//(square / 8 != 3 || square / 8 != 4)) // enpassant doesn't exist or isn't next to the piece
 			return 0L;

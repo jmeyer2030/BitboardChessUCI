@@ -26,7 +26,7 @@ public class PositionState {
         this.threeFoldTable = new ThreeFoldTable();
     }
 
-    public void applyMove(Move move) {
+    public void applyMove(int move) {
         position.makeMove(move);
         threeFoldTable.addPosition(position.zobristHash, move);
     }

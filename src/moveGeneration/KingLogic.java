@@ -13,7 +13,7 @@ public class KingLogic {
 	}
 	
 	public long getCaptures(int square, Position position) {
-		long enemyPieces = position.pieceColors[Color.flipColor(position.activePlayer).ordinal()];
+		long enemyPieces = position.pieceColors[1 - position.activePlayer];
 		return moveBoards[square] & enemyPieces;
 	}
 	
@@ -26,7 +26,7 @@ public class KingLogic {
 	}
 	
 	public long generateCastles(int square, Position position) {
-		return position.activePlayer == Color.WHITE ? generateWhiteCastles(position) : generateBlackCastles(position);
+		return position.activePlayer == 0 ? generateWhiteCastles(position) : generateBlackCastles(position);
 	}
 
 //Private Helper Methods

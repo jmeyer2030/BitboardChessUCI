@@ -103,7 +103,7 @@ public class Move {
     */
     public static Move quietMove(int start, int destination, Position position, PieceType movePiece) {
         return new Move(start, destination, MoveType.QUIET, null, null,
-            position.rule50, position.castleRights, movePiece, position.enPassant);
+            position.halfMoveCount, position.castleRights, movePiece, position.enPassant);
     }
 
     /**
@@ -129,7 +129,7 @@ public class Move {
      */
     public static Move enPassantMove(int start, int destination, Position position) {
         return new Move(start, destination, MoveType.ENPASSANT, null, null,
-            position.rule50, position.castleRights, PieceType.PAWN, position.enPassant);
+            position.halfMoveCount, position.castleRights, PieceType.PAWN, position.enPassant);
     }
 
     /**
@@ -138,7 +138,7 @@ public class Move {
     public static Move promotionMove(int start, int destination, Position position, PieceType promotionType) {
         //PieceType captureType = position.getPieceType(destination); // EDITED TO MAKE WORK
         return new Move(start, destination, MoveType.PROMOTION, promotionType, null,
-            position.rule50, position.castleRights, PieceType.PAWN, position.enPassant);
+            position.halfMoveCount, position.castleRights, PieceType.PAWN, position.enPassant);
     }
 
     /**
@@ -146,7 +146,7 @@ public class Move {
      */
     public static Move castleMove(int start, int destination, Position position) {
         return new Move(start, destination, MoveType.CASTLE, null, null,
-            position.rule50, position.castleRights, PieceType.KING, position.enPassant);
+            position.halfMoveCount, position.castleRights, PieceType.KING, position.enPassant);
     }
 
 /**

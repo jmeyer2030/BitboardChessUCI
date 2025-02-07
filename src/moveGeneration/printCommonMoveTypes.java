@@ -4,6 +4,25 @@ import board.MoveEncoding;
 
 public class printCommonMoveTypes {
     public static void main(String[] args) {
+        int pawnEnPassantTemplate = 0;
+        //Start
+        //destination
+        pawnEnPassantTemplate = MoveEncoding.setMovedPiece(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setCapturedPiece(pawnEnPassantTemplate, 0);
+        // PromotionType
+        // Flags
+        pawnEnPassantTemplate = MoveEncoding.setIsQuiet(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setIsCapture(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setIsEP(pawnEnPassantTemplate, 1);
+        pawnEnPassantTemplate = MoveEncoding.setIsPromotion(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setIsCastle(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setIsCheck(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setIsDoublePush(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setIsReversible(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setCaptureColor(pawnEnPassantTemplate, 0);
+        pawnEnPassantTemplate = MoveEncoding.setCastleSide(pawnEnPassantTemplate, 0);
+        System.out.println("pawnEnPassantTemplate = 0b" + Integer.toBinaryString(pawnEnPassantTemplate) + ";");
+
         int pawnPromotionNoCaptureTemplate = 0;
         //Start
         //destination

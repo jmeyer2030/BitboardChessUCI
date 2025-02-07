@@ -218,7 +218,7 @@ public class StaticEvaluation {
     * @return evaluation from active player's perspective
     */
     public static int negamaxEvaluatePosition(Position position) {
-        if (position.activePlayer == Color.BLACK)
+        if (position.activePlayer == 1)
             return -evaluatePosition(position);
         return evaluatePosition(position);
     }

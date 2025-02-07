@@ -67,7 +67,7 @@ public class SetPosition implements Command {
                     List<Move> moves = MoveGenerator.generateStrictlyLegal(position);
                     for (Move generatedMove : moves) {
                         if (generatedMove.toLongAlgebraic().equals(commandMove)) {
-                            chessEngine.positionState.applyMove(generatedMove);
+                            //chessEngine.positionState.applyMove(generatedMove);
                             continue;
                         }
                     }

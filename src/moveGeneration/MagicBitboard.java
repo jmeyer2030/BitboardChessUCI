@@ -35,7 +35,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	 * @return moveBoard of all moves
 	 */
 	public long getMoveBoard(int square, Position position) {
-		long activePlayerPieces = position.pieceColors[position.activePlayer.ordinal()];
+		long activePlayerPieces = position.pieceColors[position.activePlayer];
 		long blockerBoard = position.occupancy & getBlockerMasks()[square];
 		int index = getIndexForBlocker(blockerBoard, square);
 		return getMoveBoards().get(square).get(index) & ~activePlayerPieces;

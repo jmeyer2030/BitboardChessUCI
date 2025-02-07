@@ -45,6 +45,7 @@ public final class MoveEncoding {
     public static final int isCheckMask =       0b00000010_00000000_00000000_00000000;
     public static final int isDoublePushMask =  0b00000100_00000000_00000000_00000000;
     public static final int isReversibleMask =  0b00001000_00000000_00000000_00000000;
+    public static final int wasInCheckMask =    0b01000000_00000000_00000000_00000000;
 
     // Helper
     public static final int captureColorMask =  0b00010000_00000000_00000000_00000000;
@@ -102,7 +103,8 @@ public final class MoveEncoding {
 
     public static int setCapturedPiece(int move, int piece) {
         if (piece < 0 || piece > 4) {
-            throw new IllegalArgumentException();
+            System.out.println("Start: " + getStart(move) + " Destination: " + getDestination(move));
+            throw new IllegalArgumentException("Piece: " + piece + " cannot be captured!");
         }
 
         move = move & ~capturedPieceMask;
@@ -267,8 +269,8 @@ public final class MoveEncoding {
 /*
     CastleSide (0 King, 1 Queen)
 */
-    public static boolean getCastleSide(int move) {
-        return (move & castleSideMask) != 0;
+    public static int getCastleSide(int move) {
+        return (move & castleSideMask);
     }
 
     public static int setCastleSide(int move, int castleSide) {
@@ -286,4 +288,40 @@ public final class MoveEncoding {
         move = setDestination(move, 24);
         System.out.println(getDestination(move));
     }
+
+/*
+    WasInCheck (0 false 1 true)
+*/
+    public static boolean getWasInCheck(int move) {
+        return (move & wasInCheckMask) != 0;
+    }
+
+    public static int setWasInCheck(int move, int wasInCheck) {
+        if (wasInCheck != 0 && wasInCheck != 1) {
+            throw new IllegalArgumentException();
+        }
+        move = move & ~wasInCheckMask;
+        return move | wasInCheck << 30;
+    }
+
+
+    public static void getDetails(int move) {
+        System.out.println("start :" + getStart(move));
+        System.out.println("destination :" + getDestination(move));
+        System.out.println("movedPiece :" + getMovedPiece(move));
+        System.out.println("capturedPiece :" + getCapturedPiece(move));
+        System.out.println("promotionType :" + getPromotionType(move));
+        System.out.println("isQuiet :" + getIsQuiet(move));
+        System.out.println("isCapture :" + getIsCapture(move));
+        System.out.println("isEP :" + getIsEP(move));
+        System.out.println("isPromotion :" + getIsPromotion(move));
+        System.out.println("isCastle :" + getIsCastle(move));
+        System.out.println("isCheck :" + getIsCheck(move));
+        System.out.println("isDoublePush :" + getIsDoublePush(move));
+        System.out.println("isReversible :" + getIsReversible(move));
+        System.out.println("wasInCheck :" + getWasInCheck(move));
+        System.out.println("captureColor :" + getCaptureColor(move));
+        System.out.println("castleSide :" + getCastleSide(move));
+    }
 }
+

@@ -101,8 +101,8 @@ public class MoveGenerator{
 
 			// Should check if the positions are equal here
 
-			if (position.activePlayer == board.Color.WHITE && !move.resultWhiteInCheck ||
-				position.activePlayer == board.Color.BLACK && !move.resultBlackInCheck) {
+			if (position.activePlayer == 0 && !move.resultWhiteInCheck ||
+				position.activePlayer == 1 && !move.resultBlackInCheck) {
 				legalMoves.add(move);
 			}
         }
@@ -156,7 +156,7 @@ public class MoveGenerator{
 	*/
 	private static List<Move> generatePawnMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<>();
-		long pawnList = position.pieces[0] & position.pieceColors[position.activePlayer.ordinal()];
+		long pawnList = position.pieces[0] & position.pieceColors[position.activePlayer];
 
 		while (pawnList != 0L) {
 			int square = Long.numberOfTrailingZeros(pawnList);
@@ -204,7 +204,7 @@ public class MoveGenerator{
 	 */
 	private static List<Move> generateRookMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long rookList = (position.pieceColors[position.activePlayer.ordinal()]) & position.pieces[3];
+		long rookList = (position.pieceColors[position.activePlayer]) & position.pieces[3];
 
 		// Iterate over the rook positions using bitwise manipulation
 		while (rookList != 0L) {
@@ -237,7 +237,7 @@ public class MoveGenerator{
 	 */
 	private static List<Move> generateBishopMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long bishopList = position.pieceColors[position.activePlayer.ordinal()] & position.pieces[2];
+		long bishopList = position.pieceColors[position.activePlayer] & position.pieces[2];
 
 		// Iterate over bishop positions using bitwise manipulation
 		while (bishopList != 0L) {
@@ -271,7 +271,7 @@ public class MoveGenerator{
 	 */
 	private static List<Move> generateKnightMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long knightList = position.pieceColors[position.activePlayer.ordinal()] & position.pieces[1];
+		long knightList = position.pieceColors[position.activePlayer] & position.pieces[1];
 
 		// Iterate over knight positions using bitwise manipulation
 		while (knightList != 0L) {
@@ -305,7 +305,7 @@ public class MoveGenerator{
 	 */
 	private static List<Move> generateKingMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long kingList = position.pieceColors[position.activePlayer.ordinal()] & position.pieces[5];
+		long kingList = position.pieceColors[position.activePlayer] & position.pieces[5];
 
 		// Iterate over king positions using bitwise manipulation
 		while (kingList != 0L) {
@@ -350,7 +350,7 @@ public class MoveGenerator{
 	 */
 	public static List<Move> generateQueenMoves(Position position) {
 		List<Move> generatedMoves = new ArrayList<Move>();
-		long queenList = position.pieceColors[position.activePlayer.ordinal()] & position.pieces[4];
+		long queenList = position.pieceColors[position.activePlayer] & position.pieces[4];
 
 		// Iterate over queen positions using bitwise manipulation
 		while (queenList != 0L) {
@@ -407,7 +407,7 @@ public class MoveGenerator{
 		return promotions;
 	}
 
-	public static long getPawnAttacks(Position position, int square, Color attackColor)  {
+	public static long getPawnAttacks(Position position, int square, int attackColor)  {
 		return pl.getAttackBoard(square, attackColor);
 	}
 	public static long getKnightAttacks(Position position, int square) {
@@ -435,10 +435,10 @@ public class MoveGenerator{
 	*/
 	private static boolean castleSquaresAttacked(Position position, int destination) {
 		boolean squareAttacked = false;
-		if (position.activePlayer == Color.WHITE && position.whiteInCheck) {
+		if (position.activePlayer == 0 && position.inCheck) {
 			return true;
 		}
-		if (position.activePlayer == Color.BLACK && position.blackInCheck) {
+		if (position.activePlayer == 1 && position.inCheck) {
 			return true;
 		}
 
@@ -482,7 +482,7 @@ public class MoveGenerator{
 	*/
 	public static boolean squareAttackedBy(Position position, int square, Color attackColor) {
 		long potentialAttackers = position.pieceColors[attackColor.ordinal()];
-		if (((pl.getAttackBoard(square, Color.flipColor(attackColor)) & potentialAttackers & position.pieces[0]) != 0) ||
+		if (((pl.getAttackBoard(square, 1 - attackColor.ordinal()) & potentialAttackers & position.pieces[0]) != 0) ||
 			 ((bl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) ||
 			 ((rl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) ||
 			 ((nl.getAttackBoard(square, position) & potentialAttackers & position.pieces[1]) != 0) ||
@@ -497,9 +497,9 @@ public class MoveGenerator{
 	* @throws InvalidPositionException if position becomes invalid after make/unmake
 	*/
 	public static void moveUpdateChecks(Move move, Position position) throws InvalidPositionException {
-		move.prevWhiteInCheck = position.whiteInCheck;
-		move.prevBlackInCheck = position.blackInCheck;
-		position.makeMove(move);
+		move.prevWhiteInCheck = position.inCheck;
+		move.prevBlackInCheck = position.inCheck;
+		//position.makeMove(move);
 		/*
 		if (move.movePiece == PieceType.KING) {
 			// Check all pieces that could attack it
@@ -510,7 +510,7 @@ public class MoveGenerator{
 		*/
 		move.resultWhiteInCheck = kingInCheck(position, Color.WHITE);
 		move.resultBlackInCheck = kingInCheck(position, Color.BLACK);
-		position.unMakeMove(move);
+		//position.unMakeMove(move);
 	}
 
 	/*

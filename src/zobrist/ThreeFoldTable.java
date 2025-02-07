@@ -1,6 +1,7 @@
 package zobrist;
 
 import board.Move;
+import board.MoveEncoding;
 import board.PieceType;
 
 import java.util.ArrayList;
@@ -18,8 +19,8 @@ public class ThreeFoldTable {
     /**
     * adds a position to the list of reached positions
     */
-    public void addPosition(long zobristHash, Move move) {
-        boolean reversible = (move.movePiece != PieceType.PAWN && move.captureType == null);
+    public void addPosition(long zobristHash, int move) {
+        boolean reversible = MoveEncoding.getIsReversible(move);
         searchedPositions.add(new ThreeFoldElement(zobristHash, reversible));
     }
 

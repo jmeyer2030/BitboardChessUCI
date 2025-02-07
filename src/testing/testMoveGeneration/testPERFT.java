@@ -3,6 +3,7 @@ package testing.testMoveGeneration;
 import board.*;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
+import moveGeneration.MoveGenerator2;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import zobrist.Hashing;
@@ -23,6 +24,7 @@ public class testPERFT {
     public static void beforeAll() {
         MoveGenerator.initializeAll();
         Hashing.initializeRandomNumbers();
+        MoveGenerator2.initializeAll();
     }
 
     @Test

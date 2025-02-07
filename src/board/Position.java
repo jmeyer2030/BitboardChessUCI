@@ -8,11 +8,21 @@ import zobrist.Hashing;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 
 /*
  * Represents a position with Bitboards
  */
 public class Position {
+
+	public Stack<Integer> hmcStack;
+	public Stack<Integer> epStack;
+	public Stack<Byte> castleRightsStack;
+
+	public static int[][] castleRookStarts = new int[][] {{7, 0}, {63, 56}}; // [activePlayer][castleSide] [0][0] is white king
+	public static int[][] castleRookDestinations = new int[][] {{5, 3}, {61, 59}}; // [activePlayer][castleSide] [0][0] is white king
+	public static byte[] castleRightsMask = new byte[] {0b0000_0011, 0b0000_1100}; //[activePlayer] is mask to remove rights of active player
+
 	public long zobristHash;
 
 	//Piece Locations
@@ -21,13 +31,12 @@ public class Position {
 	public long[] pieces; // This stores all piece BBs at the PieceType.ordinal() position
 
 	//State:
-	public Color activePlayer;
+	public int activePlayer; // 0 is white, 1 is black
 	public byte castleRights; //Castle Rights: 0b0000(whiteQueen)(whiteKing)(blackQueen)(blackKing)
 	public int enPassant; //Same as fen, is the location where the pawn would be if it advanced one square.
-	public int rule50;
+	public int halfMoveCount;
 	public int fullMoveCount;
-	public boolean whiteInCheck;
-	public boolean blackInCheck;
+	public boolean inCheck;
 
 /*
 * Constructors
@@ -36,6 +45,9 @@ public class Position {
 	* Build starting position
 	*/
 	public Position() {
+		hmcStack = new Stack<Integer>();
+		epStack = new Stack<Integer>();
+		castleRightsStack = new Stack<Byte>();
 		//Piece Locations:
 		occupancy = 0b11111111_11111111_00000000_00000000_00000000_00000000_11111111_11111111L;
 
@@ -52,13 +64,12 @@ public class Position {
 		pieces[5] = 0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
 
 		//State:
-		activePlayer = Color.WHITE;
+		activePlayer = 0;
 		castleRights = 0b00001111;
 		enPassant = 0;
-		rule50 = 0;
+		halfMoveCount = 0;
 		fullMoveCount = 1;
-		whiteInCheck = false;
-		blackInCheck = false;
+		inCheck = false;
 
 		zobristHash = Hashing.computeZobrist(this);
 	}
@@ -67,16 +78,19 @@ public class Position {
 	* Copy a position
 	*/
 	public Position(Position position) {
+		hmcStack = (Stack<Integer>) position.hmcStack.clone();
+		epStack = (Stack<Integer>) position.epStack;
+		castleRightsStack = (Stack<Byte>) position.castleRightsStack;
+
 		this.occupancy = position.occupancy;
 		this.pieceColors = Arrays.copyOf(position.pieceColors, 2);
 		this.pieces = Arrays.copyOf(position.pieces, 6);
 		this.activePlayer = position.activePlayer;
 		this.castleRights = position.castleRights;
 		this.enPassant = position.enPassant;
-		this.rule50 = position.rule50;
+		this.halfMoveCount = position.halfMoveCount;
 		this.fullMoveCount = position.fullMoveCount;
-		this.whiteInCheck = position.whiteInCheck;
-		this.blackInCheck = position.blackInCheck;
+		this.inCheck = position.inCheck;
 		this.zobristHash = position.zobristHash;
 	}
 
@@ -84,6 +98,10 @@ public class Position {
 	* Build from FEN
 	*/
 	public Position(FEN fen) {
+		hmcStack = new Stack<Integer>();
+		epStack = new Stack<Integer>();
+		castleRightsStack = new Stack<Byte>();
+
 	    // Initialize bitboards for occupancy and individual pieces
 	    long occupancy = 0L;
 	    long whitePieces = 0L;
@@ -169,7 +187,7 @@ public class Position {
 	    }
 
 	    // Parse active color
-	    Color activePlayer = fen.activeColor == 'w' ? Color.WHITE : Color.BLACK;
+	    int activePlayer = fen.activeColor == 'w' ? 0 : 1;
 
 	    // Parse castling rights
 	    byte castleRights = 0;
@@ -201,8 +219,7 @@ public class Position {
 	    this.castleRights = castleRights;
 	    this.enPassant = enPassant;
 
-	    this.whiteInCheck = MoveGenerator.kingInCheck(this, Color.WHITE);
-	    this.blackInCheck = MoveGenerator.kingInCheck(this, Color.BLACK);
+	    //this.inCheck = MoveGenerator.kingInCheck(this, this.activePlayer);
 
 	    this.zobristHash = Hashing.computeZobrist(this);
 	}
@@ -210,18 +227,38 @@ public class Position {
 /*
 * Make and unMake
 */
+	private void removePiece(int square, int pieceType, int color) {
+		this.occupancy &= ~(1L << square);
+		this.pieceColors[color] &= ~(1L << square);
+		this.pieces[pieceType] &= ~(1L << square);
+	}
+
+	private void addPiece(int square, int pieceType, int color) {
+		this.occupancy |= (1L << square);
+		this.pieceColors[color] |= (1L << square);
+		this.pieces[pieceType] |= (1L << square);
+	}
 	/**
-	* Applies a move
-	*/
+	 * Applies a move
+	 */
 	public void makeMove(int move) {
+		try {
+			validPosition();
+		} catch(InvalidPositionException ipe) {
+			System.out.println("caught on make!");
+			printBoard();
+			throw new RuntimeException();
+		}
+
+		//System.out.println(getDisplayBoard());
+		//printBoard();
+
 		// Get Encoded data
 		int start = MoveEncoding.getStart(move);
 		int destination = MoveEncoding.getDestination(move);
 		int movedPiece = MoveEncoding.getMovedPiece(move);
 		int capturedPiece = MoveEncoding.getCapturedPiece(move);
 		int promotionType = MoveEncoding.getPromotionType(move);
-
-		boolean isQuiet = MoveEncoding.getIsQuiet(move);
 		boolean isCapture = MoveEncoding.getIsCapture(move);
 		boolean isEP = MoveEncoding.getIsEP(move);
 		boolean isPromotion = MoveEncoding.getIsPromotion(move);
@@ -229,231 +266,158 @@ public class Position {
 		boolean isCheck = MoveEncoding.getIsCheck(move);
 		boolean isDoublePush = MoveEncoding.getIsDoublePush(move);
 		boolean isReversible = MoveEncoding.getIsReversible(move);
+		int castleSide = MoveEncoding.getCastleSide(move);
 
-		boolean captureColor = MoveEncoding.getCaptureColor(move);
-		boolean castleSide = MoveEncoding.getCastleSide(move);
+		hmcStack.push(this.halfMoveCount);
+		epStack.push(this.enPassant);
+		castleRightsStack.push(this.castleRights);
 
+		// Increment hmc
+		halfMoveCount++;
 
+		// Remove capture
+		if (isCapture) {
+			removePiece(destination, capturedPiece, 1 - activePlayer);
+		}
 
-		// Create bitmasks
-	    long startMask = 1L << start;
-	    long destinationMask = 1L << destination;
-	    long swapMask = (startMask | destinationMask);
+		// Remove start, add destination
+		removePiece(start, movedPiece, activePlayer);
+		addPiece(destination, movedPiece, activePlayer);
 
-
-		// Increment rule50, reset handled later
-		rule50++;
-
-		// Occupancy remove start add destination
-	    occupancy &= ~startMask; //remove start square
-	    occupancy |= destinationMask; //add destination
-
-		// Inactive color remove destination
-		pieceColors[Color.flipColor(activePlayer).ordinal()] &= ~destinationMask;
-
-		// Active color remove start add destination
-		pieceColors[activePlayer.ordinal()] ^= swapMask;
-
-		// Pieces remove capture
-		if (isCapture)
-			pieces[capturedPiece] &= ~destinationMask;
-
-		// Pieces add destination
-		pieces[movedPiece] |= destinationMask;
-
-		// Pieces remove start
-		pieces[movedPiece] &= ~startMask;
-
-	    // Handle specific move types
-	    if (!isReversible) {
-			rule50 = 0;
+		// Handle specific move types
+		if (!isReversible) {
+			halfMoveCount = 0;
 		}
 
 		if (isEP) {
-			// Remove the pawn captured en passant
-			int enPassantCaptureSquare = activePlayer == Color.WHITE ? enPassant - 8 : enPassant + 8;
-			long enPassantCaptureMask = 1L << enPassantCaptureSquare;
-
-			occupancy &= ~enPassantCaptureMask; // remove capture from occupancy
-			pieceColors[0] &= ~enPassantCaptureMask; // remove capture from colors
-			pieceColors[1] &= ~enPassantCaptureMask;
-			pieces[0] &= ~enPassantCaptureMask; // remove capture piece from pawns
+			// Remove pawn captured en Passant
+			int enPassantCaptureSquare = enPassant - 8 + 16 * activePlayer; // if white - 8, else + 8
+			removePiece(enPassantCaptureSquare, 0, 1 - activePlayer);
 		}
 
-
 		if (isPromotion) {
-			pieces[0] &= ~destinationMask;
-			pieces[promotionType] |= destinationMask;
+			// Remove pawn, add promotion piece
+			removePiece(destination, movedPiece, activePlayer);
+			addPiece(destination, promotionType, activePlayer);
 		}
 
 		if (isCastle) {
 			// Move the rook
-			int rookStart = (destination == 6 || destination == 62)
-					? (activePlayer == Color.WHITE ? 7 : 63) //king side
-					: (activePlayer == Color.WHITE ? 0 : 56); //queen side
-			int rookEnd = (destination == 6 || destination == 62)
-					? rookStart - 2 //king side
-					: rookStart + 3; //queen side
-			long rookMoveMask = (1L << rookStart) | (1L << rookEnd);
-			pieces[3] ^= rookMoveMask;
-			occupancy ^= rookMoveMask;
-			pieceColors[activePlayer.ordinal()] ^= rookMoveMask;
+			int rookStart = castleRookStarts[activePlayer][castleSide];
+			int rookDestination = castleRookDestinations[activePlayer][castleSide];
+			removePiece(rookStart, 3, activePlayer);
+			addPiece(rookDestination, 3, activePlayer);
 		}
 
-	    // Update castle rights for king move
-	    /*
-	    castleRights &= ((destinationMask & pieces[5]) != 0) ?
-                 (activePlayer == Color.WHITE ? (byte) 0b0000_0011 : (byte) 0b0000_1100) :
-				(byte) 0b0000_1111;
-		*/
-
-		// If king move, update castle rights
-		if ((destinationMask & pieces[5]) != 0) {
-			if (activePlayer == Color.WHITE) {
-				castleRights &= 0b0000_0011;
-			} else {
-				castleRights &= 0b0000_1100;
-			}
+		if (movedPiece == 5) {
+			// Change castle rights
+			castleRights &= castleRightsMask[activePlayer];
 		}
 
-
-	    // Update castle rights for rook move
-	    /*
-	    castleRights &= (move.movePiece == PieceType.ROOK) ? //If a rook move, we change rights depending on start
-                (byte) (move.start == 0 ? 0b0000_0111 :
-                        move.start == 7 ? 0b0000_1011 :
-                        move.start == 56 ? 0b0000_1101 :
-						move.start == 63 ? 0b0000_1110 : 0b0000_1111)
-						: 0b0000_1111;
-		*/
-
-		// If rook move, update based on its start square
-		if ((destinationMask & pieces[3]) != 0) {
-			if (move.start == 0) {
+		if (movedPiece == 3) {
+			// Change castle rights
+			if (start == 0) {
 				castleRights &= 0b0000_0111;
-			} else if (move.start == 7) {
+			} else if (start == 7) {
 				castleRights &= 0b0000_1011;
-			} else if (move.start == 56) {
+			} else if (start == 56) {
 				castleRights &= 0b0000_1101;
-			} else if (move.start == 63) {
+			} else if (start == 63) {
 				castleRights &= 0b0000_1110;
 			}
 		}
 
-		// Update castle rights for rook square move
+		if (isDoublePush) {
+			// Set EP square
+			enPassant = destination - 8 + 16 * activePlayer;
+		} else {
+			enPassant = 0;
+		}
 
-	    // Set en passant square
-	    enPassant = ((move.movePiece == PieceType.PAWN) && Math.abs(move.start - move.destination) == 16) ?
-	    	activePlayer == Color.WHITE ? move.destination - 8 : move.destination + 8 : 0;
+		//increment moveCounter if black moved
+		fullMoveCount += activePlayer;
 
-	    //increment moveCounter
-	    fullMoveCount += activePlayer == Color.WHITE ? 0 : 1;
+		// Switch active player
+		activePlayer = 1 - activePlayer;
 
-	    // Switch active player
-	    activePlayer = activePlayer == Color.WHITE ? Color.BLACK : Color.WHITE;
-
-	    whiteInCheck = move.resultWhiteInCheck;
-	    blackInCheck = move.resultBlackInCheck;
+		// Set check
+		inCheck = isCheck;
 
 		this.zobristHash = Hashing.computeZobrist(this);
+
+		try {
+			validPosition();
+		} catch(InvalidPositionException ipe) {
+			System.out.println("caught ending make!" + MoveEncoding.getStart(move) + "dest: " + MoveEncoding.getDestination(move));
+			MoveEncoding.getDetails(move);
+			printBoard();
+			throw new RuntimeException();
+		}
 	}
 
 	/**
 	 * Unmakes a move
 	 */
-	public void unMakeMove(Move move) {
-		// Create bitmaps
-		long startMask = (1L << move.start);
-		long destinationMask = (1L << move.destination);
-		long swapMask = (startMask | destinationMask);
-
-		// Roughly validate the move
-		assert (destinationMask & this.occupancy) != 0;
-		assert (startMask & this.occupancy) == 0;
+	public void unMakeMove(int move) {
+		try {
+			validPosition();
+		} catch(InvalidPositionException ipe) {
+			System.out.println("caught on unmake!");
+			printBoard();
+			throw new RuntimeException();
+		}
+		// Get Encoded data
+		int start = MoveEncoding.getStart(move);
+		int destination = MoveEncoding.getDestination(move);
+		int movedPiece = MoveEncoding.getMovedPiece(move);
+		int capturedPiece = MoveEncoding.getCapturedPiece(move);
+		int promotionType = MoveEncoding.getPromotionType(move);
+		boolean isCapture = MoveEncoding.getIsCapture(move);
+		boolean isEP = MoveEncoding.getIsEP(move);
+		boolean isPromotion = MoveEncoding.getIsPromotion(move);
+		boolean isCastle = MoveEncoding.getIsCastle(move);
+		boolean isCheck = MoveEncoding.getIsCheck(move);
+		boolean isDoublePush = MoveEncoding.getIsDoublePush(move);
+		boolean isReversible = MoveEncoding.getIsReversible(move);
+		int castleSide = MoveEncoding.getCastleSide(move);
+		boolean wasInCheck = MoveEncoding.getWasInCheck(move);
 
 		// Change active player
-		this.activePlayer = activePlayer == Color.WHITE ? Color.BLACK : Color.WHITE;
+		this.activePlayer = 1 - activePlayer;
 
-		// Change occupancy of moved piece (special moves/captures handled later)
-		occupancy &= ~destinationMask; //remove destination
-		occupancy |= startMask; //add start
-
-		// Change color pieces of moved piece
-		pieceColors[activePlayer.ordinal()] ^= swapMask;
-
-		// Add piece on start square
-		pieces[move.movePiece.ordinal()] |= startMask;
-
-		// Remove piece on destination square
-		pieces[move.movePiece.ordinal()] &= ~destinationMask;
-
-		// Add precious occupant of the destination square (this should handle promotion captures
-		if (move.captureType != null) {
-			occupancy |= destinationMask;
-			pieceColors[0] |= activePlayer == Color.WHITE ? 0L : destinationMask;
-			pieceColors[1] |= activePlayer == Color.WHITE ? destinationMask : 0L;
-			pieces[move.captureType.ordinal()] |= destinationMask;
+		if (isPromotion) {
+			removePiece(destination, promotionType, activePlayer);
+		} else {
+			removePiece(destination, movedPiece, activePlayer);
 		}
 
-		// Handle specific piece types
-		switch (move.moveType) {
-			case QUIET:
-			case CAPTURE:
-				break;
-			case ENPASSANT:
-				// Replace pawn
-				int enPassantCaptureSquare = activePlayer == Color.WHITE ? move.destination - 8 : move.destination + 8;
-				long enPassantCaptureMask = 1L << enPassantCaptureSquare;
+		addPiece(start, movedPiece, activePlayer);
 
-				//add the pawn back
-				occupancy ^= enPassantCaptureMask; //add the pawn back
-				pieces[0] ^= enPassantCaptureMask;
-				pieceColors[0] |= activePlayer == Color.WHITE ? 0L : enPassantCaptureMask;
-				pieceColors[1] |= activePlayer == Color.WHITE ? enPassantCaptureMask : 0L;
-				break;
-			case PROMOTION:
-				//remove promoted piece (if promotion type != capture type
-				if (move.promotionType != move.captureType)
-					pieces[move.promotionType.ordinal()] &= ~destinationMask;
-				//at this point, the promotion piece (QKRB) is back on the start square and the occupancy/color is correct
-				//just need to remove the piece and add a pawn.
-				pieces[move.promotionType.ordinal()] &= ~startMask;
-				pieces[0] |= startMask;
-				break;
-			case CASTLE:
-				//king is back on start and it's occupancy/color is updated.
-				//just need to move the rook back and update occupancy/color for it
-				// Move the rook based on which side castled
-				// Move the rook
-				int rookStart = (move.destination == 6 || move.destination == 62)
-						? (activePlayer == Color.WHITE ? 7 : 63) //king side
-						: (activePlayer == Color.WHITE ? 0 : 56); //queen side
-				int rookEnd = (move.destination == 6 || move.destination == 62)
-						? rookStart - 2 //king side
-						: rookStart + 3; //queen side
-				long rookMoveMask = (1L << rookStart) | (1L << rookEnd);
-				pieces[3] ^= rookMoveMask;
-				occupancy ^= rookMoveMask;
-				pieceColors[activePlayer.ordinal()] ^= rookMoveMask;
-	            break;
+		if (isCapture) {
+			addPiece(destination, capturedPiece, 1 - activePlayer);
+		}
+
+		if (isEP) {
+			int enPassantCaptureSquare = destination - 8 + 16 * activePlayer;
+			addPiece(enPassantCaptureSquare, 0, 1 - activePlayer);
+		}
+
+		if (isCastle) {
+			int rookStart = castleRookStarts[activePlayer][castleSide];
+			int rookDestination = castleRookDestinations[activePlayer][castleSide];
+			removePiece(rookDestination, 3, activePlayer);
+			addPiece(rookStart, 3, activePlayer);
 		}
 
 
-		// Update castling rights
-		this.castleRights = move.castleRights;
 
-		// Set en passant square
-		this.enPassant = move.enPassant;
+		this.castleRights = castleRightsStack.pop();
+		this.halfMoveCount = hmcStack.pop();
+		this.enPassant = epStack.pop();
 
-		// Update 50 move rule
-		this.rule50 = move.halfMoveCount;
+		fullMoveCount -=  activePlayer; // if black moved,
 
-		//increment moveCounter
-		if (activePlayer == Color.BLACK)
-			fullMoveCount--;
-
-		this.whiteInCheck = move.prevWhiteInCheck;
-		this.blackInCheck = move.prevBlackInCheck;
+		this.inCheck = wasInCheck;
 
 		this.zobristHash = Hashing.computeZobrist(this);
 	}
@@ -501,7 +465,7 @@ public class Position {
 		equal &= compareValues(this.pieceColors[0], position.pieceColors[0], "White Pieces");
 		equal &= compareValues(this.pieceColors[1], position.pieceColors[1], "Black Pieces");
 		equal &= compareValues(this.castleRights, position.castleRights, "Castle Rights");
-		equal &= compareValues(this.rule50, position.rule50, "Rule 50");
+		equal &= compareValues(this.halfMoveCount, position.halfMoveCount, "Rule 50");
 		equal &= compareValues(this.enPassant, position.enPassant, "En Passant");
 		equal &= compareValues(this.activePlayer, position.activePlayer, "Active Player");
 		equal &= compareValues(this.fullMoveCount, position.fullMoveCount, "Full Move Count");
@@ -558,7 +522,7 @@ public class Position {
 
 		System.out.println("Castle Rights" + Integer.toBinaryString((castleRights+256)%256));
 		System.out.println("En Passant: " + enPassant);
-		System.out.println("HalfMoveCount: " + rule50);
+		System.out.println("HalfMoveCount: " + halfMoveCount);
 		System.out.println("FullMoveCount: " + fullMoveCount);
 	}
 

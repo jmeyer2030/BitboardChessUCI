@@ -11,12 +11,12 @@ public class KnightLogic implements LogicInterface{
 	}
 	
 	public long getMoveBoard(int square, Position position) {
-		long activePlayerPieces = position.pieceColors[position.activePlayer.ordinal()];
+		long activePlayerPieces = position.pieceColors[position.activePlayer];
 		return knightMoves[square] & ~activePlayerPieces;
 	}
 	
 	public long getCaptures(int square, Position position) {
-		long enemyPieces = position.activePlayer == Color.WHITE ? position.pieceColors[1] : position.pieceColors[0];
+		long enemyPieces = position.activePlayer == 0 ? position.pieceColors[1] : position.pieceColors[0];
 		return knightMoves[square] & enemyPieces;
 	}
 	

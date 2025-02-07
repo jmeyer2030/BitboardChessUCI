@@ -30,7 +30,7 @@ public class TranspositionTable {
         return element;
     }
 
-    public void addElement(long zobristHash, Move bestMove, int depth, int score, NodeType nodeType) {
+    public void addElement(long zobristHash, int bestMove, int depth, int score, NodeType nodeType) {
         table[getIndex(zobristHash)] = new TTElement(zobristHash, bestMove, depth, score, nodeType);
     }
 }

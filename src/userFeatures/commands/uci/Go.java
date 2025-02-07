@@ -96,7 +96,7 @@ public class Go implements Command {
         Position position = chessEngine.positionState.position;
 
         String activeTimeStr;
-        if (position.activePlayer == Color.WHITE) {
+        if (position.activePlayer == 0) {
             activeTimeStr = subCommands.get("wtime");
         } else {
             activeTimeStr = subCommands.get("btime");
@@ -108,9 +108,9 @@ public class Go implements Command {
 
 
         System.out.println("Beginning search:");
-        Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime,searchState);
+        //Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime,searchState);
 
-        System.out.println("bestmove " + moveValue.bestMove.toLongAlgebraic());
+        //System.out.println("bestmove " + moveValue.bestMove.toLongAlgebraic());
 
     }
 
@@ -120,7 +120,7 @@ public class Go implements Command {
 
         for (String lan : searchMoves) {
             Move move = MoveGenerator.getMoveFromLAN(lan, position);
-            chessEngine.positionState.applyMove(move);
+            //chessEngine.positionState.applyMove(move);
         }
     }
 

@@ -4,7 +4,10 @@ import board.MoveEncoding;
 import board.Position;
 
 public class MoveShortcuts {
-//                                                           0b00000000000000000000000000000000;
+/*
+    Move templates
+*/
+    public static final int pawnEnPassantTemplate =          0b00000000010000000000000000000000;
     public static final int pawnPromotionNoCaptureTemplate = 0b00000000100000000000000000000000;
     public static final int pawnPromotionCaptureTemplate =   0b00000000101000000000000000000000;
     public static final int pawnDoublePushTemplate =         0b00000100000100000000000000000000;
@@ -23,11 +26,12 @@ public class MoveShortcuts {
     public static final int kingKingSideCastleTemplate =     0b00001001000100000101000000000000;
     public static final int kingQueenSideCastleTemplate =    0b00101001000100000101000000000000;
 
-    public static int generatePawnPromotionNoCapture(int start, int destination, int promotionPiece) {
+    public static int generatePawnPromotionNoCapture(int start, int destination, int promotionPiece, Position position) {
         int move = pawnPromotionNoCaptureTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
         move = MoveEncoding.setPromotionType(move, promotionPiece);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
@@ -37,20 +41,32 @@ public class MoveShortcuts {
         move = MoveEncoding.setDestination(move, destination);
         move = MoveEncoding.setPromotionType(move, promotionPiece);
         move = MoveEncoding.setCapturedPiece(move, position.getPieceType(destination));
-        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer.ordinal());
+        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
-    public static int generatePawnDoublePush(int start, int destination) {
+    public static int generatePawnEnPassant(int start, int destination, Position position) {
+        int move = pawnEnPassantTemplate;
+        move = MoveEncoding.setStart(move, start);
+        move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
+        return move;
+    }
+
+    public static int generatePawnDoublePush(int start, int destination, Position position) {
         int move = pawnDoublePushTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
-    public static int generatePawnSinglePush(int start, int destination) {
+    public static int generatePawnSinglePush(int start, int destination, Position position) {
         int move = pawnSinglePushTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
     public static int generatePawnCapture(int start, int destination, Position position) {
@@ -58,13 +74,15 @@ public class MoveShortcuts {
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
         move = MoveEncoding.setCapturedPiece(move, position.getPieceType(destination));
-        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer.ordinal());
+        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
-    public static int generateKnightNoCapture(int start, int destination) {
+    public static int generateKnightNoCapture(int start, int destination, Position position) {
         int move = knightNoCaptureTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
@@ -73,14 +91,16 @@ public class MoveShortcuts {
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
         move = MoveEncoding.setCapturedPiece(move, position.getPieceType(destination));
-        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer.ordinal());
+        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
-    public static int generateBishopNoCapture(int start, int destination) {
+    public static int generateBishopNoCapture(int start, int destination, Position position) {
         int move = bishopNoCaptureTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
@@ -89,14 +109,16 @@ public class MoveShortcuts {
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
         move = MoveEncoding.setCapturedPiece(move, position.getPieceType(destination));
-        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer.ordinal());
+        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
-    public static int generateRookNoCapture(int start, int destination) {
+    public static int generateRookNoCapture(int start, int destination, Position position) {
         int move = rookNoCaptureTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
@@ -105,14 +127,16 @@ public class MoveShortcuts {
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
         move = MoveEncoding.setCapturedPiece(move, position.getPieceType(destination));
-        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer.ordinal());
+        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
-    public static int generateQueenNoCapture(int start, int destination) {
+    public static int generateQueenNoCapture(int start, int destination, Position position) {
         int move = queenNoCaptureTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
@@ -121,14 +145,16 @@ public class MoveShortcuts {
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
         move = MoveEncoding.setCapturedPiece(move, position.getPieceType(destination));
-        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer.ordinal());
+        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
-    public static int generateKingNoCapture(int start, int destination) {
+    public static int generateKingNoCapture(int start, int destination, Position position) {
         int move = kingNoCaptureTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
@@ -137,21 +163,24 @@ public class MoveShortcuts {
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
         move = MoveEncoding.setCapturedPiece(move, position.getPieceType(destination));
-        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer.ordinal());
+        move = MoveEncoding.setCaptureColor(move, 1 - position.activePlayer);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
-    public static int generateKingKingSideCastle(int start, int destination) {
+    public static int generateKingKingSideCastle(int start, int destination, Position position) {
         int move = kingKingSideCastleTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 
-    public static int generateKingQueenSideCastle(int start, int destination) {
+    public static int generateKingQueenSideCastle(int start, int destination, Position position) {
         int move = kingQueenSideCastleTemplate;
         move = MoveEncoding.setStart(move, start);
         move = MoveEncoding.setDestination(move, destination);
+        move = MoveEncoding.setWasInCheck(move, position.inCheck ? 1 : 0);
         return move;
     }
 }
