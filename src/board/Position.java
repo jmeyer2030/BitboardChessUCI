@@ -242,25 +242,6 @@ public class Position {
 	 * Applies a move
 	 */
 	public void makeMove(int move) {
-		if (MoveEncoding.getActivePlayer(move) != this.activePlayer) {
-			System.out.println(MoveEncoding.getActivePlayer(move));
-			System.out.println(this.activePlayer);
-			throw new IllegalArgumentException();
-		}
-
-		Position copy = new Position(this);
-
-		try {
-			validPosition();
-		} catch(InvalidPositionException ipe) {
-			System.out.println("caught on make!");
-			printBoard();
-			throw new RuntimeException();
-		}
-
-		//System.out.println(getDisplayBoard());
-		//printBoard();
-
 		// Get Encoded data
 		int start = MoveEncoding.getStart(move);
 		int destination = MoveEncoding.getDestination(move);
@@ -351,34 +332,13 @@ public class Position {
 		// Set check
 		inCheck = isCheck;
 
-		this.zobristHash = Hashing.computeZobrist(this);
-
-		try {
-			validPosition();
-		} catch(InvalidPositionException ipe) {
-			System.out.println("caught ending make!" + MoveEncoding.getStart(move) + "dest: " + MoveEncoding.getDestination(move));
-			MoveEncoding.getDetails(move);
-			printBoard();
-
-			System.out.println("COPY: ");
-			System.out.println(copy.getDisplayBoard());
-			copy.printBoard();
-
-			throw new RuntimeException();
-		}
+		//this.zobristHash = Hashing.computeZobrist(this);
 	}
 
 	/**
 	 * Unmakes a move
 	 */
 	public void unMakeMove(int move) {
-		try {
-			validPosition();
-		} catch(InvalidPositionException ipe) {
-			System.out.println("caught on unmake!");
-			printBoard();
-			throw new RuntimeException();
-		}
 		// Get Encoded data
 		int start = MoveEncoding.getStart(move);
 		int destination = MoveEncoding.getDestination(move);
@@ -389,9 +349,6 @@ public class Position {
 		boolean isEP = MoveEncoding.getIsEP(move);
 		boolean isPromotion = MoveEncoding.getIsPromotion(move);
 		boolean isCastle = MoveEncoding.getIsCastle(move);
-		boolean isCheck = MoveEncoding.getIsCheck(move);
-		boolean isDoublePush = MoveEncoding.getIsDoublePush(move);
-		boolean isReversible = MoveEncoding.getIsReversible(move);
 		int castleSide = MoveEncoding.getCastleSide(move);
 		boolean wasInCheck = MoveEncoding.getWasInCheck(move);
 
@@ -432,7 +389,7 @@ public class Position {
 
 		this.inCheck = wasInCheck;
 
-		this.zobristHash = Hashing.computeZobrist(this);
+		//this.zobristHash = Hashing.computeZobrist(this);
 	}
 
 /*

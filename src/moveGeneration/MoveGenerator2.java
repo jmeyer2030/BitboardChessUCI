@@ -98,6 +98,8 @@ public class MoveGenerator2 {
         firstNonMove = generateKingMoves(position, moveBuffer, firstNonMove);
         return firstNonMove;
     }
+
+
     /*
      * Private methods
      */
@@ -110,16 +112,39 @@ public class MoveGenerator2 {
     * @return move null move if the move is illegal otherwise the move with updated check flag
     */
      private static int updateChecks(int move, Position position) {
-         position.makeMove(move);
+         boolean putsSelfInCheck;
 
-         if (kingInCheck(position, 1 - position.activePlayer)) {
+         // Check if move puts self in check
+         if (MoveEncoding.getIsEP(move)) {
+             position.makeMove(move);
+             putsSelfInCheck = kingInCheck(position, 1 - position.activePlayer);
+             position.unMakeMove(move);
+         } else if (MoveEncoding.getMovedPiece(move) == 5) { // king move
+             position.makeMove(move);
+             putsSelfInCheck = kingInCheck(position, 1 - position.activePlayer);
+             position.unMakeMove(move);
+
+             // NEED TO LOOK AT X-RAY ATTACKS !!!! piece can move into it's shadow
+             if (putsSelfInCheck != squareAttackedBy(position, MoveEncoding.getDestination(move), 1 - position.activePlayer)) {
+                System.out.println(position.getDisplayBoard());
+                MoveEncoding.getDetails(move);
+                 throw new IllegalArgumentException();
+             }
+
+             //putsSelfInCheck = squareAttackedBy(position, MoveEncoding.getDestination(move), 1 - position.activePlayer);
+         } else { // if non-king and non-ep move
+             position.makeMove(move);
+             putsSelfInCheck = kingInCheck(position, 1 - position.activePlayer);
+             position.unMakeMove(move);
+         }
+
+         // If it does return 0
+         if (putsSelfInCheck) {
             return 0;
          }
 
-         move = MoveEncoding.setIsCheck(move, kingInCheck(position, position.activePlayer) ? 1 : 0);
 
-         position.unMakeMove(move);
-
+         //move = MoveEncoding.setIsCheck(move, kingInCheck(position, 1 - position.activePlayer) ? 1 : 0);
          return move;
      }
 
@@ -133,7 +158,6 @@ public class MoveGenerator2 {
      * @return new buffer location
      */
      private static int addAndValidateMove(int move, int[] moveBuffer, int firstNonMove, Position position) {
-
         move = MoveEncoding.setActivePlayer(move, position.activePlayer);
         move = updateChecks(move, position);
         if (move == 0) {
@@ -215,7 +239,6 @@ public class MoveGenerator2 {
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
             }
         }
-
         return firstNonMove;
     }
 
@@ -227,7 +250,6 @@ public class MoveGenerator2 {
      * @return firstNonMove updated
      */
     private static int generateRookMoves(Position position, int[] moveBuffer, int firstNonMove) {
-
         long rookList = (position.pieceColors[position.activePlayer]) & position.pieces[3];
         // Iterate over the rook positions using bitwise manipulation
         while (rookList != 0L) {
@@ -259,11 +281,10 @@ public class MoveGenerator2 {
 
     /**
      * Generates and returns all bishop moves
-     * @param position
+     * @param position to generate moves for
      * @return Move list
      */
     private static int generateBishopMoves(Position position, int[] moveBuffer, int firstNonMove) {
-
         long bishopList = position.pieceColors[position.activePlayer] & position.pieces[2];
         // Iterate over bishop positions using bitwise manipulation
         while (bishopList != 0L) {
@@ -290,17 +311,15 @@ public class MoveGenerator2 {
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
             }
         }
-
         return firstNonMove;
     }
 
     /**
      * Generates and returns all knight moves
-     * @param position
+     * @param position to generate moves for
      * @return Move list
      */
     private static int generateKnightMoves(Position position, int[] moveBuffer, int firstNonMove) {
-
         long knightList = position.pieceColors[position.activePlayer] & position.pieces[1];
 
         // Iterate over knight positions using bitwise manipulation
@@ -327,17 +346,15 @@ public class MoveGenerator2 {
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
             }
         }
-
         return firstNonMove;
     }
 
     /**
      * Generates and returns all king moves
-     * @param position
+     * @param position position to generate moves for
      * @return Move list
      */
     private static int generateKingMoves(Position position, int[] moveBuffer, int firstNonMove) {
-
         long kingList = position.pieceColors[position.activePlayer] & position.pieces[5];
 
         // Iterate over king positions using bitwise manipulation
@@ -363,6 +380,7 @@ public class MoveGenerator2 {
 
                 int move = MoveShortcuts.generateKingNoCapture(start, destination, position);
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
+
             }
 
             // Process castling moves
@@ -385,6 +403,7 @@ public class MoveGenerator2 {
 
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
             }
+
         }
 
         return firstNonMove;
@@ -392,11 +411,10 @@ public class MoveGenerator2 {
 
     /**
      * Generates and returns all queen moves
-     * @param position
+     * @param position to generate moves for
      * @return Move list
      */
     public static int generateQueenMoves(Position position, int[] moveBuffer, int firstNonMove) {
-        List<Move> generatedMoves = new ArrayList<Move>();
         long queenList = position.pieceColors[position.activePlayer] & position.pieces[4];
 
         // Iterate over queen positions using bitwise manipulation
@@ -506,10 +524,6 @@ public class MoveGenerator2 {
      */
     public static boolean kingInCheck(Position position, int kingColor) {
         int kingLoc = Long.numberOfTrailingZeros(position.pieces[5] & position.pieceColors[kingColor]);
-        if (kingLoc > 63 || kingLoc < 0) { // Checks if generated move was a king capture (we just return false so it's illegal)
-            System.out.println("King CAPTURED!");
-            return true;
-        }
         return squareAttackedBy(position, kingLoc, 1 - kingColor);
     }
 
@@ -522,14 +536,11 @@ public class MoveGenerator2 {
      */
     public static boolean squareAttackedBy(Position position, int square, int attackColor) {
         long potentialAttackers = position.pieceColors[attackColor];
-        if (((pl.getAttackBoard(square, attackColor) & potentialAttackers & position.pieces[0]) != 0) ||
+        return ((pl.getAttackBoard(square, 1 - attackColor) & potentialAttackers & position.pieces[0]) != 0) ||
                 ((bl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) ||
                 ((rl.getAttackBoard(square, position) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) ||
                 ((nl.getAttackBoard(square, position) & potentialAttackers & position.pieces[1]) != 0) ||
-                ((kl.getKingAttacks(square) & potentialAttackers & position.pieces[5]) != 0)) {
-            return true;
-        }
-        return false;
+                ((kl.getKingAttacks(square) & potentialAttackers & position.pieces[5]) != 0);
     }
 
     /**

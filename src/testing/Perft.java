@@ -45,27 +45,19 @@ public class Perft {
     private static long perftRecursion(int depth, Position position, int[] moveBuffer, int firstNonMove) {
         if (depth == 0)
             return 1;
-
         long result = 0;
         int nextFirstNonMove = MoveGenerator2.generateAllMoves(position, moveBuffer, firstNonMove);
+        if (depth == 1) {
+            return nextFirstNonMove - firstNonMove;
+        }
 
         for (int i = firstNonMove; i < nextFirstNonMove; i++) {
             int move = moveBuffer[i];
-            try {
-                position.makeMove(move);
-            } catch (Exception e) {
-                System.out.println("First nonMove: " + firstNonMove);
-                System.out.println("nextFirstNonMove" + nextFirstNonMove);
-                for (int j = 0; j < 100; j++ ) {
-                    System.out.println(MoveEncoding.getActivePlayer(moveBuffer[j]) + "  isNull? " + (moveBuffer[j] == 0) + " |  This one? " + (i == j) + "   |   FirstnonMove?  " + (firstNonMove == j) + "   |   nextFirstNonMove?  " + (nextFirstNonMove == j));
-                }
-                System.out.println("Depth: " + depth);
-                System.out.println("i: " + i);
-                throw e;
-            }
+            position.makeMove(move);
             result += perftRecursion(depth - 1, position, moveBuffer, nextFirstNonMove);
             position.unMakeMove(move);
         }
+
         return result;
     }
 

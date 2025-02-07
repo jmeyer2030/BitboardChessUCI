@@ -58,9 +58,11 @@ public final class MoveEncoding {
     }
 
     public static int setStart(int move, int start) {
+        /*
         if (start < 0 || start > 63) {
             throw new IllegalArgumentException();
         }
+        */
         move = move & ~startMask; // Clear start bits
         return move | start;
     }
@@ -72,9 +74,11 @@ public final class MoveEncoding {
     }
 
     public static int setDestination(int move, int destination) {
+        /*
         if (destination < 0 || destination > 63) {
             throw new IllegalArgumentException();
         }
+        */
         move = move & ~destinationMask; // Clear destination bits
         return move | (destination << 6);
     }
@@ -86,9 +90,11 @@ public final class MoveEncoding {
     }
 
     public static int setMovedPiece(int move, int piece) {
+        /*
         if (piece < 0 || piece > 5) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~movedPieceMask; // Clear moved piece
         return move | (piece << 12);
@@ -102,10 +108,12 @@ public final class MoveEncoding {
     }
 
     public static int setCapturedPiece(int move, int piece) {
+
         if (piece < 0 || piece > 4) {
             System.out.println("Start: " + getStart(move) + " Destination: " + getDestination(move));
             throw new IllegalArgumentException("Piece: " + piece + " cannot be captured!");
         }
+
 
         move = move & ~capturedPieceMask;
         return move | (piece << 15);
@@ -120,9 +128,11 @@ public final class MoveEncoding {
     }
 
     public static int setPromotionType(int move, int piece) {
+        /*
         if (piece < 1 || piece > 4) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~promotionTypeMask;
         return move | (piece << 18);
@@ -135,9 +145,11 @@ public final class MoveEncoding {
     }
 
     public static int setIsQuiet(int move, int isQuiet) {
+        /*
         if (isQuiet != 0 && isQuiet != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~isQuietMask;
         return move | (isQuiet << 20);
@@ -150,9 +162,11 @@ public final class MoveEncoding {
     }
 
     public static int setIsCapture(int move, int isCapture) {
+        /*
         if (isCapture != 0 && isCapture != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~isCaptureMask;
         return move | (isCapture << 21);
@@ -165,9 +179,11 @@ public final class MoveEncoding {
     }
 
     public static int setIsEP(int move, int isEP) {
+        /*
         if (isEP != 0 && isEP != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~isEPMask;
         return move | (isEP << 22);
@@ -181,9 +197,11 @@ public final class MoveEncoding {
     }
 
     public static int setIsPromotion(int move, int isPromotion) {
+        /*
         if (isPromotion != 0 && isPromotion != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~isPromotionMask;
         return move | (isPromotion << 23);
@@ -197,9 +215,11 @@ public final class MoveEncoding {
     }
 
     public static int setIsCastle(int move, int isCastle) {
+        /*
         if (isCastle != 0 && isCastle != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~isCastleMask;
         return move | (isCastle << 24);
@@ -213,9 +233,11 @@ public final class MoveEncoding {
     }
 
     public static int setIsCheck(int move, int isCheck) {
+        /*
         if (isCheck != 0 && isCheck != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~isCheckMask;
         return move | (isCheck << 25);
@@ -228,9 +250,11 @@ public final class MoveEncoding {
     }
 
     public static int setIsDoublePush(int move, int isDoublePush) {
+        /*
         if (isDoublePush != 0 && isDoublePush != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~isDoublePushMask;
         return move | (isDoublePush << 26);
@@ -243,9 +267,11 @@ public final class MoveEncoding {
     }
 
     public static int setIsReversible(int move, int isReversible) {
+        /*
         if (isReversible != 0 && isReversible != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~isReversibleMask;
         return move | (isReversible << 27);
@@ -258,9 +284,11 @@ public final class MoveEncoding {
     }
 
     public static int setCaptureColor(int move, int captureColor) {
+        /*
         if (captureColor != 0 && captureColor != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~captureColorMask;
         return move | (captureColor << 28);
@@ -274,19 +302,14 @@ public final class MoveEncoding {
     }
 
     public static int setCastleSide(int move, int castleSide) {
+        /*
         if (castleSide != 0 && castleSide != 1) {
             throw new IllegalArgumentException();
         }
+        */
 
         move = move & ~castleSideMask;
         return move | (castleSide << 29);
-    }
-
-    public static void main(String[] args) {
-        int move = 0;
-        System.out.println(Integer.toBinaryString(move));
-        move = setDestination(move, 24);
-        System.out.println(getDestination(move));
     }
 
 /*
@@ -297,9 +320,11 @@ public final class MoveEncoding {
     }
 
     public static int setWasInCheck(int move, int wasInCheck) {
+        /*
         if (wasInCheck != 0 && wasInCheck != 1) {
             throw new IllegalArgumentException();
         }
+        */
         move = move & ~wasInCheckMask;
         return move | (wasInCheck << 30);
     }
@@ -312,9 +337,11 @@ public final class MoveEncoding {
     }
 
     public static int setActivePlayer(int move, int activePlayer) {
+        /*
         if (activePlayer != 0 && activePlayer != 1) {
             throw new IllegalArgumentException();
         }
+        */
         move = move & ~wasInCheckMask;
         return move | (activePlayer << 31);
     }

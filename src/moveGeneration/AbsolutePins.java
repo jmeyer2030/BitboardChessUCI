@@ -7,6 +7,9 @@ public class AbsolutePins {
 		inBetween = generateInBetween();
 	}
 
+	/**
+	* inBetween[i][j] is a bitboard representing all the squares in between 'i' and 'j'.
+	*/
 	public long[][] generateInBetween() {
 		long[][] inBetween = new long[64][64];
 		for (int i = 0; i < 64; i++) {
