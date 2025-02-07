@@ -149,6 +149,14 @@ public class MoveGenerator2 {
      }
 
      /**
+     *
+     *
+     */
+     public static boolean kingMoveSelfInCheck(int move, Position position) {
+         return true;
+     }
+
+     /**
      * Updates checks on the move and sees if its legal. If it's valid, it is added to the move buffer
      * and the new firstNonMove of the array is returned.
      * @param move move to add
