@@ -242,6 +242,14 @@ public class Position {
 	 * Applies a move
 	 */
 	public void makeMove(int move) {
+		if (MoveEncoding.getActivePlayer(move) != this.activePlayer) {
+			System.out.println(MoveEncoding.getActivePlayer(move));
+			System.out.println(this.activePlayer);
+			throw new IllegalArgumentException();
+		}
+
+		Position copy = new Position(this);
+
 		try {
 			validPosition();
 		} catch(InvalidPositionException ipe) {
@@ -351,6 +359,11 @@ public class Position {
 			System.out.println("caught ending make!" + MoveEncoding.getStart(move) + "dest: " + MoveEncoding.getDestination(move));
 			MoveEncoding.getDetails(move);
 			printBoard();
+
+			System.out.println("COPY: ");
+			System.out.println(copy.getDisplayBoard());
+			copy.printBoard();
+
 			throw new RuntimeException();
 		}
 	}
@@ -524,6 +537,7 @@ public class Position {
 		System.out.println("En Passant: " + enPassant);
 		System.out.println("HalfMoveCount: " + halfMoveCount);
 		System.out.println("FullMoveCount: " + fullMoveCount);
+		System.out.println("ActivePlayer: " + activePlayer);
 	}
 
 	/**

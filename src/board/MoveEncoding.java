@@ -46,7 +46,7 @@ public final class MoveEncoding {
     public static final int isDoublePushMask =  0b00000100_00000000_00000000_00000000;
     public static final int isReversibleMask =  0b00001000_00000000_00000000_00000000;
     public static final int wasInCheckMask =    0b01000000_00000000_00000000_00000000;
-
+    public static final int activePlayerMask =  0b10000000_00000000_00000000_00000000;
     // Helper
     public static final int captureColorMask =  0b00010000_00000000_00000000_00000000;
     public static final int castleSideMask =    0b00100000_00000000_00000000_00000000;
@@ -91,7 +91,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~movedPieceMask; // Clear moved piece
-        return move | piece << 12;
+        return move | (piece << 12);
     }
 /*
     Captured Piece (as ordinal of the enum)
@@ -108,7 +108,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~capturedPieceMask;
-        return move | piece << 15;
+        return move | (piece << 15);
     }
 
 /*
@@ -125,7 +125,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~promotionTypeMask;
-        return move | piece << 18;
+        return move | (piece << 18);
     }
 /*
     Quiet flag
@@ -140,7 +140,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~isQuietMask;
-        return move | isQuiet << 20;
+        return move | (isQuiet << 20);
     }
 /*
     Capture flag
@@ -155,7 +155,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~isCaptureMask;
-        return move | isCapture << 21;
+        return move | (isCapture << 21);
     }
 /*
     EP flag
@@ -170,7 +170,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~isEPMask;
-        return move | isEP << 22;
+        return move | (isEP << 22);
     }
 
 /*
@@ -186,7 +186,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~isPromotionMask;
-        return move | isPromotion << 23;
+        return move | (isPromotion << 23);
     }
 
 /*
@@ -202,7 +202,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~isCastleMask;
-        return move | isCastle << 24;
+        return move | (isCastle << 24);
     }
 
 /*
@@ -218,7 +218,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~isCheckMask;
-        return move | isCheck << 25;
+        return move | (isCheck << 25);
     }
 /*
     Double Push flag
@@ -233,7 +233,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~isDoublePushMask;
-        return move | isDoublePush << 26;
+        return move | (isDoublePush << 26);
     }
 /*
     Reversible flag
@@ -248,7 +248,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~isReversibleMask;
-        return move | isReversible << 27;
+        return move | (isReversible << 27);
     }
 /*
     Capture Color (0 White, 1 Black)
@@ -263,14 +263,14 @@ public final class MoveEncoding {
         }
 
         move = move & ~captureColorMask;
-        return move | captureColor << 28;
+        return move | (captureColor << 28);
     }
 
 /*
     CastleSide (0 King, 1 Queen)
 */
     public static int getCastleSide(int move) {
-        return (move & castleSideMask);
+        return (move & castleSideMask) >> 29;
     }
 
     public static int setCastleSide(int move, int castleSide) {
@@ -279,7 +279,7 @@ public final class MoveEncoding {
         }
 
         move = move & ~castleSideMask;
-        return move | castleSide << 29;
+        return move | (castleSide << 29);
     }
 
     public static void main(String[] args) {
@@ -301,9 +301,23 @@ public final class MoveEncoding {
             throw new IllegalArgumentException();
         }
         move = move & ~wasInCheckMask;
-        return move | wasInCheck << 30;
+        return move | (wasInCheck << 30);
     }
 
+/*
+    ActivePlayer
+*/
+    public static int getActivePlayer(int move) {
+        return (move & activePlayerMask) >> 31 == -1 ? 1 : 0;
+    }
+
+    public static int setActivePlayer(int move, int activePlayer) {
+        if (activePlayer != 0 && activePlayer != 1) {
+            throw new IllegalArgumentException();
+        }
+        move = move & ~wasInCheckMask;
+        return move | (activePlayer << 31);
+    }
 
     public static void getDetails(int move) {
         System.out.println("start :" + getStart(move));
@@ -322,6 +336,7 @@ public final class MoveEncoding {
         System.out.println("wasInCheck :" + getWasInCheck(move));
         System.out.println("captureColor :" + getCaptureColor(move));
         System.out.println("castleSide :" + getCastleSide(move));
+        System.out.println("activePlayer: " + getActivePlayer(move));
     }
 }
 

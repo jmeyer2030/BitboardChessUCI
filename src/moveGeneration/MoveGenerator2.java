@@ -133,6 +133,8 @@ public class MoveGenerator2 {
      * @return new buffer location
      */
      private static int addAndValidateMove(int move, int[] moveBuffer, int firstNonMove, Position position) {
+
+        move = MoveEncoding.setActivePlayer(move, position.activePlayer);
         move = updateChecks(move, position);
         if (move == 0) {
             return firstNonMove;
@@ -140,7 +142,6 @@ public class MoveGenerator2 {
         moveBuffer[firstNonMove] = move;
         return ++firstNonMove;
      }
-
 
     /**
      * Generates and returns all pawn moves
