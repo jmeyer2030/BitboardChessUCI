@@ -292,19 +292,21 @@ public abstract class MagicBitboard implements LogicInterface{
 	}
 
 	/**
-	* returns a bitboard representing the x-ray attacks, those that see through the first friendly blocker of a piece on a square
+	* returns a bitboard representing the attacks of a slider behind and including the blocker
 	*/
 	public long xrayAttacks(int square, Position position) {
 		// Get the Attacks of the piece on the square
 		long attacks = getAttackBoard(square, position);
 
 		// Get the intersection of attacks and active player pieces
-		long activePiecesHit = (position.activePlayer == 0 ? position.pieceColors[0] : position.pieceColors[1]) & attacks;//first hit pieces
+		long activePlayerBlockers = (position.pieceColors[position.activePlayer]) & attacks;
 
-		long occupancyWithoutFriendlyBlockers = position.occupancy ^ activePiecesHit;
+		long occupancyWithoutFriendlyBlockers = position.occupancy ^ activePlayerBlockers;
 
-		// Return attacks that go past a friendly piece
-		return attacks ^ getAttackBoard(square, occupancyWithoutFriendlyBlockers);
+		long attacksWithoutBlockers = getAttackBoard(square, occupancyWithoutFriendlyBlockers);
+
+		// Return attacks if the friendly blocker wasn't there
+		return (attacksWithoutBlockers ^ attacks) | (attacks & attacksWithoutBlockers);
 	}
 
 

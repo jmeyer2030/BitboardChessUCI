@@ -3,14 +3,14 @@ package moveGeneration;
 public class AbsolutePins {
 	public static long[][] inBetween;
 	
-	public void initializeAll() {
+	public static void initializeAll() {
 		inBetween = generateInBetween();
 	}
 
 	/**
 	* inBetween[i][j] is a bitboard representing all the squares in between 'i' and 'j'.
 	*/
-	public long[][] generateInBetween() {
+	public static long[][] generateInBetween() {
 		long[][] inBetween = new long[64][64];
 		for (int i = 0; i < 64; i++) {
 			for (int j = 0; j < 64; j++) {
@@ -20,7 +20,7 @@ public class AbsolutePins {
 		return inBetween;
 	}
 	
-	private long generateBetween(int i, int j) {
+	private static long generateBetween(int i, int j) {
 	    // If `i` and `j` are the same, there's no path.
 	    if (i == j) return 0L;
 

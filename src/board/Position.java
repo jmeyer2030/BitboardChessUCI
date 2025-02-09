@@ -1,6 +1,7 @@
 package board;
 
 import moveGeneration.MoveGenerator;
+import moveGeneration.MoveGenerator2;
 import testing.testMoveGeneration.Testing;
 import customExceptions.InvalidPositionException;
 import zobrist.Hashing;
@@ -29,6 +30,7 @@ public class Position {
 	public long occupancy;
 	public long[] pieceColors;
 	public long[] pieces; // This stores all piece BBs at the PieceType.ordinal() position
+	public int[] kingLocs;
 
 	//State:
 	public int activePlayer; // 0 is white, 1 is black
@@ -36,7 +38,16 @@ public class Position {
 	public int enPassant; //Same as fen, is the location where the pawn would be if it advanced one square.
 	public int halfMoveCount;
 	public int fullMoveCount;
+
+	public int[] pinnedPieces;
+	public long pinnedPiecesBits;
+
+	public int[] potentialDiscoverers;
+	public long potentialDiscoverersBits;
+
 	public boolean inCheck;
+	public boolean inDoubleCheck;
+
 
 /*
 * Constructors
@@ -45,6 +56,15 @@ public class Position {
 	* Build starting position
 	*/
 	public Position() {
+		pinnedPieces = new int[64];
+		Arrays.fill(pinnedPieces, -1);
+
+		potentialDiscoverers = new int[64];
+		Arrays.fill(potentialDiscoverers, -1);
+
+		pinnedPiecesBits = 0;
+		potentialDiscoverersBits = 0;
+
 		hmcStack = new Stack<Integer>();
 		epStack = new Stack<Integer>();
 		castleRightsStack = new Stack<Byte>();
@@ -62,6 +82,8 @@ public class Position {
 		pieces[3] = 0b10000001_00000000_00000000_00000000_00000000_00000000_00000000_10000001L;
 		pieces[4] = 0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L;
 		pieces[5] = 0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
+
+		kingLocs = new int[] {Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
 
 		//State:
 		activePlayer = 0;
@@ -85,6 +107,7 @@ public class Position {
 		this.occupancy = position.occupancy;
 		this.pieceColors = Arrays.copyOf(position.pieceColors, 2);
 		this.pieces = Arrays.copyOf(position.pieces, 6);
+		this.kingLocs = Arrays.copyOf(position.kingLocs, 2);
 		this.activePlayer = position.activePlayer;
 		this.castleRights = position.castleRights;
 		this.enPassant = position.enPassant;
@@ -92,12 +115,26 @@ public class Position {
 		this.fullMoveCount = position.fullMoveCount;
 		this.inCheck = position.inCheck;
 		this.zobristHash = position.zobristHash;
+
+		this.pinnedPieces = Arrays.copyOf(pinnedPieces, 64);
+		this.potentialDiscoverersBits = position.potentialDiscoverersBits;
+		this.potentialDiscoverers = Arrays.copyOf(potentialDiscoverers, 64);
+		this.pinnedPiecesBits = position.pinnedPiecesBits;
 	}
 
 	/**
 	* Build from FEN
 	*/
 	public Position(FEN fen) {
+		pinnedPieces = new int[64];
+		Arrays.fill(pinnedPieces, -1);
+
+		potentialDiscoverers = new int[64];
+		Arrays.fill(potentialDiscoverers, -1);
+
+		pinnedPiecesBits = 0;
+		potentialDiscoverersBits = 0;
+
 		hmcStack = new Stack<Integer>();
 		epStack = new Stack<Integer>();
 		castleRightsStack = new Stack<Byte>();
@@ -222,6 +259,11 @@ public class Position {
 	    //this.inCheck = MoveGenerator.kingInCheck(this, this.activePlayer);
 
 	    this.zobristHash = Hashing.computeZobrist(this);
+
+		kingLocs = new int[] {Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
+
+		MoveGenerator2.computePotentialDiscoveries(this);
+		MoveGenerator2.computePins(this);
 	}
 
 /*
@@ -299,6 +341,7 @@ public class Position {
 		}
 
 		if (movedPiece == 5) {
+			kingLocs[activePlayer] = destination;
 			// Change castle rights
 			castleRights &= castleRightsMask[activePlayer];
 		}
@@ -333,6 +376,10 @@ public class Position {
 		inCheck = isCheck;
 
 		//this.zobristHash = Hashing.computeZobrist(this);
+
+		MoveGenerator2.computePotentialDiscoveries(this);
+		MoveGenerator2.computePins(this);
+		resetXRays();
 	}
 
 	/**
@@ -379,6 +426,10 @@ public class Position {
 			addPiece(rookStart, 3, activePlayer);
 		}
 
+		if (movedPiece == 5) {
+			kingLocs[activePlayer] = start;
+		}
+
 
 
 		this.castleRights = castleRightsStack.pop();
@@ -390,11 +441,32 @@ public class Position {
 		this.inCheck = wasInCheck;
 
 		//this.zobristHash = Hashing.computeZobrist(this);
+
+		MoveGenerator2.computePotentialDiscoveries(this);
+		MoveGenerator2.computePins(this);
+		resetXRays();
 	}
 
 /*
 * Helper Methods:
 */
+	public void resetXRays() {
+		while (this.potentialDiscoverersBits != 0) {
+			int square = Long.numberOfTrailingZeros(potentialDiscoverersBits);
+			potentialDiscoverersBits &= (potentialDiscoverersBits - 1);
+
+			potentialDiscoverers[square] = -1;
+		}
+
+		while (this.pinnedPiecesBits != 0) {
+			int square = Long.numberOfTrailingZeros(pinnedPiecesBits);
+			pinnedPiecesBits &= (pinnedPiecesBits - 1);
+
+			pinnedPieces[square] = -1;
+		}
+	}
+
+
 	/**
 	* Returns the PieceType on a square
 	* @param square square
@@ -629,4 +701,5 @@ public class Position {
 		if (occupancy != piecesOR)
 			throw new InvalidPositionException("Piece types aren't consistent with occupancy");
 	}
+
 }

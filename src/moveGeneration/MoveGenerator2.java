@@ -27,10 +27,6 @@ public class MoveGenerator2 {
 
     }
 
-    /*
-     * Fields
-     */
-
     public static int[] moves = new int[256];
     public static int firstNonMove = 0;
 
@@ -82,8 +78,6 @@ public class MoveGenerator2 {
         return null;
     }
 
-
-
     /**
      * returns all legal moves
      * @param position
@@ -99,11 +93,6 @@ public class MoveGenerator2 {
         return firstNonMove;
     }
 
-
-    /*
-     * Private methods
-     */
-
     /**
     * if the move results in self in check, returns 0. Otherwise, checks if the move puts the enemy in check,
     * if it does, adds the check flag, then returns the move
@@ -114,25 +103,13 @@ public class MoveGenerator2 {
      private static int updateChecks(int move, Position position) {
          boolean putsSelfInCheck;
 
-         // Check if move puts self in check
          if (MoveEncoding.getIsEP(move)) {
              position.makeMove(move);
              putsSelfInCheck = kingInCheck(position, 1 - position.activePlayer);
              position.unMakeMove(move);
-         } else if (MoveEncoding.getMovedPiece(move) == 5) { // king move
-             position.makeMove(move);
-             putsSelfInCheck = kingInCheck(position, 1 - position.activePlayer);
-             position.unMakeMove(move);
-
-             // NEED TO LOOK AT X-RAY ATTACKS !!!! piece can move into it's shadow
-             if (putsSelfInCheck != squareAttackedBy(position, MoveEncoding.getDestination(move), 1 - position.activePlayer)) {
-                System.out.println(position.getDisplayBoard());
-                MoveEncoding.getDetails(move);
-                 throw new IllegalArgumentException();
-             }
-
-             //putsSelfInCheck = squareAttackedBy(position, MoveEncoding.getDestination(move), 1 - position.activePlayer);
-         } else { // if non-king and non-ep move
+         } else if (MoveEncoding.getMovedPiece(move) == 5) {
+             putsSelfInCheck =  kingMoveSelfInCheck(move, position, position.activePlayer);
+         } else { // Should substitute with absolute pin detection
              position.makeMove(move);
              putsSelfInCheck = kingInCheck(position, 1 - position.activePlayer);
              position.unMakeMove(move);
@@ -143,17 +120,28 @@ public class MoveGenerator2 {
             return 0;
          }
 
-
          //move = MoveEncoding.setIsCheck(move, kingInCheck(position, 1 - position.activePlayer) ? 1 : 0);
          return move;
      }
 
      /**
-     *
-     *
+     * Returns true if the king would be attacked if it moved to the move's destination
+     * @param move move to check
+     * @param position the move is applied to
+     * @return if the move puts themselves in check
      */
-     public static boolean kingMoveSelfInCheck(int move, Position position) {
-         return true;
+     public static boolean kingMoveSelfInCheck(int move, Position position, int kingColor) {
+         int kingLoc = Long.numberOfTrailingZeros(position.pieceColors[kingColor] & position.pieces[5]);
+         long removedKingOccupancy = position.occupancy & ~(1L << kingLoc);
+         long potentialAttackers = position.pieceColors[1 - kingColor];
+         int destination = MoveEncoding.getDestination(move);
+
+         return ((pl.getAttackBoard(destination, kingColor) & potentialAttackers & position.pieces[0]) != 0) || // Look at king color pawn move FROM the king's loc
+                 ((bl.getAttackBoard(destination, removedKingOccupancy) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) ||
+                 ((rl.getAttackBoard(destination, removedKingOccupancy) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) ||
+                 ((nl.getAttackBoard(destination, position) & potentialAttackers & position.pieces[1]) != 0) ||
+                 ((kl.getKingAttacks(destination) & potentialAttackers & position.pieces[5]) != 0);
+
      }
 
      /**
@@ -507,7 +495,6 @@ public class MoveGenerator2 {
         if (position.activePlayer == 1 && position.inCheck) {
             return true;
         }
-
         if (destination == 2) {
             squareAttacked |= squareAttackedBy(position, 4, 1);
             squareAttacked |= squareAttackedBy(position, 3, 1);
@@ -523,6 +510,7 @@ public class MoveGenerator2 {
         }
         return squareAttacked;
     }
+
 
     /**
      * Returns if the king of the specified color is in check
@@ -552,31 +540,111 @@ public class MoveGenerator2 {
     }
 
     /**
-     * Does check detection on a move
-     * @throws InvalidPositionException if position becomes invalid after make/unmake
+     * Populates this.pinnedPieces[i] with either the square of the pinning piece or -1 where i is the pinned piece location.
+     * Does this computation for the active player, e.g. what pieces of the active player are pinned to the active player's king?
+     *
      */
-    public static void moveUpdateChecks(Move move, Position position) throws InvalidPositionException {
-        //move.prevWhiteInCheck = position.whiteInCheck;
-        //move.prevBlackInCheck = position.blackInCheck;
-        //position.makeMove(move);
-    /*
-    if (move.movePiece == PieceType.KING) {
-        // Check all pieces that could attack it
-    } else {
-        // Check if that piece attacks enemy king
-        // Check all sliding pieces
-    }
-    */
-        move.resultWhiteInCheck = kingInCheck(position, 0);
-        move.resultBlackInCheck = kingInCheck(position, 0);
-        //position.unMakeMove(move);
+    public static void computePins(Position position) {
+        // First reset locations of pinned pieces
+        position.pinnedPiecesBits = 0;
+
+        // Get potential pinning pieces for rooks
+        long rookAttackPieces = (position.pieces[3] | position.pieces[4]) & position.pieceColors[1 - position.activePlayer];
+
+        // Get xray attacks
+        long rookXRay = rl.xrayAttacks(position.kingLocs[position.activePlayer], position);
+
+        // Get intersection of rooks and xray
+        long pinningPieces = rookAttackPieces & rookXRay;
+
+        while (pinningPieces != 0) {
+            int rookAttackPiece = Long.numberOfTrailingZeros(pinningPieces);
+            pinningPieces &= (pinningPieces - 1);
+
+            int blockerPiece = Long.numberOfTrailingZeros(
+                    AbsolutePins.inBetween[rookAttackPiece][position.kingLocs[position.activePlayer]] &
+                    position.pieceColors[position.activePlayer]);
+
+            if (blockerPiece == 64) {
+                continue;
+            }
+
+            position.pinnedPiecesBits |= (1 << blockerPiece);
+            position.pinnedPieces[blockerPiece] = rookAttackPiece;
+        }
+
+
+        long bishopAttackPieces = (position.pieces[2] | position.pieces[4]) & position.pieceColors[1 - position.activePlayer];
+
+        long bishopXRay = bl.xrayAttacks(position.kingLocs[position.activePlayer], position);
+
+        pinningPieces = bishopAttackPieces & bishopXRay;
+
+        while (pinningPieces != 0) {
+            int bishopAttackPiece = Long.numberOfTrailingZeros(pinningPieces);
+            int blockerPiece = Long.numberOfTrailingZeros(
+                    AbsolutePins.inBetween[bishopAttackPiece][position.kingLocs[position.activePlayer]] &
+                            position.pieceColors[position.activePlayer]);
+
+            pinningPieces &= (pinningPieces - 1);
+            if (blockerPiece == 64) {
+                continue;
+            }
+
+            position.pinnedPiecesBits |= (1 << blockerPiece);
+            position.pinnedPieces[blockerPiece] = bishopAttackPiece;
+        }
     }
 
-	/*
-	if king move, need to check all attackers
-	if non-king move, need to check sliders and that piece
-	*/
+    /**
+     * Populates this.pinnedPieces[i] with either the square of the pinning piece or -1 where i is the pinned piece location.
+     * Does this computation for the active player, e.g. what pieces of the active player are pinned to the active player's king?
+     *
+     */
+    public static void computePotentialDiscoveries(Position position) {
+        // First reset locations of pinned pieces
+        position.potentialDiscoverersBits = 0;
+
+        // Get potential discovery pieces for rooks
+        long rookAttackPieces = (position.pieces[3] | position.pieces[4]) & position.pieceColors[position.activePlayer];
+        // Get xray attacks
+        long rookXRay = rl.xrayAttacks(position.kingLocs[1 - position.activePlayer], position);
+        // Get intersection of rooks and xray
+        long potentialAttackers = rookAttackPieces & rookXRay;
+        while (potentialAttackers != 0) {
+            int rookAttackPiece = Long.numberOfTrailingZeros(potentialAttackers);
+            int blockerPiece = Long.numberOfTrailingZeros(
+                    AbsolutePins.inBetween[rookAttackPiece][position.kingLocs[1 - position.activePlayer]] &
+                            position.pieceColors[position.activePlayer]);
+            potentialAttackers &= (potentialAttackers - 1);
+            if (blockerPiece == 64) { // Case that a rook is found but it is not blocked
+                continue;
+            }
+            position.potentialDiscoverersBits |= (1 << blockerPiece);
+            position.potentialDiscoverers[blockerPiece] = rookAttackPiece;
+        }
+
+
+        long bishopAttackPieces = (position.pieces[2] | position.pieces[4]) & position.pieceColors[position.activePlayer];
+
+        long bishopXRay = bl.xrayAttacks(position.kingLocs[1 - position.activePlayer], position);
+
+        potentialAttackers = bishopAttackPieces & bishopXRay;
+
+        while (potentialAttackers != 0) {
+            int bishopAttackPiece = Long.numberOfTrailingZeros(potentialAttackers);
+            int blockerPiece = Long.numberOfTrailingZeros(
+                    AbsolutePins.inBetween[bishopAttackPiece][position.kingLocs[1 - position.activePlayer]] &
+                            position.pieceColors[position.activePlayer]);
+            potentialAttackers &= (potentialAttackers - 1);
+            if (blockerPiece == 64) { // Case that a bishop is found but it is not blocked
+                continue;
+            }
+            position.potentialDiscoverersBits |= (1 << blockerPiece);
+            position.potentialDiscoverers[blockerPiece] = bishopAttackPiece;
+        }
     }
+}
 
 /*
 Legacy Code

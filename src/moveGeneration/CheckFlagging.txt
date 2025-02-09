@@ -1,0 +1,52 @@
+Flagging moves as checks:
+Checks are either caused by the attacks of the piece being moved or are a discovered attack
+
+We can pretty easily check if the piece attacks the enemy king by checking
+    if a piece of the moved piece's type can attack the location of the enemy king
+
+For discoveries, we should know that moving a certain piece out of the in-between squares will result in a check.
+
+
+For Castling, there is no risk of discovery (since the king and rook cannot possibly be blockers) but we need to check the moved rook
+
+For En Passant, we need to check if the pawn  being captured was pinned, and if capturing pawn causes a discovery
+
+A piece is a potentialChecker iff:
+  - it is on the same side as the active player
+  - it blocks a check from an active players slider to the enemy king
+
+Then, if a potentialChecker moves to a square that is not inbetween the slider and the enemy king, then there is a discovered check
+
+
+To Compute potentialCheckers:
+
+
+
+We probably want to keep track of:
+- pieces that if moved could cause a discovered check on the enemy
+    Discovery rays from the enemy king
+- pieces that if moved could cause a discovered check on ourselves
+    Discovery rays from our own king
+
+For both we should know: the location of the slider that causes this situation
+
+To do this we have two int arrays that store integers that are pieces that if moved cause a self check or a discoverd check
+
+
+How should position/move generator store checks:
+ - Move generator should compute if a move is a check by:
+    - Checking discoveries
+    - Checking EP
+    - Checking castle
+ - Should move generator pass information about the check to the position?
+
+ - Position should CERTAINLY store if active player is in check/double check, and where the checkers are.
+     because this can be used to see if a move is legal much more quickly
+ - Moves should certainly store if they are a check because this can be used in move ordering
+ - Position on make move should compute check information. Move gneerator should compute only if the move is a check.
+ 
+
+
+
+
+
