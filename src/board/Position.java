@@ -46,7 +46,7 @@ public class Position {
 	public long potentialDiscoverersBits;
 
 	public boolean inCheck;
-	public boolean inDoubleCheck;
+	public long checkers;
 
 
 /*
@@ -377,9 +377,6 @@ public class Position {
 
 		//this.zobristHash = Hashing.computeZobrist(this);
 
-		MoveGenerator2.computePotentialDiscoveries(this);
-		MoveGenerator2.computePins(this);
-		resetXRays();
 	}
 
 	/**
@@ -430,8 +427,6 @@ public class Position {
 			kingLocs[activePlayer] = start;
 		}
 
-
-
 		this.castleRights = castleRightsStack.pop();
 		this.halfMoveCount = hmcStack.pop();
 		this.enPassant = epStack.pop();
@@ -442,15 +437,15 @@ public class Position {
 
 		//this.zobristHash = Hashing.computeZobrist(this);
 
-		MoveGenerator2.computePotentialDiscoveries(this);
-		MoveGenerator2.computePins(this);
-		resetXRays();
 	}
 
 /*
 * Helper Methods:
 */
 	public void resetXRays() {
+		Arrays.fill(potentialDiscoverers, -1);
+		Arrays.fill(pinnedPieces, -1);
+		/*
 		while (this.potentialDiscoverersBits != 0) {
 			int square = Long.numberOfTrailingZeros(potentialDiscoverersBits);
 			potentialDiscoverersBits &= (potentialDiscoverersBits - 1);
@@ -464,6 +459,7 @@ public class Position {
 
 			pinnedPieces[square] = -1;
 		}
+		*/
 	}
 
 

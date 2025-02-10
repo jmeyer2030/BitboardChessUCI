@@ -62,35 +62,27 @@ public class RookLogic extends MagicBitboard{
 	}
 
 //Getter methods
-	protected int[] getNumBits() {
-		assert numBits != null;
-
+	protected final int[] getNumBits() {
 		return numBits;
 	}
 	
-	protected long[] getBlockerMasks() {
-		assert blockerMasks != null;
-		
+	protected final long[] getBlockerMasks() {
 		return blockerMasks;
 	}
 	
-	protected List<List<Long>> getBlockerBoards() {
+	protected final List<List<Long>> getBlockerBoards() {
 		assert blockerBoards != null;
 		return blockerBoards;
 	}
 	
-	protected long[] getMagicNumbers() {
+	protected final long[] getMagicNumbers() {
 		return magicNumbers;
 	}
 	
-	protected List<List<Long>> getMoveBoards() {
+	protected final List<List<Long>> getMoveBoards() {
 		return moveBoards;
 	}
 	
-	protected List<List<Long>> getMoveboards() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 //Protected methods
 	/**
 	 * Generates all blockerMasks for rook moves

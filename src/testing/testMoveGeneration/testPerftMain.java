@@ -11,7 +11,7 @@ public class testPerftMain {
         AbsolutePins.initializeAll();
         MoveGenerator2.initializeAll();
         Hashing.initializeRandomNumbers();
-        int depth = 6;
+        int depth = 7;
         long result = perftStartingPosition(depth, false);
     }
 }

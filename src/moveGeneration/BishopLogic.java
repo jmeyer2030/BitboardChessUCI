@@ -25,7 +25,7 @@ public class BishopLogic extends MagicBitboard{
 	
 	public static List<List<Long>> blockerBoards;
 	
-	public static long[] magicNumbers = {4762574765071009120L, 3035709978020225024L, -8573683670269558392L,
+	public static final long[] magicNumbers = {4762574765071009120L, 3035709978020225024L, -8573683670269558392L,
 		-9220943688114896895L, 1297336034757443584L, 2550944558485632L, 149208143149662272L, 1338112498205186L,
 		439171341070125185L, 45222333252352L, 1873655792922535428L, 343439132422310928L, 353013042521088L,
 		2305854009439158340L, -8069883179750587120L, 27049637468217344L, -8628333643761958654L, 1154082662173008656L,
@@ -64,23 +64,23 @@ public class BishopLogic extends MagicBitboard{
 	}
 	
 //Getter methods
-	protected int[] getNumBits() {
+	protected final int[] getNumBits() {
 		return numBits;
 	}
 	
-	protected long[] getBlockerMasks() {
+	protected final long[] getBlockerMasks() {
 		return blockerMasks;
 	}
 	
-	protected List<List<Long>> getBlockerBoards() {
+	protected final List<List<Long>> getBlockerBoards() {
 		return blockerBoards;
 	}
 	
-	protected long[] getMagicNumbers() {
+	protected final long[] getMagicNumbers() {
 		return magicNumbers;
 	}
 	
-	protected List<List<Long>> getMoveBoards() {
+	protected final List<List<Long>> getMoveBoards() {
 		return moveBoards;
 	}
 	

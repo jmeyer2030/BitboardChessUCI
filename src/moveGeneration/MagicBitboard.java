@@ -55,14 +55,11 @@ public abstract class MagicBitboard implements LogicInterface{
 	 * @param position
 	 * @return attackBoard of all attacks
 	 */
-	public long getAttackBoard(int square, Position position) {
-		//long blockerBoard = position.occupancy & getBlockerMasks()[square];
-		//int index = getIndexForBlocker(blockerBoard, square);
-		//return getMoveBoards().get(square).get(index);
+	public final long getAttackBoard(int square, Position position) {
 		return getMoveBoards().get(square).get(getIndexForBlocker(position.occupancy & getBlockerMasks()[square], square));
 	}
 	
-	public long getAttackBoard(int square, long occupancy) {
+	public final long getAttackBoard(int square, long occupancy) {
 		long blockerBoard = occupancy & getBlockerMasks()[square];
 		int index = getIndexForBlocker(blockerBoard, square);
 		return getMoveBoards().get(square).get(index);
@@ -161,7 +158,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	/**
 	* Given a blocker board and square, returns the index of the corresponding move board
 	*/
-    protected int getIndexForBlocker(long blockerBoard, int square) {
+    protected final int getIndexForBlocker(long blockerBoard, int square) {
         // Function to get the index
         return (int) ((getMagicNumbers()[square] * blockerBoard) >> (64 - getNumBits()[square]) 
                 & ((1 << getNumBits()[square]) - 1));
@@ -294,7 +291,7 @@ public abstract class MagicBitboard implements LogicInterface{
 	/**
 	* returns a bitboard representing the attacks of a slider behind and including the blocker
 	*/
-	public long xrayAttacks(int square, Position position) {
+	public final long xrayAttacks(int square, Position position) {
 		// Get the Attacks of the piece on the square
 		long attacks = getAttackBoard(square, position);
 

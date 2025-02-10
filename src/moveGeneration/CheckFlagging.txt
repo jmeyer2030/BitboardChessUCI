@@ -44,8 +44,9 @@ How should position/move generator store checks:
      because this can be used to see if a move is legal much more quickly
  - Moves should certainly store if they are a check because this can be used in move ordering
  - Position on make move should compute check information. Move gneerator should compute only if the move is a check.
- 
 
+
+HOW do we pass informat
 
 
 
