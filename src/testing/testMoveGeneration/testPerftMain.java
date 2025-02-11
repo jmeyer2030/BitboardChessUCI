@@ -4,14 +4,15 @@ import moveGeneration.AbsolutePins;
 import moveGeneration.MoveGenerator2;
 import zobrist.Hashing;
 
-import static testing.testMoveGeneration.testPERFT.perftStartingPosition;
+import static testing.testMoveGeneration.testPERFT.*;
 
 public class testPerftMain {
     public static void main(String[] args) {
         AbsolutePins.initializeAll();
         MoveGenerator2.initializeAll();
         Hashing.initializeRandomNumbers();
-        int depth = 7;
+        int depth = 6;
+        //perftFromFen("rnb1kbnr/pp1ppppp/8/2p5/4P3/5N2/PPPPBPPq/RNBQK2R w KQkq - 0 4", 1, false);
         long result = perftStartingPosition(depth, false);
     }
 }

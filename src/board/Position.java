@@ -40,13 +40,8 @@ public class Position {
 	public int fullMoveCount;
 
 	public int[] pinnedPieces;
-	public long pinnedPiecesBits;
-
-	public int[] potentialDiscoverers;
-	public long potentialDiscoverersBits;
 
 	public boolean inCheck;
-	public long checkers;
 
 
 /*
@@ -58,12 +53,6 @@ public class Position {
 	public Position() {
 		pinnedPieces = new int[64];
 		Arrays.fill(pinnedPieces, -1);
-
-		potentialDiscoverers = new int[64];
-		Arrays.fill(potentialDiscoverers, -1);
-
-		pinnedPiecesBits = 0;
-		potentialDiscoverersBits = 0;
 
 		hmcStack = new Stack<Integer>();
 		epStack = new Stack<Integer>();
@@ -117,9 +106,6 @@ public class Position {
 		this.zobristHash = position.zobristHash;
 
 		this.pinnedPieces = Arrays.copyOf(pinnedPieces, 64);
-		this.potentialDiscoverersBits = position.potentialDiscoverersBits;
-		this.potentialDiscoverers = Arrays.copyOf(potentialDiscoverers, 64);
-		this.pinnedPiecesBits = position.pinnedPiecesBits;
 	}
 
 	/**
@@ -128,12 +114,6 @@ public class Position {
 	public Position(FEN fen) {
 		pinnedPieces = new int[64];
 		Arrays.fill(pinnedPieces, -1);
-
-		potentialDiscoverers = new int[64];
-		Arrays.fill(potentialDiscoverers, -1);
-
-		pinnedPiecesBits = 0;
-		potentialDiscoverersBits = 0;
 
 		hmcStack = new Stack<Integer>();
 		epStack = new Stack<Integer>();
@@ -262,7 +242,6 @@ public class Position {
 
 		kingLocs = new int[] {Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
 
-		MoveGenerator2.computePotentialDiscoveries(this);
 		MoveGenerator2.computePins(this);
 	}
 
@@ -443,7 +422,6 @@ public class Position {
 * Helper Methods:
 */
 	public void resetXRays() {
-		Arrays.fill(potentialDiscoverers, -1);
 		Arrays.fill(pinnedPieces, -1);
 		/*
 		while (this.potentialDiscoverersBits != 0) {

@@ -37,7 +37,6 @@ public class MoveGenerator{
 
 		pl.initializeAll();
 		rl.initializeAll();
-		bl.initializeAll();
 		kl.initializeAll();
 		nl.initializeAll();
 		ap.initializeAll();

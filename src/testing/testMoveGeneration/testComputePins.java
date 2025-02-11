@@ -22,13 +22,13 @@ public class testComputePins {
         }
 
 
-        MoveGenerator2.computePotentialDiscoveries(position);
+        //MoveGenerator2.computePotentialDiscoveries(position);
 
-        for (int i = 0; i < 64; i++) {
-            System.out.println(i + " " + position.potentialDiscoverers[i]);
-        }
+        //for (int i = 0; i < 64; i++) {
+            //System.out.println(i + " " + position.potentialDiscoverers[i]);
+        //}
 
-        System.out.println(position.getDisplayBoard());
+        //System.out.println(position.getDisplayBoard());
 
     }
 }
