@@ -9,11 +9,9 @@ import zobrist.Hashing;
 public class testComputePins {
     public static void main(String[] args) {
         Hashing.initializeRandomNumbers();
-        MoveGenerator2.initializeAll();
 
         FEN fen = new FEN("8/5k2/8/3P4/2B5/5K2/8/8 w - - 0 1");
         Position position = new Position(fen);
-        AbsolutePins.initializeAll();
 
         MoveGenerator2.computePins(position);
 

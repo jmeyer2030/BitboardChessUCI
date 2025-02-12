@@ -1,44 +1,41 @@
 package moveGeneration;
 
-import board.Color;
 import board.Position;
 
-public class KnightLogic implements LogicInterface{
-	public static long[] knightMoves;
+public class KnightLogic {
+	private static long[] knightMoves = new long[64];
 	
-	public void initializeAll() {
-		knightMoves = generateAllKnightMoves();
+	static {
+		generateAllKnightMoves();
 	}
-	
-	public long getMoveBoard(int square, Position position) {
+
+	public static long getMoveBoard(int square, Position position) {
 		long activePlayerPieces = position.pieceColors[position.activePlayer];
 		return knightMoves[square] & ~activePlayerPieces;
 	}
 	
-	public long getCaptures(int square, Position position) {
+	public static long getCaptures(int square, Position position) {
 		long enemyPieces = position.activePlayer == 0 ? position.pieceColors[1] : position.pieceColors[0];
 		return knightMoves[square] & enemyPieces;
 	}
 	
-	public long getQuietMoves(int square, Position position) {
+	public static long getQuietMoves(int square, Position position) {
 		return knightMoves[square] & ~position.occupancy;
 	}
 	
-	public long getAttackBoard(int square, Position position) {
+	public static long getAttackBoard(int square, Position position) {
 		return knightMoves[square];
 	}
 	
 	
 	
-	private long[] generateAllKnightMoves() {
-		long[] allKnightMoves = new long[64];
+	private static void generateAllKnightMoves() {
 		for (int i = 0; i < 64; i++) {
-			allKnightMoves[i] = generateKnightMoves(i);
+			knightMoves[i] = generateKnightMoves(i);
 		}
-		return allKnightMoves;
 	}
 	
-	private long generateKnightMoves(int square) {
+	private static long generateKnightMoves(int square) {
 	    long knightMove = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
 	    // Possible knight moves relative to the current square
 	    int[] knightOffsets = {

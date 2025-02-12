@@ -35,11 +35,6 @@ public class MoveGenerator{
 		nl = new KnightLogic();
 		AbsolutePins ap = new AbsolutePins();
 
-		pl.initializeAll();
-		rl.initializeAll();
-		kl.initializeAll();
-		nl.initializeAll();
-		ap.initializeAll();
 	}
 
 	/**

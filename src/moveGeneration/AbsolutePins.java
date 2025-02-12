@@ -1,23 +1,22 @@
 package moveGeneration;
 
 public class AbsolutePins {
-	public static long[][] inBetween;
+	public static final long[][] inBetween = new long[64][];
 	
-	public static void initializeAll() {
-		inBetween = generateInBetween();
+	static {
+		generateInBetween();
 	}
 
 	/**
 	* inBetween[i][j] is a bitboard representing all the squares in between 'i' and 'j'.
 	*/
-	public static long[][] generateInBetween() {
-		long[][] inBetween = new long[64][64];
+	private static void generateInBetween() {
 		for (int i = 0; i < 64; i++) {
+			inBetween[i] = new long[64];
 			for (int j = 0; j < 64; j++) {
 				inBetween[i][j] = generateBetween(i, j);
 			}
 		}
-		return inBetween;
 	}
 	
 	private static long generateBetween(int i, int j) {

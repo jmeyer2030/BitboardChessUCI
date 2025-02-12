@@ -26,7 +26,6 @@ public class testPERFT {
 
         MoveGenerator.initializeAll();
         Hashing.initializeRandomNumbers();
-        MoveGenerator2.initializeAll();
     }
 
     @Test

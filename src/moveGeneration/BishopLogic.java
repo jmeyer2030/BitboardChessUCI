@@ -15,32 +15,32 @@ public class BishopLogic {
     // Pre-computed magic numbers
     private static final long[] magicNumbers =
             {4762574765071009120L, 3035709978020225024L, -8573683670269558392L, -9220943688114896895L,
-                    1297336034757443584L, 2550944558485632L, 149208143149662272L, 1338112498205186L,
-                    439171341070125185L, 45222333252352L, 1873655792922535428L, 343439132422310928L,
-                    353013042521088L, 2305854009439158340L, -8069883179750587120L, 27049637468217344L,
-                    -8628333643761958654L, 1154082662173008656L, 18577434498828544L, -9058946528189546096L,
-                    1145837178716186L, 290622914533793800L, 3476858079382085825L, 4630263437925057024L,
-                    1161937778154948608L, 2320622644582946816L, -9223332452153949152L, 18155273571139616L,
-                    54324739509862405L, 83884490930262144L, 18165031879837696L, 9572382600626306L,
-                    72693189070299136L, 9289911334110208L, 577094414598930468L, 2201185943680L,
-                    81065360228418576L, 22523500137418753L, 288512959230576648L, -9222806887340420094L,
-                    6922597914221085824L, 576610457717319936L, 864726390270869632L, 4629709350871499012L,
-                    4613973020062548224L, 602635484790816L, 9715301998433312L, 2308104996826120320L,
-                    4613094497927045643L, 81139568691150921L, 289357376730955792L, 576496075221893248L,
-                    1134833477355536L, -9187236303706389498L, 4538955816263680L, 94909848055062536L,
-                    2288102087338000L, 325109097941772320L, 4971974126610155521L, 4904736654213906962L,
-                    576531192185225748L, 4629700692083376256L, 1152957805956301832L, 293299211259118089L};
+             1297336034757443584L, 2550944558485632L, 149208143149662272L, 1338112498205186L,
+             439171341070125185L, 45222333252352L, 1873655792922535428L, 343439132422310928L,
+             353013042521088L, 2305854009439158340L, -8069883179750587120L, 27049637468217344L,
+             -8628333643761958654L, 1154082662173008656L, 18577434498828544L, -9058946528189546096L,
+             1145837178716186L, 290622914533793800L, 3476858079382085825L, 4630263437925057024L,
+             1161937778154948608L, 2320622644582946816L, -9223332452153949152L, 18155273571139616L,
+             54324739509862405L, 83884490930262144L, 18165031879837696L, 9572382600626306L,
+             72693189070299136L, 9289911334110208L, 577094414598930468L, 2201185943680L,
+             81065360228418576L, 22523500137418753L, 288512959230576648L, -9222806887340420094L,
+             6922597914221085824L, 576610457717319936L, 864726390270869632L, 4629709350871499012L,
+             4613973020062548224L, 602635484790816L, 9715301998433312L, 2308104996826120320L,
+             4613094497927045643L, 81139568691150921L, 289357376730955792L, 576496075221893248L,
+             1134833477355536L, -9187236303706389498L, 4538955816263680L, 94909848055062536L,
+             2288102087338000L, 325109097941772320L, 4971974126610155521L, 4904736654213906962L,
+             576531192185225748L, 4629700692083376256L, 1152957805956301832L, 293299211259118089L};
 
     // Number of potential blockers for each square
     private static final int[] numBits = new int[]
             {6, 5, 5, 5, 5, 5, 5, 6,
-                    5, 5, 5, 5, 5, 5, 5, 5,
-                    5, 5, 7, 7, 7, 7, 5, 5,
-                    5, 5, 7, 9, 9, 7, 5, 5,
-                    5, 5, 7, 9, 9, 7, 5, 5,
-                    5, 5, 7, 7, 7, 7, 5, 5,
-                    5, 5, 5, 5, 5, 5, 5, 5,
-                    6, 5, 5, 5, 5, 5, 5, 6};
+             5, 5, 5, 5, 5, 5, 5, 5,
+             5, 5, 7, 7, 7, 7, 5, 5,
+             5, 5, 7, 9, 9, 7, 5, 5,
+             5, 5, 7, 9, 9, 7, 5, 5,
+             5, 5, 7, 7, 7, 7, 5, 5,
+             5, 5, 5, 5, 5, 5, 5, 5,
+             6, 5, 5, 5, 5, 5, 5, 6};
 
     static {
         generateBlockerMasks();
@@ -103,6 +103,28 @@ public class BishopLogic {
         long blockerBoard = occupancy & blockerMasks[square];
         int index = getIndexForBlocker(blockerBoard, square);
         return moveBoards[square][index];
+    }
+
+    /**
+     * returns a bitboard representing the attacks of a slider behind and including the blocker
+     *
+     * @param square   square
+     * @param position position
+     * @return attacks if they see through the first blocker
+     */
+    public static long xrayAttacks(int square, Position position) {
+        // Get the Attacks of the piece on the square
+        long attacks = getAttackBoard(square, position);
+
+        // Get the intersection of attacks and active player pieces
+        long activePlayerBlockers = (position.pieceColors[position.activePlayer]) & attacks;
+
+        long occupancyWithoutFriendlyBlockers = position.occupancy ^ activePlayerBlockers;
+
+        long attacksWithoutBlockers = getAttackBoard(square, occupancyWithoutFriendlyBlockers);
+
+        // Return attacks if the friendly blocker wasn't there
+        return (attacksWithoutBlockers ^ attacks) | (attacks & attacksWithoutBlockers);
     }
 
     /**
@@ -271,28 +293,6 @@ public class BishopLogic {
         }
 
         return moveBoards;
-    }
-
-    /**
-     * returns a bitboard representing the attacks of a slider behind and including the blocker
-     *
-     * @param square   square
-     * @param position position
-     * @return attacks if they see through the first blocker
-     */
-    public long xrayAttacks(int square, Position position) {
-        // Get the Attacks of the piece on the square
-        long attacks = getAttackBoard(square, position);
-
-        // Get the intersection of attacks and active player pieces
-        long activePlayerBlockers = (position.pieceColors[position.activePlayer]) & attacks;
-
-        long occupancyWithoutFriendlyBlockers = position.occupancy ^ activePlayerBlockers;
-
-        long attacksWithoutBlockers = getAttackBoard(square, occupancyWithoutFriendlyBlockers);
-
-        // Return attacks if the friendly blocker wasn't there
-        return (attacksWithoutBlockers ^ attacks) | (attacks & attacksWithoutBlockers);
     }
 
 
