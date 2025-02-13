@@ -47,8 +47,6 @@ public class ChessEngine {
 
 
     private void initialize() {
-        MoveGenerator.initializeAll();
-        zobrist.Hashing.initializeRandomNumbers();
         this.isReady = true;
     }
 

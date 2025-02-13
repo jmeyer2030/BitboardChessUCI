@@ -13,7 +13,6 @@ public class testStaticEvaluation {
 
     @BeforeAll
     public static void initAll() {
-        MoveGenerator.initializeAll();
     }
 
     @Test

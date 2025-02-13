@@ -1,6 +1,5 @@
 package system;
 
-import board.Move;
 import board.Position;
 import customExceptions.InvalidPositionException;
 
@@ -31,7 +30,7 @@ public class SearchMonitor {
         this.searchStack = new Stack<BoardMovePair>();
     }
 
-    public void addPair(Move move, Position position) {
+    public void addPair(int move, Position position) {
         searchStack.push(new BoardMovePair(move, new Position(position)));
     }
 
@@ -61,10 +60,10 @@ public class SearchMonitor {
     * Stores a move and the position resulting from that move
     */
     public class BoardMovePair {
-        public Move move;
+        public int move;
         public Position position;
 
-        public BoardMovePair(Move move, Position position) {
+        public BoardMovePair(int move, Position position) {
             this.move = move;
             this.position = Objects.requireNonNull(position);
         }

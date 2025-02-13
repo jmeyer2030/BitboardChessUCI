@@ -12,6 +12,5 @@ public class Notation {
         int rank = square / 8;
         int file = square % 8;
         return files[file] + ranks[rank] ;
-
     }
 }

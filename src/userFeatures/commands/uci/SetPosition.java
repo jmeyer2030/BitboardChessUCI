@@ -1,7 +1,6 @@
 package userFeatures.commands.uci;
 
 import board.FEN;
-import board.Move;
 import board.Position;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
@@ -9,7 +8,6 @@ import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 import zobrist.ThreeFoldTable;
 
-import java.util.List;
 import java.util.logging.Level;
 
 public class SetPosition implements Command {
@@ -33,7 +31,7 @@ public class SetPosition implements Command {
         } else if ("fen".equals(arguments[0]) && arguments.length >= 7) {
             StringBuilder fenString = new StringBuilder();
             for (int i = 1; i < 7; i++) {
-                fenString.append(arguments[i] + " ");
+                fenString.append(arguments[i]).append(" ");
             }
 
             fenString.deleteCharAt(fenString.length() - 1);
@@ -58,21 +56,15 @@ public class SetPosition implements Command {
 
         // Parse moves component
         boolean foundMoves = false;
-        for (int i = 0; i < arguments.length; i++) {
-            if ("moves".equals(arguments[i])) {
+        for (String argument : arguments) {
+            if ("moves".equals(argument)) {
                 foundMoves = true;
             } else if (foundMoves) {
-                String commandMove = arguments[i];
                 try {
-                    List<Move> moves = MoveGenerator.generateStrictlyLegal(position);
-                    for (Move generatedMove : moves) {
-                        if (generatedMove.toLongAlgebraic().equals(commandMove)) {
-                            //chessEngine.positionState.applyMove(generatedMove);
-                            continue;
-                        }
-                    }
-                } catch (InvalidPositionException e) {
-                    System.out.println("An error has occurred parsing move: " + commandMove);
+                    int move = MoveGenerator.getMoveFromLAN(argument, position, chessEngine.positionState.moveBuffer);
+                    chessEngine.positionState.applyMove(move);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("An error has occurred parsing move: " + argument);
                     return;
                 }
             }

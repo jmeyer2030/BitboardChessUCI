@@ -1,16 +1,13 @@
 package testing;
 
-import board.Move;
 import board.MoveEncoding;
 import board.Position;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
-import moveGeneration.MoveGenerator2;
 import zobrist.perft.PerftElement;
 import zobrist.perft.PerftTable;
 
 import java.util.List;
-import java.util.Stack;
 
 import static testing.Notation.squareToChessNotation;
 
@@ -25,7 +22,7 @@ public class Perft {
             return 1;
 
         int[] moveBuffer = new int[2048];
-        int firstNonMove =  MoveGenerator2.generateAllMoves(position, moveBuffer, 0);
+        int firstNonMove =  MoveGenerator.generateAllMoves(position, moveBuffer, 0);
         System.out.println(firstNonMove);
 
         long total = 0;
@@ -46,7 +43,7 @@ public class Perft {
         if (depth == 0)
             return 1;
         long result = 0;
-        int nextFirstNonMove = MoveGenerator2.generateAllMoves(position, moveBuffer, firstNonMove);
+        int nextFirstNonMove = MoveGenerator.generateAllMoves(position, moveBuffer, firstNonMove);
         if (depth == 1) {
             return nextFirstNonMove - firstNonMove;
         }
@@ -67,6 +64,7 @@ public class Perft {
     * @param position to search
     * @return result of perft
     */
+    /*
     public static long ttPerft(int depth, Position position) {
         if (depth < 1)
             return 1;
@@ -129,5 +127,6 @@ public class Perft {
 
         return result;
     }
+    */
 
 }

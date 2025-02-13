@@ -17,7 +17,6 @@ public class MakeUnmakeTest {
     @BeforeAll
     public static void initAll() {
         //MoveGenerator.initializeAll();
-        Hashing.initializeRandomNumbers();
     }
 
 

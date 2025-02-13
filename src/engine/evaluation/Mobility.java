@@ -2,6 +2,8 @@ package engine.evaluation;
 
 import board.Position;
 import moveGeneration.MoveGenerator;
+import moveGeneration.BishopLogic;
+import moveGeneration.RookLogic;
 
 public class Mobility {
     static int mgBishopMultiplier = 3;
@@ -69,11 +71,11 @@ public class Mobility {
     }
 
     public static int numBishopAttacks(Position position, int square) {
-        return Long.bitCount(MoveGenerator.getBishopAttacks(position, square));
+        return Long.bitCount(BishopLogic.getAttackBoard(square, position));
     }
 
     public static int numRookAttacks(Position position, int square) {
-        return Long.bitCount(MoveGenerator.getRookAttacks(position, square));
+        return Long.bitCount(RookLogic.getAttackBoard(square, position));
     }
 
     public static int numQueenAttacks(Position position, int square) {

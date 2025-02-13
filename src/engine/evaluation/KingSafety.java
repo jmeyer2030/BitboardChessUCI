@@ -1,7 +1,9 @@
 package engine.evaluation;
 
 import board.Position;
+import moveGeneration.BishopLogic;
 import moveGeneration.MoveGenerator;
+import moveGeneration.RookLogic;
 
 public class KingSafety {
     /**
@@ -14,8 +16,8 @@ public class KingSafety {
         int whiteKingLoc = Long.numberOfTrailingZeros(position.pieceColors[0] & position.pieces[5]);
         int blackKingLoc = Long.numberOfTrailingZeros(position.pieceColors[1] & position.pieces[5]);
 
-        int whiteQueenAttacks = Long.bitCount(MoveGenerator.getQueenAttacks(position, whiteKingLoc));
-        int blackQueenAttacks = Long.bitCount(MoveGenerator.getQueenAttacks(position, blackKingLoc));
+        int whiteQueenAttacks = Long.bitCount(RookLogic.getAttackBoard(position.kingLocs[0], position) | BishopLogic.getAttackBoard(position.kingLocs[0], position));
+        int blackQueenAttacks = Long.bitCount(RookLogic.getAttackBoard(position.kingLocs[1], position) | BishopLogic.getAttackBoard(position.kingLocs[1], position));
 
         return (blackQueenAttacks - whiteQueenAttacks) * 3;
     }

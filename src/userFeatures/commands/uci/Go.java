@@ -1,7 +1,7 @@
 package userFeatures.commands.uci;
 
 import board.Color;
-import board.Move;
+import board.MoveEncoding;
 import engine.search.Search;
 import engine.search.SearchState;
 import engine.TimeManagement;
@@ -108,9 +108,9 @@ public class Go implements Command {
 
 
         System.out.println("Beginning search:");
-        //Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime,searchState);
+        Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime,searchState);
 
-        //System.out.println("bestmove " + moveValue.bestMove.toLongAlgebraic());
+        System.out.println("bestmove " + MoveEncoding.getLAN(moveValue.bestMove));
 
     }
 
@@ -119,8 +119,8 @@ public class Go implements Command {
         Position position = chessEngine.positionState.position;
 
         for (String lan : searchMoves) {
-            Move move = MoveGenerator.getMoveFromLAN(lan, position);
-            //chessEngine.positionState.applyMove(move);
+            int move = MoveGenerator.getMoveFromLAN(lan, position, chessEngine.positionState.moveBuffer);
+            chessEngine.positionState.applyMove(move);
         }
     }
 

@@ -10,8 +10,6 @@ public class testThreeFoldTable {
 
     @BeforeAll
     public static void initializeComponents() {
-        MoveGenerator.initializeAll();
-        Hashing.initializeRandomNumbers();
     }
 
     @Test

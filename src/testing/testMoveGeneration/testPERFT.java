@@ -1,12 +1,9 @@
 package testing.testMoveGeneration;
 
 import board.*;
-import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
-import moveGeneration.MoveGenerator2;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import zobrist.Hashing;
 import testing.Perft;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,8 +21,6 @@ public class testPERFT {
     @BeforeAll
     public static void beforeAll() {
 
-        MoveGenerator.initializeAll();
-        Hashing.initializeRandomNumbers();
     }
 
     @Test
@@ -140,7 +135,8 @@ public class testPERFT {
 
         long result;
         if (useTTs) {
-            result =  Perft.ttPerft(depth, position);
+            result = 0;
+            //result =  Perft.ttPerft(depth, position);
         } else {
             result = Perft.perft(depth, position);
         }
@@ -157,7 +153,8 @@ public class testPERFT {
 
         long result;
         if (useTTs) {
-            result =  Perft.ttPerft(depth, position);
+            //result =  Perft.ttPerft(depth, position);
+            result = 0;
         } else {
             result = Perft.perft(depth, position);
         }

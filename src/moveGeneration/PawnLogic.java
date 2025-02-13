@@ -73,38 +73,37 @@ public class PawnLogic {
         return (1L << (position.enPassant));
     }
 
-
     private static long getWhitePawnPushes(int square, long occupancyBoard) {
-        if (square > 15) // if not on rank 2
-            return whitePawnPushBlockerMask[square] & ~occupancyBoard;
-
-        //true if there is a piece on rank 3 of the square's file
-        boolean blockerAtRankThree = ((occupancyBoard & thirdRankMask & whitePawnPushBlockerMask[square]) != 0);
-
-        if (blockerAtRankThree) // if its occupied we just return 0.
-            return 0L;
-
-        return ~occupancyBoard & whitePawnPushBlockerMask[square];
+        long pushes = whitePawnPushes[square];
+        if (square <= 15) { // Check if pawn is on the second rank
+            if ((occupancyBoard & whitePawnPushBlockerMask[square]) != 0) {
+                return 0L; // Blocker present, no pushes possible
+            }
+        }
+        return pushes & ~occupancyBoard; // Mask with available squares
     }
 
     private static long getBlackPawnPushes(int square, long occupancyBoard) {
-        if (square < 48) // if not on rank 2
-            return blackPawnPushBlockerMask[square] & ~occupancyBoard;
-
-        //true if there is a piece on rank 3 of the square's file
-        boolean blockerAtRankSix = ((occupancyBoard & sixthRankMask & blackPawnPushBlockerMask[square]) != 0);
-
-        if (blockerAtRankSix) // if its occupied we just return 0.
-            return 0L;
-
-        return ~occupancyBoard & blackPawnPushBlockerMask[square];
+        long pushes = blackPawnPushes[square];
+        if (square >= 48) { // Check if pawn is on the 6th rank
+            if ((occupancyBoard & blackPawnPushBlockerMask[square]) != 0) {
+                return 0L; // Blocker present, no pushes possible
+            }
+        }
+        return pushes & ~occupancyBoard; // Mask with available squares
     }
+
 
     private static void generateWhitePawnPushes() {
         for (int i = 0; i < 64; i++) {
             long whitePawnPush = generateWhitePawnPush(i);
             whitePawnPushes[i] = whitePawnPush;
-            whitePawnPushBlockerMask[i] = whitePawnPush;
+
+            if (i < 16) {
+                whitePawnPushBlockerMask[i] = whitePawnPush & thirdRankMask;
+            } else {
+                whitePawnPushBlockerMask[i] = whitePawnPush;
+            }
         }
     }
 
@@ -154,7 +153,12 @@ public class PawnLogic {
         for (int i = 0; i < 64; i++) {
             long blackPawnPush = generateBlackPawnPush(i);
             blackPawnPushes[i] = blackPawnPush;
-            blackPawnPushBlockerMask[i] = blackPawnPush;
+
+            if (i >= 48) {
+                blackPawnPushBlockerMask[i] = blackPawnPush & sixthRankMask;
+            } else {
+                blackPawnPushBlockerMask[i] = blackPawnPush;
+            }
         }
     }
 

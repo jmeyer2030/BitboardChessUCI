@@ -346,6 +346,51 @@ public final class MoveEncoding {
         return move | (activePlayer << 31);
     }
 
+
+    /**
+     * returns a standard notation string for a square in little endian
+     * @param square square
+     * @return standard notation square
+     */
+    public static String squareToAlgebraic(int square) {
+        String[] files = new String[] {"a", "b", "c", "d", "e", "f", "g", "h"};
+        String[] ranks = new String[] {"1", "2", "3", "4", "5", "6", "7", "8"};
+        int rank = square / 8;
+        int file = square % 8;
+        return files[file] + ranks[rank] ;
+    }
+
+    /**
+    * Returns Long Algebraic Notation (LAN) representation of a move
+    * Long Algebraic Notation: <Start><Destination><promotionType>
+    *
+    * @param move move to convert to LAN
+    * @return LAN representation of the move
+    */
+    public static String getLAN(int move) {
+        StringBuilder builder = new StringBuilder();
+
+        int start = getStart(move);
+        int destination = getDestination(move);
+
+        builder.append(squareToAlgebraic(start));
+        builder.append(squareToAlgebraic(destination));
+
+        if (getIsPromotion(move)) {
+            String[] pieceTypes = {"p", "n", "b", "r", "q", "k"};
+            builder.append(pieceTypes[getPromotionType(move)]);
+        }
+
+        return builder.toString();
+    }
+
+
+    /**
+    * Prints all details of a move to console
+    * Only used for debugging
+    *
+    * @param move to print the details of
+    */
     public static void getDetails(int move) {
         System.out.println("start :" + getStart(move));
         System.out.println("destination :" + getDestination(move));

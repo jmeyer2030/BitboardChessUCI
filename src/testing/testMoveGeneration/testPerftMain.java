@@ -1,16 +1,11 @@
 package testing.testMoveGeneration;
 
-import moveGeneration.AbsolutePins;
-import moveGeneration.MoveGenerator2;
-import zobrist.Hashing;
-
 import static testing.testMoveGeneration.testPERFT.*;
 
 public class testPerftMain {
     public static void main(String[] args) {
-        Hashing.initializeRandomNumbers();
         int depth = 7;
-        //perftFromFen("rnb1kbnr/pp1ppppp/8/2p5/4P3/5N2/PPPPBPPq/RNBQK2R w KQkq - 0 4", 1, false);
+        //perftFromFen("rnbqk2r/pBpp1ppp/5n2/4p3/4P3/b7/PPPP1PPP/RNBQK1NR b KQkq - 0 4", depth, false);
         long result = perftStartingPosition(depth, false);
     }
 }

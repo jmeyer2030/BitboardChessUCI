@@ -1,8 +1,6 @@
 package zobrist;
 
-import board.Move;
 import board.MoveEncoding;
-import board.PieceType;
 
 import java.util.ArrayList;
 

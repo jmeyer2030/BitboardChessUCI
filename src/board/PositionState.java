@@ -9,11 +9,14 @@ Represents the internally stored position/state of a chess engine:
     position
     tt
     three-fold
+    moveBuffer
 */
 public class PositionState {
     public Position position;
     public final TranspositionTable tt;
     public ThreeFoldTable threeFoldTable;
+    public int[] moveBuffer;
+    public int[] moveScores;
 
     public PositionState(int numBits, Position position) {
         if (numBits == 0) {
@@ -24,6 +27,8 @@ public class PositionState {
 
         this.position = new Position(position);
         this.threeFoldTable = new ThreeFoldTable();
+        this.moveBuffer = new int[2048];
+        this.moveScores = new int[2048];
     }
 
     public void applyMove(int move) {

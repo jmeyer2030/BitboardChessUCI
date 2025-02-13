@@ -26,20 +26,22 @@ import java.util.Random;
 public class Hashing {
     public static long seed = 24;
 
-    private static long pieceSquare[][][]; // use with: pieceSquare[square][color.ordinal][piece.ordinal]
-    private static long[] castleRights;
-    private static long[] enPassant;
-    private static long[] sideToMove;
+    public static final long pieceSquare[][][] = new long[64][][]; // use with: pieceSquare[square][color.ordinal][piece.ordinal]
+    public static final long[] castleRights = new long[16];
+    public static final long[] enPassant = new long[8];
+    public static final long[] sideToMove = new long[2];
 
+    static {
+        initializeRandomNumbers();
+    }
     /**
     * Generates the pseudorandom numbers for zobrist hashing and initializes
     * the arrays of randoms
     */
-    public static void initializeRandomNumbers() {
+    private static void initializeRandomNumbers() {
         Random random = new Random(seed);
 
         // Init piece color square randoms
-        pieceSquare = new long[64][][]; // Init each square
         for (int i = 0; i < 64; i++) {
             pieceSquare[i] = new long[2][]; // Init each color (for that square)
             for (int j = 0; j < 2; j++) {
@@ -51,19 +53,16 @@ public class Hashing {
         }
 
         // Init castleRights randoms
-        castleRights = new long[16];
         for (int i = 0; i < 16; i++) {
             castleRights[i] = random.nextLong();
         }
 
         // Init enPassant
-        enPassant = new long[8];
         for (int i = 0; i < 8; i++) {
             enPassant[i] = random.nextLong();
         }
 
         // Init sideToMove
-        sideToMove = new long[2];
         sideToMove[0] = -1L;
         sideToMove[1] = random.nextLong();
     }
