@@ -207,8 +207,8 @@ public class MoveGenerator {
                 if (destination / 8 == 0 || destination / 8 == 7) {
                     int moveN = MoveShortcuts.generatePawnPromotionCapture(start, destination, 1, position);
                     int moveB = MoveShortcuts.generatePawnPromotionCapture(start, destination, 2, position);
-                    int moveR = MoveShortcuts.generatePawnPromotionCapture(start, destination, 2, position);
-                    int moveQ = MoveShortcuts.generatePawnPromotionCapture(start, destination, 2, position);
+                    int moveR = MoveShortcuts.generatePawnPromotionCapture(start, destination, 3, position);
+                    int moveQ = MoveShortcuts.generatePawnPromotionCapture(start, destination, 4, position);
 
                     firstNonMove = addAndValidateMove(moveN, moveBuffer, firstNonMove, position);
                     firstNonMove = addAndValidateMove(moveB, moveBuffer, firstNonMove, position);

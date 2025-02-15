@@ -106,12 +106,10 @@ public class Go implements Command {
 
         SearchState searchState = new SearchState(chessEngine.positionState);
 
-
         System.out.println("Beginning search:");
-        Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime,searchState);
+        Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime, searchState);
 
         System.out.println("bestmove " + MoveEncoding.getLAN(moveValue.bestMove));
-
     }
 
 

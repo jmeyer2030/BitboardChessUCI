@@ -124,7 +124,7 @@ public final class MoveEncoding {
 */
 
     public static int getPromotionType(int move) {
-        return (move & promotionTypeMask) >> 18;
+        return ((move & promotionTypeMask) >> 18) + 1;
     }
 
     public static int setPromotionType(int move, int piece) {
@@ -135,7 +135,7 @@ public final class MoveEncoding {
         */
 
         move = move & ~promotionTypeMask;
-        return move | (piece << 18);
+        return move | ((piece - 1) << 18);
     }
 /*
     Quiet flag

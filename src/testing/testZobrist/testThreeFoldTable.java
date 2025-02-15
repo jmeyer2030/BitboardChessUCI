@@ -19,7 +19,7 @@ public class testThreeFoldTable {
         ThreeFoldTable threeFoldTable = new ThreeFoldTable();
 
 
-        SearchState searchState = new SearchState(18, position);
+        SearchState searchState = new SearchState(18);
 
         //Search.MoveValue mv = Search.iterativeDeepening(position, 5_000, searchState);
 

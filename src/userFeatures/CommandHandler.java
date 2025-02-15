@@ -63,7 +63,7 @@ public class CommandHandler {
 
             // Handle different sizes of inputs
             if (parts.length == 0 ) {
-                System.out.println("Invalid command");
+                System.out.println("No Input parts detected");
                 continue;
             } else if (parts.length == 1) {
                 arguments = new String[0];

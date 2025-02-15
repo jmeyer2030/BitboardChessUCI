@@ -13,7 +13,7 @@ public class ChessEngine {
     public enum CommandMode { DEFAULT, UCI }
 
     // Engine Information:
-    public final String ENGINE_NAME = "DriftWood 1.0";
+    public final String ENGINE_NAME = "DriftWood 2.4";
     public final String AUTHOR = "Joshua Meyer";
 
     // Engine Settings:

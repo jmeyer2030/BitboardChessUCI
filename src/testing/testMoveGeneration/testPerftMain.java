@@ -1,11 +1,11 @@
 package testing.testMoveGeneration;
 
-import static testing.testMoveGeneration.testPERFT.*;
+import static testing.testMoveGeneration.quickTestPerft.*;
 
 public class testPerftMain {
     public static void main(String[] args) {
-        int depth = 7;
+        int depth = 6;
         //perftFromFen("rnbqk2r/pBpp1ppp/5n2/4p3/4P3/b7/PPPP1PPP/RNBQK1NR b KQkq - 0 4", depth, false);
-        long result = perftStartingPosition(depth, false);
+        long result = perftStartingPosition(depth);
     }
 }

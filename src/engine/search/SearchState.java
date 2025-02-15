@@ -16,7 +16,6 @@ A class that stores state information related to the search:
 */
 public class SearchState {
     public final TranspositionTable tt;
-    public final SearchMonitor searchMonitor;
     public final Stack<Integer> searchStack;
     public final ThreeFoldTable threeFoldTable;
 
@@ -24,15 +23,15 @@ public class SearchState {
     public final int[] moveScores;
     public int firstNonMove;
 
-    public SearchState(int ttNumBits, Position position) {
+    public SearchState(int ttNumBits) {
         if (ttNumBits == 0) {
             this.tt = null;
         } else {
             this.tt = new TranspositionTable(ttNumBits);
         }
-        this.moveBuffer = new int[2048];
-        this.moveScores = new int[2048];
-        this.searchMonitor = new SearchMonitor(position);
+        this.moveBuffer = new int[16384];
+        this.moveScores = new int[16384];
+        //this.searchMonitor = new SearchMonitor(position);
         this.searchStack = new Stack<>();
         this.threeFoldTable = new ThreeFoldTable();
         this.firstNonMove = 0;
@@ -42,7 +41,7 @@ public class SearchState {
         this.tt = positionState.tt;
         this.threeFoldTable = positionState.threeFoldTable;
         this.searchStack = new Stack<>();
-        this.searchMonitor = new SearchMonitor(positionState.position);
+        //this.searchMonitor = new SearchMonitor(positionState.position);
         this.moveBuffer = positionState.moveBuffer;
         this.moveScores = positionState.moveScores;
         this.firstNonMove = 0;

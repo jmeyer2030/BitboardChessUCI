@@ -406,6 +406,11 @@ public class Position {
         this.zobristHash ^= Hashing.sideToMove[1 - activePlayer];
         this.zobristHash ^= Hashing.sideToMove[activePlayer];
         this.zobristHash ^= Hashing.castleRights[castleRights];
+        try {
+            validPosition();
+        } catch (InvalidPositionException ipe) {
+            throw new IllegalStateException();
+        }
     }
 
     /**
@@ -656,7 +661,7 @@ public class Position {
                 "    +---+---+---+---+---+---+---+---+\n".toCharArray(),
                 "  1 |   |   |   |   |   |   |   |   |\n".toCharArray(),
                 "    +---+---+---+---+---+---+---+---+\n".toCharArray(),
-                "	   A   B   C   D   E   F   G   H  \n".toCharArray()};
+                "      A   B   C   D   E   F   G   H  \n".toCharArray()};
 
         int firstSquare = 6;
         int squareIncrement = 4;

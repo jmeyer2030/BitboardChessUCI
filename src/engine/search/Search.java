@@ -21,9 +21,6 @@ public class Search {
     public static final int POS_INFINITY = 100_000_000;
     public static final int NEG_INFINITY = -100_000_000;
 
-    // A stack that stores moves in case of negamax thread interruption
-    public static final Stack<Integer> moveStack = new Stack<Integer>();
-
     /**
      * Class representing a move and evaluation
      */
@@ -36,6 +33,8 @@ public class Search {
             this.bestMove = bestMove;
         }
     }
+
+    public static int searchedDepth = 0;
 
     /**
      * Runs negamax on increasing depths until the time limit is exceeded
@@ -57,16 +56,18 @@ public class Search {
         // Initialize search depth and search while time hasn't been exceeded
         int depth = 0;
         while (depth < 1000) {
-
-            Position copy = new Position(position);
             depth++;
-            Callable<MoveValue> task = getMoveValueCallable(position, depth, copy, searchState);
+
+            // Create and submit search task
+            Callable<MoveValue> task = getMoveValueCallable(position, depth, position, searchState);
             Future<MoveValue> future = executor.submit(task);
 
             try {
-                // Compute the maximal amount of time this search can take
-                long maxTimeForSearch = limitMillis - (System.currentTimeMillis() - start);
-                MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS); // Throws timeout exception
+                // Compute the max amount of time this search can take
+                long maxTimeForSearch = start + limitMillis - System.currentTimeMillis();
+
+                // Try to get the result of the task. If time limit exceeded, throws timeout exception
+                MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS);
                 searchResults.add(result);
                 System.out.println("info depth " + depth + " pv " +
                         MoveUtility.toLongAlgebraic(searchResults.getLast().bestMove)
@@ -76,44 +77,46 @@ public class Search {
                 if (Math.abs(searchResults.getLast().value) >= POS_INFINITY)
                     return searchResults.getLast();
 
+                searchedDepth++;
+
             } catch (TimeoutException te) {
                 System.out.println("Function timed out!");
 
                 future.cancel(true); // Tells the thread that it was interrupted
+                executor.shutdown();
 
                 try {
-                    future.get(); // Waits for the thread to complete or throw an exception
-                } catch (CancellationException ce) { // This is expected
-                    System.out.println("Task Canceled.");
-                } catch (Exception e) {
-                    System.out.println("An unexpected error has occurred");
+                    if (!executor.awaitTermination(1, TimeUnit.SECONDS)) { // Wait for it to finish
+                        executor.shutdownNow(); // Force shutdown if it didn't finish
+                    }
+                } catch (InterruptedException e) {
+                    executor.shutdownNow();
                 }
-
-                System.out.println("ready to remove from stack!");
-
-                while (!moveStack.isEmpty()) { // Unmake moves from copy, and remove items from the position hash table
-                    int move = moveStack.pop();
-
-                    System.out.println("unmaking moves, stack size: " + moveStack.size());
-                    searchState.threeFoldTable.popPosition();
-                    copy.unMakeMove(move); // we should unmake from copy... right?
-                }
-
-                // consider adding a equal check for copy and position
 
                 break; //Exit the search loop
             } catch (ExecutionException | InterruptedException e) { // This should never happen so we throw an exception
                 Throwable cause = e.getCause();
                 throw new RuntimeException();
             }
+
         }
-
-        executor.shutdown();
-
-        System.out.println("Evaluation: " + searchResults.getLast().value + "\nMove: " + searchResults.getLast().bestMove + ", " + MoveEncoding.getLAN(searchResults.getLast().bestMove));
 
         return searchResults.get(searchResults.size() - 1);
     }
+
+    public static void iterativeDeepeningFixedDepth(Position position, int depth) {
+        SearchState searchState = new SearchState(18);
+        for (int i = 1; i <= depth; i++) {
+            try {
+                negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (InvalidPositionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 
     private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, Position copy, SearchState searchState) {
         return () -> {
@@ -131,7 +134,6 @@ public class Search {
     }
 
     /**
-     * Assumes that this will not be called on 0 on a
      */
     public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, SearchState searchState)
             throws InterruptedException, InvalidPositionException {
@@ -144,46 +146,14 @@ public class Search {
         // Store alpha at the start of the search
         int alphaOrig = alpha;
 
-        // Generate moves and store indices in buffer
-        int firstMove = searchState.firstNonMove;
-        int firstNonMove = MoveGenerator.generateAllMoves(position, searchState.moveBuffer, searchState.firstNonMove);
-        searchState.firstNonMove = firstNonMove;
-
-        // Test if game has ended
-        int numMoves = firstNonMove - firstMove;
-        GameStatus status = gameStatus(numMoves, position, searchState.threeFoldTable);
-
-        long hash = position.zobristHash;
-
-        switch (status) {
-            case ONGOING:
-                break;
-            case WHITE_WIN:
-            case BLACK_WIN:
-                searchState.firstNonMove = firstMove;
-                return new MoveValue(NEG_INFINITY - depthLeft, 0);// prefer a higher depth
-            case STALEMATE:
-            case REPETITION:
-            case RULE50:
-                searchState.firstNonMove = firstMove;
-                return new MoveValue(0, 0);
-            default:
-        }
-
-        if (depthLeft == 0) {
-
-            searchState.firstNonMove = firstMove;
-            return new MoveValue(quiescenceSearch(alpha, beta, position, searchState), 0);
-        }
-
+        // Check transposition table
         if (searchState.tt != null && searchState.tt.elementIsUseful(position.zobristHash, depthLeft)) {
-
-            int score = searchState.tt.getScore(hash);
-            int nodeType = searchState.tt.getNodeType(hash);
-            int bestMove = searchState.tt.getBestMove(hash);
+            int score = searchState.tt.getScore(position.zobristHash);
+            int nodeType = searchState.tt.getNodeType(position.zobristHash);
+            int bestMove = searchState.tt.getBestMove(position.zobristHash);
 
             if (nodeType == 0) { // Exact
-                searchState.firstNonMove = firstMove;
+                //searchState.firstNonMove = firstMove;
                 return new MoveValue(score, bestMove);
             } else if (nodeType == 1) { // Lower bound
                 alpha = Math.max(alpha, score);
@@ -192,10 +162,36 @@ public class Search {
             }
 
             if (alpha > beta) {
-                searchState.firstNonMove = firstMove;
+                //searchState.firstNonMove = firstMove;
                 return new MoveValue(score, bestMove);
             }
         }
+
+        // Check if search depth reached
+        if (depthLeft == 0) {
+            //searchState.firstNonMove = firstMove;
+            return new MoveValue(quiescenceSearch(alpha, beta, position, searchState), 0);
+        }
+
+        // Generate moves and store buffer indices
+        int firstMove = searchState.firstNonMove;
+        int firstNonMove = MoveGenerator.generateAllMoves(position, searchState.moveBuffer, searchState.firstNonMove);
+        searchState.firstNonMove = firstNonMove;
+
+        // Test if game has ended
+        int numMoves = firstNonMove - firstMove;
+        if (gameOver(numMoves, position, searchState.threeFoldTable)) {
+            searchState.firstNonMove = firstMove;
+            if (MoveGenerator.kingAttacked(position, position.activePlayer)) {
+                return new MoveValue(NEG_INFINITY - depthLeft, 0);
+            } else {
+                return new MoveValue(0, 0);
+            }
+        }
+
+
+
+
 
         // Move order
         MoveOrder.scoreMoves(position, searchState, firstMove, firstNonMove);
@@ -203,6 +199,7 @@ public class Search {
         MoveValue bestMoveValue = new MoveValue(Integer.MIN_VALUE, 0);
         for (int i = firstMove; i < firstNonMove; i++) {
             if (Thread.currentThread().isInterrupted()) {
+                searchState.firstNonMove = firstMove;
                 throw new InterruptedException("Negamax was interrupted by iterative deepening");
             }
 
@@ -211,22 +208,19 @@ public class Search {
 
             // "open" the position
             position.makeMove(move);
-            searchState.searchMonitor.addPair(move, position);
             searchState.threeFoldTable.addPosition(position.zobristHash, move);
 
             int score;
-            // If we repeat a position twice, consider it a draw.
-            if (searchState.threeFoldTable.positionRepeated(position.zobristHash)) {
-                score = 0;
-            } else {
-                // compute it's score
+            try {
                 score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState).value;
+            } finally {
+                searchState.threeFoldTable.popPosition();
+                position.unMakeMove(move);
             }
 
             // "close" the position
-            searchState.searchMonitor.popStack();
-            searchState.threeFoldTable.popPosition();
-            position.unMakeMove(move);
+            //searchState.searchMonitor.popStack();
+
 
             // Update best move when score is better
             if (score > bestMoveValue.value) {
@@ -238,7 +232,7 @@ public class Search {
             if (score > alpha) {
                 alpha = score;
             }
-            // Prune when alpha >= beta
+            // Prune when alpha >= beta because the opponent wouldn't make a move that gets here
             if (alpha >= beta) {
                 break;
             }
@@ -248,15 +242,15 @@ public class Search {
 
         if (searchState.tt != null) {
             NodeType nodeType;
-            if (bestMoveValue.value <= alphaOrig) {
+            if (bestMoveValue.value <= alphaOrig) { // Failed to find a better move (than is known to exist with alpha), so the value is AT MAXIMUM score
                 nodeType = NodeType.UPPER_BOUND;
-            } else if (bestMoveValue.value >= beta) {
+            } else if (bestMoveValue.value >= beta) { // The value is greater than beta, so an opponent would PRUNE it, but the value is at LEAST score
                 nodeType = NodeType.LOWER_BOUND;
             } else {
                 nodeType = NodeType.EXACT;
             }
 
-            searchState.tt.addElement(hash, bestMoveValue.bestMove, depthLeft, bestMoveValue.value, nodeType);
+            searchState.tt.addElement(position.zobristHash, bestMoveValue.bestMove, depthLeft, bestMoveValue.value, nodeType);
         }
 
         return bestMoveValue;
@@ -287,16 +281,19 @@ public class Search {
 
             // "open" the position
             position.makeMove(move);
-            searchState.searchMonitor.addPair(move, position);
             searchState.threeFoldTable.addPosition(position.zobristHash, move);
 
             // compute the score
-            int score = -quiescenceSearch(-beta, -alpha, position, searchState);
+            int score;
+            try {
+                score = -quiescenceSearch(-beta, -alpha, position, searchState);
+            } finally {
+                position.unMakeMove(move);
+                searchState.threeFoldTable.popPosition();
+            }
 
             // "close" the position
-            position.unMakeMove(move);
-            searchState.searchMonitor.popStack();
-            searchState.threeFoldTable.popPosition();
+
 
             if (score >= beta) {
                 searchState.firstNonMove = initialFirstNonMove;
@@ -309,23 +306,18 @@ public class Search {
         }
 
         searchState.firstNonMove = initialFirstNonMove;
-
         return bestValue;
     }
 
-    public static GameStatus gameStatus(int moveListSize, Position position, ThreeFoldTable threeFoldTable) {
+    public static boolean gameOver(int moveListSize, Position position, ThreeFoldTable threeFoldTable) {
         if (moveListSize == 0) {
-            if (MoveGenerator.kingAttacked(position, position.activePlayer)) {
-                return position.activePlayer == 0 ? GameStatus.BLACK_WIN : GameStatus.WHITE_WIN;
-            } else {
-                return GameStatus.STALEMATE;
-            }
+            return true;
         } else if (position.halfMoveCount >= 50) {
-            return GameStatus.RULE50;
+            return true;
         } else if (threeFoldTable.positionDrawn(position.zobristHash)) {
-            return GameStatus.REPETITION;
+            return true;
         } else {
-            return GameStatus.ONGOING;
+            return false;
         }
     }
 

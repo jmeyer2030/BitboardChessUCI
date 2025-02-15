@@ -170,20 +170,16 @@ public class StaticEvaluation {
     public static final int[][] pieceValues = {mgValue, egValue};
 
     public static int evaluatePosition(Position position) {
-        int mgScore = position.mgScore;
-        int egScore = position.egScore;
+        int mgScore = position.mgScore + kingSafetyEvaluation(position); // PST + kingSafety
+        int egScore = position.egScore; // PST
         int gamePhase = position.gamePhase;
 
-        mgScore += kingSafetyEvaluation(position);
 
-        int egPhase;
-        int mgPhase;
-
-        mgPhase = gamePhase;
+        int mgPhase = gamePhase;
         if (mgPhase > 24) {
             mgPhase = 24;
         }
-        egPhase = 24 - mgPhase;
+        int egPhase = 24 - mgPhase;
 
 
         int evaluation = (mgScore * mgPhase + egScore * egPhase) / 24;
@@ -205,18 +201,4 @@ public class StaticEvaluation {
             return -evaluatePosition(position);
         return evaluatePosition(position);
     }
-
-    /**
-     * Returns the net value of a capture if the capturer is then taken
-     *
-     * @param move
-     * @return exchange evaluation
-     */
-    public static int evaluateExchange(int move) {
-        //assert move.moveType == MoveType.CAPTURE;
-        //assert move.captureType != null;
-        return pieceValues[0][MoveEncoding.getCapturedPiece(move)] - pieceValues[0][MoveEncoding.getMovedPiece(move)];
-        //return pieceValues[0][move.captureType.ordinal()] - pieceValues[0][move.movePiece.ordinal()];
-    }
-
 }
