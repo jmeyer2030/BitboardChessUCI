@@ -34,8 +34,8 @@ public class testSearchSuite {
 
                 System.out.println("TESTING FEN: " + fenString + " TEST PROGRESS: " + lineNumber + "/" + 126);
                 try {
-                    //Search.iterativeDeepening(position, 1000, new SearchState(18));
-                    negaMaxTimeTest(position, depth);
+                    Search.iterativeDeepening(position, 4000, new SearchState(18));
+                    //negaMaxTimeTest(position, depth);
                     //Search.iterativeDeepeningFixedDepth(position, depth);
                 } catch (Exception e) {
                     throw new RuntimeException();
@@ -48,7 +48,7 @@ public class testSearchSuite {
 
         long endTime = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (endTime - startTime));
-        //System.out.println("Total searched depth: " + Search.searchedDepth);
+        System.out.println("Total searched depth: " + Search.searchedDepth);
     }
 }
 

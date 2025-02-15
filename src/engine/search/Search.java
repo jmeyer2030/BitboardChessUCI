@@ -108,7 +108,7 @@ public class Search {
         SearchState searchState = new SearchState(18);
         for (int i = 1; i <= depth; i++) {
             try {
-                negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState);
+                System.out.println(negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState).value);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (InvalidPositionException e) {
@@ -189,20 +189,18 @@ public class Search {
             }
         }
 
-
-
-
-
         // Move order
         MoveOrder.scoreMoves(position, searchState, firstMove, firstNonMove);
-
         MoveValue bestMoveValue = new MoveValue(Integer.MIN_VALUE, 0);
+
+        // Search loop
         for (int i = firstMove; i < firstNonMove; i++) {
             if (Thread.currentThread().isInterrupted()) {
                 searchState.firstNonMove = firstMove;
                 throw new InterruptedException("Negamax was interrupted by iterative deepening");
             }
 
+            // Selection sort and get move
             MoveOrder.bestMoveFirst(searchState, i, firstNonMove);
             int move = searchState.moveBuffer[i];
 
@@ -212,15 +210,23 @@ public class Search {
 
             int score;
             try {
-                score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState).value;
+                if (i == firstMove) {
+                    // Full window search for first move
+                    score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState).value;
+                } else {
+                    // Else try to disprove that the pv is the best move with a null-window search
+                    score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, searchState).value;
+
+                    // If disproved, then re-search with full window
+                    if (score > alpha) {
+                        score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState).value;
+                    }
+                }
             } finally {
+                // Close the position
                 searchState.threeFoldTable.popPosition();
                 position.unMakeMove(move);
             }
-
-            // "close" the position
-            //searchState.searchMonitor.popStack();
-
 
             // Update best move when score is better
             if (score > bestMoveValue.value) {
@@ -232,12 +238,14 @@ public class Search {
             if (score > alpha) {
                 alpha = score;
             }
+
             // Prune when alpha >= beta because the opponent wouldn't make a move that gets here
             if (alpha >= beta) {
                 break;
             }
         }
 
+        // After search, reset first nonMove
         searchState.firstNonMove = firstMove;
 
         if (searchState.tt != null) {
