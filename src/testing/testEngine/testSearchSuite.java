@@ -34,7 +34,10 @@ public class testSearchSuite {
 
                 System.out.println("TESTING FEN: " + fenString + " TEST PROGRESS: " + lineNumber + "/" + 126);
                 try {
-                    Search.iterativeDeepening(position, 4000, new SearchState(18));
+                    Search.MoveValue result = Search.iterativeDeepening(position, 50, new SearchState(18));
+                    if (result.bestMove == 0) {
+                        fail();
+                    }
                     //negaMaxTimeTest(position, depth);
                     //Search.iterativeDeepeningFixedDepth(position, depth);
                 } catch (Exception e) {

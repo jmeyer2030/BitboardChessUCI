@@ -94,10 +94,14 @@ public class Search {
                 }
 
                 break; //Exit the search loop
-            } catch (ExecutionException | InterruptedException e) { // This should never happen so we throw an exception
-                Throwable cause = e.getCause();
-                throw new RuntimeException();
+            } catch (ExecutionException e) { // This should never happen so we throw an exception
+                System.out.println(e.getMessage());
+                throw new RuntimeException("Unexpected execution exception caught");
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+                throw new RuntimeException("Unexpected interrupted exception caught");
             }
+
 
         }
 
@@ -108,7 +112,9 @@ public class Search {
         SearchState searchState = new SearchState(18);
         for (int i = 1; i <= depth; i++) {
             try {
-                System.out.println(negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState).value);
+                MoveValue result = negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState, true);
+                System.out.println(result.value);
+                System.out.println(MoveEncoding.getLAN(result.bestMove));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (InvalidPositionException e) {
@@ -121,7 +127,7 @@ public class Search {
     private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, Position copy, SearchState searchState) {
         return () -> {
             try {
-                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState);
+                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState, true);
             } catch (InterruptedException e) {
                 System.out.println("Negamax was interrupted.");
                 throw e;
@@ -134,8 +140,9 @@ public class Search {
     }
 
     /**
+     *
      */
-    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, SearchState searchState)
+    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, SearchState searchState, boolean isRoot)
             throws InterruptedException, InvalidPositionException {
 
         // Check for signal to interrupt the search
@@ -162,16 +169,28 @@ public class Search {
             }
 
             if (alpha > beta) {
-                //searchState.firstNonMove = firstMove;
                 return new MoveValue(score, bestMove);
             }
         }
+
+        /*
+        if (depthLeft == 1 && !MoveGenerator.kingAttacked(position, position.activePlayer)) {
+            int margin = 150;
+            int eval = StaticEvaluation.negamaxEvaluatePosition(position);
+            if (eval + margin <= alpha) {
+                return new MoveValue(eval, 0);
+            }
+        }
+        */
+
 
         // Check if search depth reached
         if (depthLeft == 0) {
             //searchState.firstNonMove = firstMove;
             return new MoveValue(quiescenceSearch(alpha, beta, position, searchState), 0);
         }
+
+
 
         // Generate moves and store buffer indices
         int firstMove = searchState.firstNonMove;
@@ -182,10 +201,28 @@ public class Search {
         int numMoves = firstNonMove - firstMove;
         if (gameOver(numMoves, position, searchState.threeFoldTable)) {
             searchState.firstNonMove = firstMove;
-            if (MoveGenerator.kingAttacked(position, position.activePlayer)) {
+            if (position.inCheck) {
                 return new MoveValue(NEG_INFINITY - depthLeft, 0);
             } else {
                 return new MoveValue(0, 0);
+            }
+        }
+
+        // Null Move Pruning
+        if (!isRoot && depthLeft >= 3 && nmpConditionsMet(position)) {
+            position.makeNullMove();
+
+            int score;
+            try {
+                score = -negamax(-beta, -beta + 1, depthLeft - 3, position, searchState, false).value;
+            } finally {
+                position.unmakeNullMove();
+            }
+
+            // If a null move failed high over beta, then certainly the best move would as well, so we prune
+            if (score >= beta) {
+                searchState.firstNonMove = firstMove;
+                return new MoveValue(beta, 0);
             }
         }
 
@@ -204,6 +241,14 @@ public class Search {
             MoveOrder.bestMoveFirst(searchState, i, firstNonMove);
             int move = searchState.moveBuffer[i];
 
+            // Futility pruning
+            /*
+            if (depthLeft == 2) { // Since this move takes us to frontier (depth 1)
+                if (!MoveEncoding.getIsCapture(move) &&
+                    MoveGenerator.check
+            }
+            */
+
             // "open" the position
             position.makeMove(move);
             searchState.threeFoldTable.addPosition(position.zobristHash, move);
@@ -212,14 +257,14 @@ public class Search {
             try {
                 if (i == firstMove) {
                     // Full window search for first move
-                    score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState).value;
+                    score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState, false).value;
                 } else {
                     // Else try to disprove that the pv is the best move with a null-window search
-                    score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, searchState).value;
+                    score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, searchState, false).value;
 
                     // If disproved, then re-search with full window
                     if (score > alpha) {
-                        score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState).value;
+                        score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState, false).value;
                     }
                 }
             } finally {
@@ -248,7 +293,7 @@ public class Search {
         // After search, reset first nonMove
         searchState.firstNonMove = firstMove;
 
-        if (searchState.tt != null) {
+        if (searchState.tt != null && bestMoveValue.bestMove != 0) {
             NodeType nodeType;
             if (bestMoveValue.value <= alphaOrig) { // Failed to find a better move (than is known to exist with alpha), so the value is AT MAXIMUM score
                 nodeType = NodeType.UPPER_BOUND;
@@ -329,47 +374,16 @@ public class Search {
         }
     }
 
-    /*
-     * Move ordering with selection sort? e.g. choose
-     */
-     /*
-    public static void moveOrder(List<Move> list, long zobristHash, TranspositionTable tt) {
-        list.sort(Comparator.comparingInt(move -> -moveValue(move, zobristHash, tt)));
+    public static boolean nmpConditionsMet(Position position) {
+        if (position.inCheck ||
+                position.pieceCounts[0][1] + position.pieceCounts[1][1] == 0 ||
+                position.pieceCounts[0][2] + position.pieceCounts[1][2] == 0 ||
+                position.pieceCounts[0][3] + position.pieceCounts[1][3] == 0 ||
+                position.pieceCounts[0][4] + position.pieceCounts[1][4] == 0) {
+            return false;
+        }
+        return true;
     }
-    */
 
-    /**
-     * Returns an integer value for a move used for sorting.
-     */
-     /*
-    public static int moveValue(Move move, long zobristHash, TranspositionTable tt) {
-        int value = 0;
-
-        if (tt != null) {
-            //
-        }
-
-        if (move.moveType == MoveType.PROMOTION) {
-            value += 500_000;
-        }
-
-        if (move.resultWhiteInCheck || move.resultBlackInCheck) {
-            value += 1_000_000;
-        }
-
-        if (move.moveType == MoveType.CAPTURE) {
-            assert move.captureType != null;
-            value += 100_000 + StaticEvaluation.evaluateExchange(move);
-        }
-
-        return value;
-    }
-    */
-/*
-    // most valuable victim/ least valuable agressor
-    public static void mVVLVA(List<Move> list) {
-        list.sort(Comparator.comparingInt(move -> -(StaticEvaluation.evaluateExchange(move))));
-    }
-    */
 
 }

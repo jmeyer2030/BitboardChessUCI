@@ -109,6 +109,17 @@ public class Go implements Command {
         System.out.println("Beginning search:");
         Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime, searchState);
 
+        if (moveValue.bestMove == 0) {
+            System.out.println("ACK MOVE IS NULL!!!!");
+        }
+
+        String ttBestMove = MoveEncoding.getLAN(chessEngine.positionState.tt.getBestMove(position.zobristHash));
+        String valueBestMove = MoveEncoding.getLAN(moveValue.bestMove);
+
+        if (!ttBestMove.equals(valueBestMove)) {
+            System.out.println("Best Move diff!");
+        }
+
         System.out.println("bestmove " + MoveEncoding.getLAN(moveValue.bestMove));
     }
 

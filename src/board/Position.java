@@ -41,6 +41,9 @@ public class Position {
 
     public int[] pinnedPieces;
 
+    public int[][] pieceCounts; // Indexed as: pieceCounts[color][piece], for use in NMP and draw eval
+
+    public long checkers;
     public boolean inCheck;
 
 
@@ -64,6 +67,8 @@ public class Position {
         hmcStack = new Stack<Integer>();
         epStack = new Stack<Integer>();
         castleRightsStack = new Stack<Byte>();
+
+
         //Piece Locations:
         occupancy = 0b11111111_11111111_00000000_00000000_00000000_00000000_11111111_11111111L;
 
@@ -81,6 +86,7 @@ public class Position {
 
         kingLocs = new int[]{Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
 
+
         //State:
         activePlayer = 0;
         castleRights = 0b00001111;
@@ -94,6 +100,9 @@ public class Position {
         mgScore = PieceSquareTables.computeMGScore(this);
         egScore = PieceSquareTables.computeEGScore(this);
         gamePhase = PieceSquareTables.computeGamePhase(this);
+
+        pieceCounts = new int[][] {new int[] {8, 2, 2, 2, 1, 1}, new int[] {8, 2, 2, 2, 1, 1}};
+        checkers = 0;
     }
 
     /**
@@ -118,15 +127,20 @@ public class Position {
 
         this.pinnedPieces = Arrays.copyOf(position.pinnedPieces, 64);
 
-        mgScore = position.mgScore;
-        egScore = position.egScore;
-        gamePhase = position.gamePhase;
+        this.mgScore = position.mgScore;
+        this.egScore = position.egScore;
+        this.gamePhase = position.gamePhase;
+
+        this.pieceCounts = new int[][] {Arrays.copyOf(position.pieceCounts[0], 6), Arrays.copyOf(position.pieceCounts[1], 6)};
+        this.checkers = position.checkers;
     }
 
     /**
      * Build from FEN
      */
     public Position(FEN fen) {
+        pieceCounts = new int[][] {new int[6], new int[6]};
+
         pinnedPieces = new int[64];
         Arrays.fill(pinnedPieces, -1);
 
@@ -164,50 +178,62 @@ public class Position {
 
                     switch (c) {
                         case 'P':
+                            pieceCounts[0][0] += 1;
                             pawns |= squareBit;
                             whitePieces |= squareBit;
                             break;
                         case 'p':
+                            pieceCounts[1][0] += 1;
                             pawns |= squareBit;
                             blackPieces |= squareBit;
                             break;
                         case 'R':
+                            pieceCounts[0][3] += 1;
                             rooks |= squareBit;
                             whitePieces |= squareBit;
                             break;
                         case 'r':
+                            pieceCounts[1][3] += 1;
                             rooks |= squareBit;
                             blackPieces |= squareBit;
                             break;
                         case 'N':
+                            pieceCounts[0][1] += 1;
                             knights |= squareBit;
                             whitePieces |= squareBit;
                             break;
                         case 'n':
+                            pieceCounts[1][1] += 1;
                             knights |= squareBit;
                             blackPieces |= squareBit;
                             break;
                         case 'B':
+                            pieceCounts[0][2] += 1;
                             bishops |= squareBit;
                             whitePieces |= squareBit;
                             break;
                         case 'b':
+                            pieceCounts[1][2] += 1;
                             bishops |= squareBit;
                             blackPieces |= squareBit;
                             break;
                         case 'Q':
+                            pieceCounts[0][4] += 1;
                             queens |= squareBit;
                             whitePieces |= squareBit;
                             break;
                         case 'q':
+                            pieceCounts[1][4] += 1;
                             queens |= squareBit;
                             blackPieces |= squareBit;
                             break;
                         case 'K':
+                            pieceCounts[0][5] += 1;
                             kings |= squareBit;
                             whitePieces |= squareBit;
                             break;
                         case 'k':
+                            pieceCounts[1][5] += 1;
                             kings |= squareBit;
                             blackPieces |= squareBit;
                             break;
@@ -251,15 +277,18 @@ public class Position {
         this.castleRights = castleRights;
         this.enPassant = enPassant;
 
-        //this.inCheck = MoveGenerator.kingInCheck(this, this.activePlayer);
+        kingLocs = new int[]{Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
+
+        this.inCheck = MoveGenerator.kingAttacked(this, this.activePlayer);
 
         this.zobristHash = Hashing.computeZobrist(this);
 
-        kingLocs = new int[]{Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
 
         mgScore = PieceSquareTables.computeMGScore(this);
         egScore = PieceSquareTables.computeEGScore(this);
         gamePhase = PieceSquareTables.computeGamePhase(this);
+
+        checkers = MoveGenerator.computeCheckers(this);
     }
 
     /*
@@ -270,6 +299,7 @@ public class Position {
         this.occupancy &= ~(1L << square);
         this.pieceColors[color] &= ~(1L << square);
         this.pieces[pieceType] &= ~(1L << square);
+        this.pieceCounts[color][pieceType]--;
 
         if (color == 0) {
             this.mgScore -= PieceSquareTables.pieceTables[0][pieceType][square] + PieceSquareTables.pieceValues[0][pieceType];
@@ -287,6 +317,7 @@ public class Position {
         this.occupancy |= (1L << square);
         this.pieceColors[color] |= (1L << square);
         this.pieces[pieceType] |= (1L << square);
+        this.pieceCounts[color][pieceType]++;
 
         if (color == 0) {
             this.mgScore += PieceSquareTables.pieceTables[0][pieceType][square] + PieceSquareTables.pieceValues[0][pieceType];
@@ -299,10 +330,69 @@ public class Position {
         this.gamePhase += PieceSquareTables.gameStageInc[pieceType];
     }
 
+
+    public void makeNullMove() {
+        // Push stored things
+        hmcStack.push(this.halfMoveCount);
+        epStack.push(this.enPassant);
+        castleRightsStack.push(this.castleRights);
+
+        // Undo ep hash
+        if (enPassant != 0) {
+            zobristHash ^= Hashing.enPassant[enPassant % 8];
+        }
+
+        // Increment HMC
+        this.halfMoveCount++;
+
+        // Set ep to 0
+        this.enPassant = 0;
+
+        // If black moving, increment FMC
+        this.fullMoveCount += activePlayer;
+
+        // Switch active player
+        this.activePlayer = 1 - activePlayer;
+
+        // Switch active player hash
+        this.zobristHash ^= Hashing.sideToMove[0];
+        this.zobristHash ^= Hashing.sideToMove[1];
+    }
+
+
+    public void unmakeNullMove() {
+        // Switch active player
+        this.activePlayer = 1 - activePlayer;
+
+        zobristHash ^= Hashing.castleRights[castleRights];
+
+        // Pop stored things
+        halfMoveCount = hmcStack.pop();
+        enPassant = epStack.pop();
+        castleRights = castleRightsStack.pop();
+
+        // If black moving, increment FMC
+        this.fullMoveCount -= activePlayer;
+
+        // Switch active player hash
+        this.zobristHash ^= Hashing.sideToMove[0];
+        this.zobristHash ^= Hashing.sideToMove[1];
+        zobristHash ^= Hashing.castleRights[castleRights];
+
+        if (enPassant != 0) { // Should always be 0
+            zobristHash ^= Hashing.enPassant[enPassant % 8];
+        }
+    }
     /**
      * Applies a move
      */
     public void makeMove(int move) {
+        // Case null move:
+        if (move == 0) {
+            makeNullMove();
+            return;
+        }
+
         // Get Encoded data
         int start = MoveEncoding.getStart(move);
         int destination = MoveEncoding.getDestination(move);
@@ -313,7 +403,7 @@ public class Position {
         boolean isEP = MoveEncoding.getIsEP(move);
         boolean isPromotion = MoveEncoding.getIsPromotion(move);
         boolean isCastle = MoveEncoding.getIsCastle(move);
-        boolean isCheck = MoveEncoding.getIsCheck(move);
+        //boolean isCheck = MoveEncoding.getIsCheck(move);
         boolean isDoublePush = MoveEncoding.getIsDoublePush(move);
         boolean isReversible = MoveEncoding.getIsReversible(move);
         int castleSide = MoveEncoding.getCastleSide(move);
@@ -323,6 +413,7 @@ public class Position {
         castleRightsStack.push(this.castleRights);
 
         zobristHash ^= Hashing.castleRights[castleRights];
+
 
         if (enPassant != 0) {
             zobristHash ^= Hashing.enPassant[enPassant % 8];
@@ -385,7 +476,6 @@ public class Position {
             }
         }
 
-
         if (isDoublePush) {
             // Set EP square
             enPassant = destination - 8 + 16 * activePlayer;
@@ -400,23 +490,28 @@ public class Position {
         // Switch active player
         activePlayer = 1 - activePlayer;
 
-        // Set check
-        inCheck = isCheck;
-
         this.zobristHash ^= Hashing.sideToMove[1 - activePlayer];
         this.zobristHash ^= Hashing.sideToMove[activePlayer];
         this.zobristHash ^= Hashing.castleRights[castleRights];
+
         try {
             validPosition();
         } catch (InvalidPositionException ipe) {
             throw new IllegalStateException();
         }
+
+        this.checkers = MoveGenerator.computeCheckers(this);
+        this.inCheck = Long.numberOfTrailingZeros(checkers) == 64 ? false : true;
     }
 
     /**
      * Unmakes a move
      */
     public void unMakeMove(int move) {
+        if (move == 0) {
+            unmakeNullMove();
+            return;
+        }
         // Get Encoded data
         int start = MoveEncoding.getStart(move);
         int destination = MoveEncoding.getDestination(move);
@@ -428,7 +523,7 @@ public class Position {
         boolean isPromotion = MoveEncoding.getIsPromotion(move);
         boolean isCastle = MoveEncoding.getIsCastle(move);
         int castleSide = MoveEncoding.getCastleSide(move);
-        boolean wasInCheck = MoveEncoding.getWasInCheck(move);
+        //boolean wasInCheck = MoveEncoding.getWasInCheck(move);
 
         // Change active player
         this.activePlayer = 1 - activePlayer;
@@ -470,9 +565,11 @@ public class Position {
         this.halfMoveCount = hmcStack.pop();
         this.enPassant = epStack.pop();
 
-        fullMoveCount -= activePlayer; // if black moved,
+        fullMoveCount -= activePlayer; // if black moved, decrement
 
-        this.inCheck = wasInCheck;
+        //this.inCheck = wasInCheck;
+        this.checkers = MoveGenerator.computeCheckers(this);
+        this.inCheck = Long.numberOfTrailingZeros(checkers) == 64 ? false : true;
 
         this.zobristHash ^= Hashing.sideToMove[1 - activePlayer];
         this.zobristHash ^= Hashing.sideToMove[activePlayer];

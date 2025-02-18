@@ -10,10 +10,7 @@ public class PieceSquareTables {
     public static final int[] mgValue = {82, 347, 365, 477, 1025, 0};
     public static final int[] egValue = {94, 281, 297, 512, 936, 0};
 
-    /* The flip array is used to calculate the piece/square
-   values for DARK pieces. The piece/square value of a
-   LIGHT pawn is pawn_pcsq[sq] and the value of a DARK
-   pawn is pawn_pcsq[flip[sq]] */
+    // Flip is used to mirror pst's for black piece values
     public static final int[] flip = {
             56, 57, 58, 59, 60, 61, 62, 63,
             48, 49, 50, 51, 52, 53, 54, 55,

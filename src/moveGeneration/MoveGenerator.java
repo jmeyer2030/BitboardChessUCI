@@ -40,13 +40,12 @@ public class MoveGenerator {
     public static int generateAllMoves(Position position, int[] moveBuffer, int firstNonMove) {
         MoveGenerator.computePins(position);
 
-        long checkers = computeCheckers(position);
-        int numCheckers = Long.bitCount(checkers);
+        int numCheckers = Long.bitCount(position.checkers);
 
         if (numCheckers == 0) {
             return generateMovesNoChecks(position, moveBuffer, firstNonMove);
         } else if (numCheckers == 1) {
-            int checkerSquare = Long.numberOfTrailingZeros(checkers);
+            int checkerSquare = Long.numberOfTrailingZeros(position.checkers);
             int checkerType = position.getPieceType(checkerSquare);
 
             // Capturing the piece is allowed
@@ -623,7 +622,6 @@ public class MoveGenerator {
         }
     }
 }
-
 
 /**
  * Populates this.pinnedPieces[i] with either the square of the pinning piece or -1 where i is the pinned piece location.

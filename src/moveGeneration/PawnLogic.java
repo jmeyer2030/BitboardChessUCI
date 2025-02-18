@@ -14,20 +14,8 @@ public class PawnLogic {
     private static final long[] blackPawnPushBlockerMask = new long[64];
 
     private static final long thirdRankMask = 0b00000000_00000000_00000000_00000000_00000000_11111111_00000000_00000000L;
-    public static final long fourthRankMask = 0b00000000_00000000_00000000_00000000_11111111_00000000_00000000_00000000L;
 
     private static final long sixthRankMask = 0b00000000_00000000_11111111_00000000_00000000_00000000_00000000_00000000L;
-    private static final long fifthRankMask = 0b00000000_00000000_00000000_11111111_00000000_00000000_00000000_00000000L;
-
-    private static final int[] numBitsWhite = new int[]
-            {0, 0, 0, 0, 0, 0, 0, 0,
-             3, 4, 4, 4, 4, 4, 4, 3,
-             2, 3, 3, 3, 3, 3, 3, 2,
-             2, 3, 3, 3, 3, 3, 3, 2,
-             3, 5, 7, 9, 9, 7, 5, 5,
-             2, 3, 3, 3, 3, 3, 3, 2,
-             2, 3, 3, 3, 3, 3, 3, 2,
-             0, 0, 0, 0, 0, 0, 0, 0};
 
     static {
         generateWhitePawnPushes();
@@ -203,4 +191,71 @@ public class PawnLogic {
         }
     }
 
+
 }
+
+
+/* Alternative Pawn Push generation code
+
+https://www.chessprogramming.org/Pawn_Pushes_(Bitboards)
+Generates pawn moves setwise
+
+    private static long whiteSinglePushTargets(Position position) {
+        return ((position.pieces[0] & position.pieceColors[0]) << 8) & ~position.occupancy;
+    }
+
+    private static long whiteDoublePushTargets(Position position) {
+        long singlePushes = whiteSinglePushTargets(position);
+        return (singlePushes << 8) & ~position.occupancy & fourthRankMask;
+    }
+
+    private static long blackSinglePushTargets(Position position) {
+        return ((position.pieces[0] & position.pieceColors[1]) >> 8) & ~position.occupancy;
+    }
+
+    private static long blackDoublePushTargets(Position position) {
+        long singlePushes = blackSinglePushTargets(position);
+        return (singlePushes >> 8) & ~position.occupancy & sixthRankMask;
+    }
+
+    // Returns white pawns with an empty square in front of it
+    private static long whitePawnsAbleToPush(Position position) {
+        return (~position.occupancy >> 8) & position.pieceColors[0] & position.pieces[0];
+    }
+
+    private static long blackPawnsAbleToPush(Position position) {
+        return (~position.occupancy << 8) & position.pieceColors[1] & position.pieces[0];
+    }
+
+    // Returns pawns that can double push and necessarily on the start square
+    private static long whitePawnsAbleToDoublePush(Position position) {
+        // ANDS empty squares (specifically ones one in front of pawns) with those two in front of pawns by shifting empty squares down one
+        long emptyRank3 = ~position.occupancy & ((~position.occupancy & fourthRankMask) >> 8);
+
+        // Return single push with modified empty
+        return (emptyRank3 >> 8) & position.pieceColors[0] & position.pieces[0];
+    }
+
+    private static long blackPawnsAbleToDoublePush(Position position) {
+        // ANDS empty squares (specifically ones one in front of pawns) with those two in front of pawns by shifting empty squares down one
+        long emptyRank3 = ~position.occupancy & ((~position.occupancy & fourthRankMask) << 8);
+
+        // Return single push with modified empty
+        return (emptyRank3 << 8) & position.pieceColors[1] & position.pieces[0];
+    }
+
+    public static long getSinglePushPawns(Position position) {
+        if (position.activePlayer == 0) {
+            return whitePawnsAbleToPush(position);
+        }
+        return blackPawnsAbleToPush(position);
+    }
+
+    public static long getDoublePushPawns(Position position) {
+        if (position.activePlayer == 0) {
+            return whitePawnsAbleToDoublePush(position);
+        }
+        return blackPawnsAbleToDoublePush(position);
+    }
+*/
+
