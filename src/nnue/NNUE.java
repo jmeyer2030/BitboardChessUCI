@@ -143,8 +143,8 @@ public class NNUE {
         int outputActivation = outputBias;
 
         for (int hiddenIndex = 0; hiddenIndex < HIDDEN_LAYER_SIZE; hiddenIndex++) {
-            outputActivation += crelu(0, QA, ourAccumulator[hiddenIndex]) * outputWeights[hiddenIndex];
-            outputActivation += crelu(0, QA, theirAccumulator[hiddenIndex]) * outputWeights[HIDDEN_LAYER_SIZE + hiddenIndex];
+            outputActivation += crelu(0, QA, ourAccumulator[hiddenIndex]) * (int) outputWeights[hiddenIndex];
+            outputActivation += crelu(0, QA, theirAccumulator[hiddenIndex]) * (int) outputWeights[HIDDEN_LAYER_SIZE + hiddenIndex];
         }
 
         outputActivation *= SCALE;
@@ -187,15 +187,12 @@ public class NNUE {
     * Initializes network weights and biases
     *
     * Expected Data format:
-    * Layer 1 weights -> Layer 1 Biases -> Layer 2 weights -> Layer 2 biases -> Output biases
-    *
-    * Column major: all the weights for the transformation from input to the first hidden neuron are contiguous
-    *
+    * Layer 1 weights -> Layer 1 Biases -> Layer 2 weights -> Layer 2 biases -> Output biases -> padding
     */
     private static void loadNetworkFromBinary() {
         byte[] nnBytes = getNetworkBytes();
 
-        // Get layer 1 weights
+        // Get feature weights
         int start = 0;
         for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {
             for (int inputIndex = 0; inputIndex < INPUT_SIZE; inputIndex++) {
@@ -208,7 +205,7 @@ public class NNUE {
             }
         }
 
-        // Get layer 1 biases
+        // Get feature biases
         start = 128 * 768 * 2;
         for (int hlNeuron = 0; hlNeuron < 128; hlNeuron++) {
             int index = start + hlNeuron * 2;
