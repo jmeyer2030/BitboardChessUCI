@@ -1,19 +1,17 @@
 package userFeatures;
 
 import board.PositionState;
-import moveGeneration.MoveGenerator;
 import system.Logging;
 
 import java.util.logging.Logger;
-
 public class ChessEngine {
     public Logger logger;
 
     // Enums
-    public enum CommandMode { DEFAULT, UCI }
+    public enum CommandMode {DEFAULT, UCI}
 
     // Engine Information:
-    public final String ENGINE_NAME = "DriftWood 2.4";
+    public final String ENGINE_NAME = "DriftWood 3.0";
     public final String AUTHOR = "Joshua Meyer";
 
     // Engine Settings:

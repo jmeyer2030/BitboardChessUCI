@@ -28,14 +28,15 @@ public class TestSearch {
         FEN fen = new FEN("3r1nk1/1pq1bppp/2p1p3/p3P2P/2P5/PP4P1/1BB1QP2/R5K1 b - - 2 23");
         Position position = new Position(fen);
 
-        //position = new Position();
+        position = new Position();
         //System.out.println("Position: \n" + position.getDisplayBoard());
         int depth = 6;
         long start = System.currentTimeMillis();
-        //Search.iterativeDeepening(position, 60_000, new SearchState(18));
-        Search.iterativeDeepeningFixedDepth(position, 5);
+        Search.iterativeDeepening(position, 10_000, new SearchState(18));
+        //Search.iterativeDeepeningFixedDepth(position, 5);
         long end = System.currentTimeMillis();
         System.out.println("Time elapsed: " + (end - start));
+        System.out.println(Search.nodes);
         //negaMaxTimeTest(position, depth);
     }
 

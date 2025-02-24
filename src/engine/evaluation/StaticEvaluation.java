@@ -3,6 +3,7 @@ package engine.evaluation;
 import board.MoveEncoding;
 import board.MoveType;
 import board.Position;
+import nnue.NNUE;
 
 import static engine.evaluation.KingSafety.kingSafetyEvaluation;
 
@@ -11,25 +12,11 @@ public class StaticEvaluation {
     public static int evaluatePosition(Position position) {
         if (InsufficientMaterial.insufficientMaterial(position)) {
             return 0;
+        } else if (MopUp.shouldUse(position)) {
+            return MopUp.eval(position);
         }
 
-        int mgScore = position.mgScore + kingSafetyEvaluation(position); // PST + kingSafety
-        int egScore = position.egScore; // PST
-        int gamePhase = position.gamePhase;
-
-
-        int mgPhase = gamePhase;
-        if (mgPhase > 24) {
-            mgPhase = 24;
-        }
-        int egPhase = 24 - mgPhase;
-
-
-        int evaluation = (mgScore * mgPhase + egScore * egPhase) / 24;
-
-        //evaluation += Mobility.mobility(position, mgPhase, egPhase);
-
-        return evaluation;
+        return position.nnue.computeOutput();
     }
 
 
@@ -40,8 +27,11 @@ public class StaticEvaluation {
      * @return evaluation from active player's perspective
      */
     public static int negamaxEvaluatePosition(Position position) {
+        return position.nnue.computeOutput();
+        /*
         if (position.activePlayer == 1)
             return -evaluatePosition(position);
         return evaluatePosition(position);
+        */
     }
 }

@@ -16,6 +16,7 @@ import java.util.List;
 
 
 public class Search {
+    public static int nodes = 0;
 
     // Values representing very high scores minimizing risk of over/underflow
     public static final int POS_INFINITY = 100_000_000;
@@ -144,7 +145,7 @@ public class Search {
      */
     public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, SearchState searchState, boolean isRoot)
             throws InterruptedException, InvalidPositionException {
-
+        nodes++;
         // Check for signal to interrupt the search
         if (Thread.currentThread().isInterrupted()) {
             throw new InterruptedException("Negamax was interrupted by iterative deepening");
@@ -190,8 +191,6 @@ public class Search {
             return new MoveValue(quiescenceSearch(alpha, beta, position, searchState), 0);
         }
 
-
-
         // Generate moves and store buffer indices
         int firstMove = searchState.firstNonMove;
         int firstNonMove = MoveGenerator.generateAllMoves(position, searchState.moveBuffer, searchState.firstNonMove);
@@ -202,7 +201,7 @@ public class Search {
         if (gameOver(numMoves, position, searchState.threeFoldTable)) {
             searchState.firstNonMove = firstMove;
             if (position.inCheck) {
-                return new MoveValue(NEG_INFINITY - depthLeft, 0);
+                return new MoveValue(NEG_INFINITY, 0); // Previously subtracted depth left
             } else {
                 return new MoveValue(0, 0);
             }
@@ -273,6 +272,12 @@ public class Search {
                 position.unMakeMove(move);
             }
 
+            if (score > 99_000_000) { // If score evaluates to a mate for us, decrement since that evaluation is on next ply
+                score = score - 1;
+            } else if (score < -99_000_000) { // If score is mate for them, increment since its on next ply
+                score = score + 1;
+            }
+
             // Update best move when score is better
             if (score > bestMoveValue.value) {
                 bestMoveValue.value = score;
@@ -310,6 +315,7 @@ public class Search {
     }
 
     public static int quiescenceSearch(int alpha, int beta, Position position, SearchState searchState) {
+        nodes++;
         int standPat = StaticEvaluation.negamaxEvaluatePosition(position);
 
         int bestValue = standPat;
@@ -384,6 +390,20 @@ public class Search {
         }
         return true;
     }
-
-
 }
+
+
+/*
+Mate detection and storage:
+
+If we see a mate, we score it -Infinity (For the active player it is infinitely bad)
+
+Then, parents of the mating position, decrement their evaluation of the position by one since they are one ply away from mate.
+
+Then, then their parents, two plies from the mate who see it as near infinitely bad, increment the score by one.
+
+
+
+
+
+*/

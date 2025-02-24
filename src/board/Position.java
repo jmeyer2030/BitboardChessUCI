@@ -2,6 +2,7 @@ package board;
 
 import engine.evaluation.PieceSquareTables;
 import moveGeneration.MoveGenerator;
+import nnue.NNUE;
 import testing.testMoveGeneration.Testing;
 import customExceptions.InvalidPositionException;
 import zobrist.Hashing;
@@ -52,6 +53,8 @@ public class Position {
     public int egScore;
     public int gamePhase;
 
+    //NNUE
+    public NNUE nnue;
 
     /*
      * Constructors
@@ -103,6 +106,8 @@ public class Position {
 
         pieceCounts = new int[][] {new int[] {8, 2, 2, 2, 1, 1}, new int[] {8, 2, 2, 2, 1, 1}};
         checkers = 0;
+
+        this.nnue = new NNUE(this);
     }
 
     /**
@@ -133,6 +138,8 @@ public class Position {
 
         this.pieceCounts = new int[][] {Arrays.copyOf(position.pieceCounts[0], 6), Arrays.copyOf(position.pieceCounts[1], 6)};
         this.checkers = position.checkers;
+
+        this.nnue = new NNUE(this);
     }
 
     /**
@@ -277,7 +284,7 @@ public class Position {
         this.castleRights = castleRights;
         this.enPassant = enPassant;
 
-        kingLocs = new int[]{Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
+        this.kingLocs = new int[]{Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
 
         this.inCheck = MoveGenerator.kingAttacked(this, this.activePlayer);
 
@@ -289,6 +296,8 @@ public class Position {
         gamePhase = PieceSquareTables.computeGamePhase(this);
 
         checkers = MoveGenerator.computeCheckers(this);
+
+        this.nnue = new NNUE(this);
     }
 
     /*
@@ -310,6 +319,7 @@ public class Position {
         }
 
         this.gamePhase -= PieceSquareTables.gameStageInc[pieceType];
+        nnue.removeFeature(pieceType, color, square, this);
     }
 
     private void addPiece(int square, int pieceType, int color) {
@@ -328,6 +338,8 @@ public class Position {
         }
 
         this.gamePhase += PieceSquareTables.gameStageInc[pieceType];
+
+        nnue.addFeature(pieceType, color, square, this);
     }
 
 
@@ -353,6 +365,7 @@ public class Position {
 
         // Switch active player
         this.activePlayer = 1 - activePlayer;
+        nnue.switchSides();
 
         // Switch active player hash
         this.zobristHash ^= Hashing.sideToMove[0];
@@ -363,6 +376,7 @@ public class Position {
     public void unmakeNullMove() {
         // Switch active player
         this.activePlayer = 1 - activePlayer;
+        nnue.switchSides();
 
         zobristHash ^= Hashing.castleRights[castleRights];
 
@@ -414,11 +428,9 @@ public class Position {
 
         zobristHash ^= Hashing.castleRights[castleRights];
 
-
         if (enPassant != 0) {
             zobristHash ^= Hashing.enPassant[enPassant % 8];
         }
-
 
         // Increment hmc
         halfMoveCount++;
@@ -489,6 +501,7 @@ public class Position {
 
         // Switch active player
         activePlayer = 1 - activePlayer;
+        nnue.switchSides();
 
         this.zobristHash ^= Hashing.sideToMove[1 - activePlayer];
         this.zobristHash ^= Hashing.sideToMove[activePlayer];
@@ -527,6 +540,7 @@ public class Position {
 
         // Change active player
         this.activePlayer = 1 - activePlayer;
+        nnue.switchSides();
 
         zobristHash ^= Hashing.castleRights[castleRights];
         if (enPassant != 0) {
@@ -578,6 +592,8 @@ public class Position {
         if (enPassant != 0) {
             zobristHash ^= Hashing.enPassant[enPassant % 8];
         }
+
+
     }
 
 
@@ -820,5 +836,4 @@ public class Position {
         if (occupancy != piecesOR)
             throw new InvalidPositionException("Piece types aren't consistent with occupancy");
     }
-
 }

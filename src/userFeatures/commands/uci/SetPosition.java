@@ -4,6 +4,7 @@ import board.FEN;
 import board.Position;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
+import nnue.NNUE;
 import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 import zobrist.ThreeFoldTable;
