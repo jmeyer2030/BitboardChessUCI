@@ -187,46 +187,46 @@ public class NNUE {
     * Initializes network weights and biases
     *
     * Expected Data format:
-    * Layer 1 weights -> Layer 1 Biases -> Layer 2 weights -> Layer 2 biases -> Output biases -> padding
+    * input weights -> input Biases -> hidden weights -> hidden biases -> Output bias -> padding
     */
     private static void loadNetworkFromBinary() {
         byte[] nnBytes = getNetworkBytes();
 
         // Get feature weights
-        int start = 0;
+        int startByte = 0;
         for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {
             for (int inputIndex = 0; inputIndex < INPUT_SIZE; inputIndex++) {
-                int memoryIndex = (inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex) * 2;
+                int byteIndex = (inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex) * 2;
 
-                byte firstByte = nnBytes[memoryIndex];
-                byte secondByte = nnBytes[memoryIndex + 1];
+                byte firstByte = nnBytes[byteIndex];
+                byte secondByte = nnBytes[byteIndex + 1];
 
                 hiddenLayerWeights[hiddenLayerIndex][inputIndex] = (short) ((secondByte << 8) | (firstByte & 0xFF));
             }
         }
 
         // Get feature biases
-        start = 128 * 768 * 2;
+        startByte = 128 * 768 * 2;
         for (int hlNeuron = 0; hlNeuron < 128; hlNeuron++) {
-            int index = start + hlNeuron * 2;
-            byte firstByte = nnBytes[index];
-            byte secondByte = nnBytes[index + 1];
+            int byteIndex = startByte + hlNeuron * 2;
+            byte firstByte = nnBytes[byteIndex];
+            byte secondByte = nnBytes[byteIndex + 1];
             hiddenLayerBias[hlNeuron] = (short) ((secondByte << 8) | (firstByte & 0xFF));
         }
 
         // Get output weights
-        start = (128 * 768 + 128) * 2;
+        startByte = (128 * 768 + 128) * 2;
         for (int hlNeuron = 0; hlNeuron < 256; hlNeuron++) {
-            int index = start + hlNeuron * 2;
-            byte firstByte = nnBytes[index];
-            byte secondByte = nnBytes[index + 1];
+            int byteIndex = startByte + hlNeuron * 2;
+            byte firstByte = nnBytes[byteIndex];
+            byte secondByte = nnBytes[byteIndex + 1];
             outputWeights[hlNeuron] = (short) ((secondByte << 8) | (firstByte & 0xFF));
         }
 
         // Get output bias
-        start = (128 * 768 + 128 + 256) * 2;
-        byte firstByte = nnBytes[start];
-        byte secondByte = nnBytes[start + 1];
+        startByte = (128 * 768 + 128 + 256) * 2;
+        byte firstByte = nnBytes[startByte];
+        byte secondByte = nnBytes[startByte + 1];
         outputBias = (short) ((secondByte << 8) | (firstByte & 0xFF));
     }
 }
