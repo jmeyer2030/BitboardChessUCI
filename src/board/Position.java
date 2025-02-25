@@ -319,7 +319,7 @@ public class Position {
         }
 
         this.gamePhase -= PieceSquareTables.gameStageInc[pieceType];
-        nnue.removeFeature(pieceType, color, square, this);
+        nnue.removeFeature(pieceType, color, square);
     }
 
     private void addPiece(int square, int pieceType, int color) {
@@ -339,7 +339,7 @@ public class Position {
 
         this.gamePhase += PieceSquareTables.gameStageInc[pieceType];
 
-        nnue.addFeature(pieceType, color, square, this);
+        nnue.addFeature(pieceType, color, square);
     }
 
 
@@ -365,7 +365,6 @@ public class Position {
 
         // Switch active player
         this.activePlayer = 1 - activePlayer;
-        nnue.switchSides();
 
         // Switch active player hash
         this.zobristHash ^= Hashing.sideToMove[0];
@@ -376,7 +375,6 @@ public class Position {
     public void unmakeNullMove() {
         // Switch active player
         this.activePlayer = 1 - activePlayer;
-        nnue.switchSides();
 
         zobristHash ^= Hashing.castleRights[castleRights];
 
@@ -501,7 +499,6 @@ public class Position {
 
         // Switch active player
         activePlayer = 1 - activePlayer;
-        nnue.switchSides();
 
         this.zobristHash ^= Hashing.sideToMove[1 - activePlayer];
         this.zobristHash ^= Hashing.sideToMove[activePlayer];
@@ -540,7 +537,6 @@ public class Position {
 
         // Change active player
         this.activePlayer = 1 - activePlayer;
-        nnue.switchSides();
 
         zobristHash ^= Hashing.castleRights[castleRights];
         if (enPassant != 0) {

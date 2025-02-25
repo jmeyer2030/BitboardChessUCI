@@ -5,6 +5,8 @@ import board.Position;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
 * Represents an Efficiently Updatable Neural Network
@@ -25,8 +27,8 @@ public class NNUE {
     private static final short[] outputWeights = new short[HIDDEN_LAYER_SIZE * 2];
     private static short outputBias;
 
-    public int[] ourAccumulator = new int[HIDDEN_LAYER_SIZE]; // Side to move
-    public int[] theirAccumulator = new int[HIDDEN_LAYER_SIZE]; // Other player
+    public int[] whiteAccumulator = new int[HIDDEN_LAYER_SIZE];
+    public int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
 
     /**
     * Initializes weights and biases from quantised.bin on class load
@@ -47,9 +49,11 @@ public class NNUE {
         //FEN fen = new FEN("2q5/8/8/8/8/6k1/8/4K3 w - - 0 1"); // BLACK WAY WINNING
         //FEN fen = new FEN("8/8/3k4/8/8/3K4/8/8 w - - 0 1"); // ONLY KINGS
         //FEN fen = new FEN("rnb1k2r/1pq1bppp/p2ppn2/6B1/3NPP2/2N2Q2/PPP3PP/2KR1B1R b kq - 4 9"); // Equal opening
-        //Position position = new Position(fen);
-        Position position = new Position();
-        System.out.println(position.nnue.computeOutput());
+        //FEN fen = new FEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+        FEN fen = new FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"); // startpos
+        Position position = new Position(fen);
+        //Position position = new Position();
+        System.out.println(position.nnue.computeOutput(position.activePlayer));
     }
 
     /**
@@ -57,23 +61,18 @@ public class NNUE {
     * @param piece piece to add
     * @param color color of the piece
     * @param square square of the piece
-    * @param position position corresponding to the nn (can prob just pass active player)
     */
-    public void addFeature(int piece, int color, int square, Position position) {
-        int activePlayer = position.activePlayer;
+    public void addFeature(int piece, int color, int square) {
+        int whitePerspectiveVal = piece + (color == 0 ? 0 : 6); // If piece is white, 0-5
+        int blackPerspectiveVal = piece + (color == 0 ? 6 : 0); // If piece is white, 6-11
 
-        // pieceVal is 0-5 in our accumulator if our color
-        int ourPieceVal = piece + (color == activePlayer ? 0 : 6);
-
-        // pieceVal is 0-5 in their accumulator if their color
-        int theirPieceVal = piece + (color == activePlayer ? 6 : 0);
-
-        int ourIndex = 64 * ourPieceVal + square;
-        int theirIndex = 64 * theirPieceVal + square;
+        int whitePerspectiveIndex = 64 * whitePerspectiveVal + square;
+        int blackPerspectiveIndex = 64 * blackPerspectiveVal + (square ^ 0b111000);
+        //int blackPerspectiveIndex = 64 * blackPerspectiveVal + (square);
 
         for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
-            ourAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][ourIndex];
-            theirAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][theirIndex];
+            whiteAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][whitePerspectiveIndex];
+            blackAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][blackPerspectiveIndex];
         }
     }
 
@@ -82,33 +81,18 @@ public class NNUE {
      * @param piece piece to remove
      * @param color color of the piece
      * @param square square of the piece
-     * @param position position corresponding to the nn (can prob just pass active player)
      */
-    public void removeFeature(int piece, int color, int square, Position position) {
-        int activePlayer = position.activePlayer;
+    public void removeFeature(int piece, int color, int square) {
+        int whitePieceVal = piece + (color == 0 ? 0 : 6); // If piece is white, 0-5
+        int blackPieceVal = piece + (color == 0 ? 6 : 0); // If piece is white, 6-11
 
-        // pieceVal is 0-5 in our accumulator if our color
-        int ourPieceVal = piece + (color == activePlayer ? 0 : 6);
-
-        // pieceVal is 0-5 in their accumulator if their color
-        int theirPieceVal = piece + (color == activePlayer ? 6 : 0);
-
-        int ourIndex = 64 * ourPieceVal + square;
-        int theirIndex = 64 * theirPieceVal + square;
+        int whiteIndex = 64 * whitePieceVal + square;
+        int blackIndex = 64 * blackPieceVal + (square ^ 0b111000);
 
         for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
-            ourAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][ourIndex];
-            theirAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][theirIndex];
+            whiteAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][whiteIndex];
+            blackAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][blackIndex];
         }
-    }
-
-    /**
-    * Switch their and our accumulator when we make a move
-    */
-    public void switchSides() {
-        int[] tempOurAccumulator = ourAccumulator;
-        ourAccumulator = theirAccumulator;
-        theirAccumulator = tempOurAccumulator;
     }
 
     /**
@@ -118,19 +102,22 @@ public class NNUE {
     public void fillAccumulators(Position position) {
         // First add biases
         for (int i = 0; i < 128; i++) {
-            ourAccumulator[i] = hiddenLayerBias[i];
-            theirAccumulator[i] = hiddenLayerBias[i];
+            whiteAccumulator[i] = hiddenLayerBias[i];
+            blackAccumulator[i] = hiddenLayerBias[i];
         }
 
         // Add features to the accumulators
         for (int color = 0; color <= 1; color++) {
             for (int piece = 0; piece <= 5; piece++) {
+                // Get bitboard corresponding with a piece and color
                 long pieceColorBB = position.pieces[piece] & position.pieceColors[color];
+
+                // Iterate over these pieces and add features to accumulator
                 while (pieceColorBB != 0) {
                     int square = Long.numberOfTrailingZeros(pieceColorBB);
                     pieceColorBB &= (pieceColorBB - 1);
 
-                    addFeature(piece, color, square, position);
+                    addFeature(piece, color, square);
                 }
             }
         }
@@ -139,48 +126,68 @@ public class NNUE {
     /**
     * Computes the output GIVEN that the accumulator states are already accurate
     */
-    public int computeOutput() {
-        int outputActivation = outputBias;
+    public int computeOutput(int activePlayer) {
+        //int outputActivation = outputBias;
+        int outputActivation = 0;
 
         for (int hiddenIndex = 0; hiddenIndex < HIDDEN_LAYER_SIZE; hiddenIndex++) {
-            outputActivation += crelu(0, QA, ourAccumulator[hiddenIndex]) * (int) outputWeights[hiddenIndex];
-            outputActivation += crelu(0, QA, theirAccumulator[hiddenIndex]) * (int) outputWeights[HIDDEN_LAYER_SIZE + hiddenIndex];
+            outputActivation += screlu(QA, whiteAccumulator[hiddenIndex]) * (int) outputWeights[(activePlayer == 0 ? 0 : HIDDEN_LAYER_SIZE) + hiddenIndex];
+            outputActivation += screlu(QA, blackAccumulator[hiddenIndex]) * (int) outputWeights[(activePlayer == 0 ? HIDDEN_LAYER_SIZE : 0) + hiddenIndex];
         }
+
+        outputActivation /= QA;
+
+        outputActivation += outputBias;
 
         outputActivation *= SCALE;
 
-        outputActivation /= QA * QB;
+        outputActivation /= QB * QB;
 
         return outputActivation;
     }
 
     /**
-    * Clipped relu, binds a value between upper and lower bounds
-    * @param lowerBound minimum value input value can be
+    * squared clipped relu, binds a value between upper and lower bounds and squares it
     * @param upperBound maximum value input value can be
     */
-    public int crelu(int lowerBound, int upperBound, int value) {
-        if (value < lowerBound)
-            return lowerBound;
-
-        if (value > upperBound)
-            return upperBound;
-
-        return value;
+    public int screlu(int upperBound, int value) {
+        int clipped = Math.min(Math.max(value, 0), upperBound);
+        return clipped * clipped;
     }
 
     /**
     * Retrieves the binary network data and returns it as a byte array
     */
-    private static byte[] getNetworkBytes() {
-        try (InputStream inputStream = NNUE.class.getResourceAsStream("/nnue/quantised.bin")) {
+    private static short[] getNetworkBytes() {
+
+        byte[] dataAsByteArr;
+
+        try {
+            InputStream inputStream = NNUE.class.getResourceAsStream("/nnue/quantised.bin");
+            dataAsByteArr = inputStream.readAllBytes();
+
             if (inputStream == null) {
                 throw new RuntimeException("Resource not found: nnue/quantised.bin");
             }
-            return inputStream.readAllBytes();
         } catch (IOException e) {
             throw new RuntimeException("Failed to read quantised.bin", e);
         }
+
+        short test = (short) ((dataAsByteArr[3] << 8) | (dataAsByteArr[2] & 0xFF));
+        System.out.println(test);
+
+        short[] shortArray = new short[dataAsByteArr.length / 2];
+        ByteBuffer buffer = ByteBuffer.wrap(dataAsByteArr).order(ByteOrder.LITTLE_ENDIAN);
+
+        for (int i = 0; i < shortArray.length; i++) {
+            shortArray[i] = buffer.getShort();
+        }
+
+        System.out.println(shortArray[1]);
+
+
+        return shortArray;
+
     }
 
     /**
@@ -190,43 +197,38 @@ public class NNUE {
     * input weights -> input Biases -> hidden weights -> hidden biases -> Output bias -> padding
     */
     private static void loadNetworkFromBinary() {
-        byte[] nnBytes = getNetworkBytes();
+        short[] nnShorts = getNetworkBytes();
+        /*for (short shrt : nnBytes) {
+            System.out.println(shrt);
+        }*/
 
         // Get feature weights
-        int startByte = 0;
         for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {
             for (int inputIndex = 0; inputIndex < INPUT_SIZE; inputIndex++) {
-                int byteIndex = (inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex) * 2;
+                //int shortIndex = (inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex);
+                //int shortIndex = hiddenLayerIndex * INPUT_SIZE + inputIndex;
+                int shortIndex = inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex;
 
-                byte firstByte = nnBytes[byteIndex];
-                byte secondByte = nnBytes[byteIndex + 1];
-
-                hiddenLayerWeights[hiddenLayerIndex][inputIndex] = (short) ((secondByte << 8) | (firstByte & 0xFF));
+                hiddenLayerWeights[hiddenLayerIndex][inputIndex] = nnShorts[shortIndex];
             }
         }
 
         // Get feature biases
-        startByte = 128 * 768 * 2;
+        int startShort = 128 * 768;
         for (int hlNeuron = 0; hlNeuron < 128; hlNeuron++) {
-            int byteIndex = startByte + hlNeuron * 2;
-            byte firstByte = nnBytes[byteIndex];
-            byte secondByte = nnBytes[byteIndex + 1];
-            hiddenLayerBias[hlNeuron] = (short) ((secondByte << 8) | (firstByte & 0xFF));
+            int byteIndex = startShort + hlNeuron;
+            hiddenLayerBias[hlNeuron] = nnShorts[byteIndex];
         }
 
         // Get output weights
-        startByte = (128 * 768 + 128) * 2;
+        startShort += 128;
         for (int hlNeuron = 0; hlNeuron < 256; hlNeuron++) {
-            int byteIndex = startByte + hlNeuron * 2;
-            byte firstByte = nnBytes[byteIndex];
-            byte secondByte = nnBytes[byteIndex + 1];
-            outputWeights[hlNeuron] = (short) ((secondByte << 8) | (firstByte & 0xFF));
+            int byteIndex = startShort + hlNeuron ;
+            outputWeights[hlNeuron] = nnShorts[byteIndex];
         }
 
         // Get output bias
-        startByte = (128 * 768 + 128 + 256) * 2;
-        byte firstByte = nnBytes[startByte];
-        byte secondByte = nnBytes[startByte + 1];
-        outputBias = (short) ((secondByte << 8) | (firstByte & 0xFF));
+        startShort += 256;
+        outputBias = nnShorts[startShort];
     }
 }

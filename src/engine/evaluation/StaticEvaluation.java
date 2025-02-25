@@ -1,11 +1,7 @@
 package engine.evaluation;
 
-import board.MoveEncoding;
-import board.MoveType;
 import board.Position;
-import nnue.NNUE;
 
-import static engine.evaluation.KingSafety.kingSafetyEvaluation;
 
 public class StaticEvaluation {
 
@@ -16,7 +12,7 @@ public class StaticEvaluation {
             return MopUp.eval(position);
         }
 
-        return position.nnue.computeOutput();
+        return position.nnue.computeOutput(position.activePlayer);
     }
 
 
@@ -27,7 +23,7 @@ public class StaticEvaluation {
      * @return evaluation from active player's perspective
      */
     public static int negamaxEvaluatePosition(Position position) {
-        return position.nnue.computeOutput();
+        return position.nnue.computeOutput(position.activePlayer);
         /*
         if (position.activePlayer == 1)
             return -evaluatePosition(position);
