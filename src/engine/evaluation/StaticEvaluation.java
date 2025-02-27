@@ -6,12 +6,6 @@ import board.Position;
 public class StaticEvaluation {
 
     public static int evaluatePosition(Position position) {
-        if (InsufficientMaterial.insufficientMaterial(position)) {
-            return 0;
-        } else if (MopUp.shouldUse(position)) {
-            return MopUp.eval(position);
-        }
-
         return position.nnue.computeOutput(position.activePlayer);
     }
 

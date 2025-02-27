@@ -126,7 +126,6 @@ public class Go implements Command {
 
     public void applySearchMoves() {
         Position position = chessEngine.positionState.position;
-
         for (String lan : searchMoves) {
             int move = MoveGenerator.getMoveFromLAN(lan, position, chessEngine.positionState.moveBuffer);
             chessEngine.positionState.applyMove(move);

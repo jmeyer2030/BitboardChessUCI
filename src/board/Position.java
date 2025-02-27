@@ -1,6 +1,5 @@
 package board;
 
-import engine.evaluation.PieceSquareTables;
 import moveGeneration.MoveGenerator;
 import nnue.NNUE;
 import testing.testMoveGeneration.Testing;
@@ -46,12 +45,6 @@ public class Position {
 
     public long checkers;
     public boolean inCheck;
-
-
-    // Evaluation
-    public int mgScore;
-    public int egScore;
-    public int gamePhase;
 
     //NNUE
     public NNUE nnue;
@@ -100,10 +93,6 @@ public class Position {
 
         zobristHash = Hashing.computeZobrist(this);
 
-        mgScore = PieceSquareTables.computeMGScore(this);
-        egScore = PieceSquareTables.computeEGScore(this);
-        gamePhase = PieceSquareTables.computeGamePhase(this);
-
         pieceCounts = new int[][] {new int[] {8, 2, 2, 2, 1, 1}, new int[] {8, 2, 2, 2, 1, 1}};
         checkers = 0;
 
@@ -131,10 +120,6 @@ public class Position {
         this.zobristHash = position.zobristHash;
 
         this.pinnedPieces = Arrays.copyOf(position.pinnedPieces, 64);
-
-        this.mgScore = position.mgScore;
-        this.egScore = position.egScore;
-        this.gamePhase = position.gamePhase;
 
         this.pieceCounts = new int[][] {Arrays.copyOf(position.pieceCounts[0], 6), Arrays.copyOf(position.pieceCounts[1], 6)};
         this.checkers = position.checkers;
@@ -290,12 +275,7 @@ public class Position {
 
         this.zobristHash = Hashing.computeZobrist(this);
 
-
-        mgScore = PieceSquareTables.computeMGScore(this);
-        egScore = PieceSquareTables.computeEGScore(this);
-        gamePhase = PieceSquareTables.computeGamePhase(this);
-
-        checkers = MoveGenerator.computeCheckers(this);
+        this.checkers = MoveGenerator.computeCheckers(this);
 
         this.nnue = new NNUE(this);
     }
@@ -310,15 +290,6 @@ public class Position {
         this.pieces[pieceType] &= ~(1L << square);
         this.pieceCounts[color][pieceType]--;
 
-        if (color == 0) {
-            this.mgScore -= PieceSquareTables.pieceTables[0][pieceType][square] + PieceSquareTables.pieceValues[0][pieceType];
-            this.egScore -= PieceSquareTables.pieceTables[1][pieceType][square] + PieceSquareTables.pieceValues[1][pieceType];
-        } else {
-            this.mgScore += PieceSquareTables.pieceTables[0][pieceType][PieceSquareTables.flip[square]] + PieceSquareTables.pieceValues[0][pieceType];
-            this.egScore += PieceSquareTables.pieceTables[1][pieceType][PieceSquareTables.flip[square]] + PieceSquareTables.pieceValues[1][pieceType];
-        }
-
-        this.gamePhase -= PieceSquareTables.gameStageInc[pieceType];
         nnue.removeFeature(pieceType, color, square);
     }
 
@@ -328,16 +299,6 @@ public class Position {
         this.pieceColors[color] |= (1L << square);
         this.pieces[pieceType] |= (1L << square);
         this.pieceCounts[color][pieceType]++;
-
-        if (color == 0) {
-            this.mgScore += PieceSquareTables.pieceTables[0][pieceType][square] + PieceSquareTables.pieceValues[0][pieceType];
-            this.egScore += PieceSquareTables.pieceTables[1][pieceType][square] + PieceSquareTables.pieceValues[1][pieceType];
-        } else {
-            this.mgScore -= PieceSquareTables.pieceTables[0][pieceType][PieceSquareTables.flip[square]] + PieceSquareTables.pieceValues[0][pieceType];
-            this.egScore -= PieceSquareTables.pieceTables[1][pieceType][PieceSquareTables.flip[square]] + PieceSquareTables.pieceValues[1][pieceType];
-        }
-
-        this.gamePhase += PieceSquareTables.gameStageInc[pieceType];
 
         nnue.addFeature(pieceType, color, square);
     }

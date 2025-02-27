@@ -45,12 +45,12 @@ public class NNUE {
     }
 
     public static void main(String[] args) {
-        //FEN fen = new FEN("2Q5/8/8/8/8/6k1/8/4K3 w - - 0 1"); // WHITE WAY WINNING
+        FEN fen = new FEN("2Q5/8/8/8/8/6k1/8/4K3 w - - 0 1"); // WHITE WAY WINNING
         //FEN fen = new FEN("2q5/8/8/8/8/6k1/8/4K3 w - - 0 1"); // BLACK WAY WINNING
         //FEN fen = new FEN("8/8/3k4/8/8/3K4/8/8 w - - 0 1"); // ONLY KINGS
         //FEN fen = new FEN("rnb1k2r/1pq1bppp/p2ppn2/6B1/3NPP2/2N2Q2/PPP3PP/2KR1B1R b kq - 4 9"); // Equal opening
         //FEN fen = new FEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
-        FEN fen = new FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"); // startpos
+        //FEN fen = new FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"); // startpos
         Position position = new Position(fen);
         //Position position = new Position();
         System.out.println(position.nnue.computeOutput(position.activePlayer));
@@ -141,7 +141,7 @@ public class NNUE {
 
         outputActivation *= SCALE;
 
-        outputActivation /= QB * QB;
+        outputActivation /= QB * QA;
 
         return outputActivation;
     }
@@ -173,18 +173,12 @@ public class NNUE {
             throw new RuntimeException("Failed to read quantised.bin", e);
         }
 
-        short test = (short) ((dataAsByteArr[3] << 8) | (dataAsByteArr[2] & 0xFF));
-        System.out.println(test);
-
         short[] shortArray = new short[dataAsByteArr.length / 2];
         ByteBuffer buffer = ByteBuffer.wrap(dataAsByteArr).order(ByteOrder.LITTLE_ENDIAN);
 
         for (int i = 0; i < shortArray.length; i++) {
             shortArray[i] = buffer.getShort();
         }
-
-        System.out.println(shortArray[1]);
-
 
         return shortArray;
 
@@ -198,9 +192,6 @@ public class NNUE {
     */
     private static void loadNetworkFromBinary() {
         short[] nnShorts = getNetworkBytes();
-        /*for (short shrt : nnBytes) {
-            System.out.println(shrt);
-        }*/
 
         // Get feature weights
         for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {

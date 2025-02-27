@@ -145,6 +145,7 @@ public class Search {
      */
     public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, SearchState searchState, boolean isRoot)
             throws InterruptedException, InvalidPositionException {
+
         nodes++;
         // Check for signal to interrupt the search
         if (Thread.currentThread().isInterrupted()) {
@@ -154,6 +155,22 @@ public class Search {
         // Store alpha at the start of the search
         int alphaOrig = alpha;
 
+        // Generate moves and store buffer indices
+        int firstMove = searchState.firstNonMove;
+        int firstNonMove = MoveGenerator.generateAllMoves(position, searchState.moveBuffer, searchState.firstNonMove);
+        searchState.firstNonMove = firstNonMove;
+
+        // Test if game has ended
+        int numMoves = firstNonMove - firstMove;
+        if (!isRoot && gameOver(numMoves, position, searchState.threeFoldTable)) { // if root, we shouldn't check for game end
+            searchState.firstNonMove = firstMove;
+            if (position.inCheck) {
+                return new MoveValue(NEG_INFINITY, 0); // Previously subtracted depth left
+            } else {
+                return new MoveValue(0, 0);
+            }
+        }
+
         // Check transposition table
         if (searchState.tt != null && searchState.tt.elementIsUseful(position.zobristHash, depthLeft)) {
             int score = searchState.tt.getScore(position.zobristHash);
@@ -161,7 +178,7 @@ public class Search {
             int bestMove = searchState.tt.getBestMove(position.zobristHash);
 
             if (nodeType == 0) { // Exact
-                //searchState.firstNonMove = firstMove;
+                searchState.firstNonMove = firstMove;
                 return new MoveValue(score, bestMove);
             } else if (nodeType == 1) { // Lower bound
                 alpha = Math.max(alpha, score);
@@ -170,8 +187,15 @@ public class Search {
             }
 
             if (alpha > beta) {
+                searchState.firstNonMove = firstMove;
                 return new MoveValue(score, bestMove);
             }
+        }
+
+        // Check if search depth reached
+        if (depthLeft == 0) {
+            searchState.firstNonMove = firstMove;
+            return new MoveValue(quiescenceSearch(alpha, beta, position, searchState), 0);
         }
 
         /*
@@ -183,29 +207,6 @@ public class Search {
             }
         }
         */
-
-
-        // Check if search depth reached
-        if (depthLeft == 0) {
-            //searchState.firstNonMove = firstMove;
-            return new MoveValue(quiescenceSearch(alpha, beta, position, searchState), 0);
-        }
-
-        // Generate moves and store buffer indices
-        int firstMove = searchState.firstNonMove;
-        int firstNonMove = MoveGenerator.generateAllMoves(position, searchState.moveBuffer, searchState.firstNonMove);
-        searchState.firstNonMove = firstNonMove;
-
-        // Test if game has ended
-        int numMoves = firstNonMove - firstMove;
-        if (gameOver(numMoves, position, searchState.threeFoldTable)) {
-            searchState.firstNonMove = firstMove;
-            if (position.inCheck) {
-                return new MoveValue(NEG_INFINITY, 0); // Previously subtracted depth left
-            } else {
-                return new MoveValue(0, 0);
-            }
-        }
 
         // Null Move Pruning
         if (!isRoot && depthLeft >= 3 && nmpConditionsMet(position)) {
@@ -316,7 +317,7 @@ public class Search {
 
     public static int quiescenceSearch(int alpha, int beta, Position position, SearchState searchState) {
         nodes++;
-        int standPat = StaticEvaluation.negamaxEvaluatePosition(position);
+        int standPat = StaticEvaluation.evaluatePosition(position);
 
         int bestValue = standPat;
         if (standPat >= beta)
@@ -373,7 +374,7 @@ public class Search {
             return true;
         } else if (position.halfMoveCount >= 50) {
             return true;
-        } else if (threeFoldTable.positionDrawn(position.zobristHash)) {
+        } else if (threeFoldTable.positionRepeated(position.zobristHash)) {
             return true;
         } else {
             return false;

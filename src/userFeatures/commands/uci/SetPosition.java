@@ -26,7 +26,7 @@ public class SetPosition implements Command {
         }
 
         // First parse the position component
-        Position position = null;
+        Position position;
         if ("startpos".equals(arguments[0])) {
             position = new Position();
         } else if ("fen".equals(arguments[0]) && arguments.length >= 7) {
