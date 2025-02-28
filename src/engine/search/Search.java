@@ -7,10 +7,8 @@ import java.util.concurrent.*;
 import board.MoveEncoding;
 import board.Position;
 import customExceptions.InvalidPositionException;
-import engine.evaluation.StaticEvaluation;
 import moveGeneration.MoveGenerator;
 import zobrist.ThreeFoldTable;
-import moveGeneration.MoveUtility;
 
 import java.util.List;
 
@@ -70,12 +68,13 @@ public class Search {
                 // Try to get the result of the task. If time limit exceeded, throws timeout exception
                 MoveValue result = future.get(maxTimeForSearch, TimeUnit.MILLISECONDS);
                 searchResults.add(result);
+
                 System.out.println("info depth " + depth + " pv " +
-                        MoveUtility.toLongAlgebraic(searchResults.getLast().bestMove)
+                        MoveEncoding.getLAN(searchResults.getLast().bestMove)
                         + " score cp " + searchResults.getLast().value);
 
                 // Stop searching if mate
-                if (Math.abs(searchResults.getLast().value) >= POS_INFINITY)
+                if (Math.abs(searchResults.getLast().value) >= (POS_INFINITY - 100))
                     return searchResults.getLast();
 
                 searchedDepth++;
@@ -102,8 +101,6 @@ public class Search {
                 System.out.println(e.getMessage());
                 throw new RuntimeException("Unexpected interrupted exception caught");
             }
-
-
         }
 
         return searchResults.get(searchResults.size() - 1);
@@ -152,7 +149,7 @@ public class Search {
             throw new InterruptedException("Negamax was interrupted by iterative deepening");
         }
 
-        // Store alpha at the start of the search
+        // Store alpha at the start of the search (so that we can see if search increased it)
         int alphaOrig = alpha;
 
         // Generate moves and store buffer indices
@@ -317,7 +314,7 @@ public class Search {
 
     public static int quiescenceSearch(int alpha, int beta, Position position, SearchState searchState) {
         nodes++;
-        int standPat = StaticEvaluation.evaluatePosition(position);
+        int standPat = position.nnue.computeOutput(position.activePlayer);
 
         int bestValue = standPat;
         if (standPat >= beta)
@@ -347,13 +344,10 @@ public class Search {
             int score;
             try {
                 score = -quiescenceSearch(-beta, -alpha, position, searchState);
-            } finally {
+            } finally { // "close" the position
                 position.unMakeMove(move);
                 searchState.threeFoldTable.popPosition();
             }
-
-            // "close" the position
-
 
             if (score >= beta) {
                 searchState.firstNonMove = initialFirstNonMove;

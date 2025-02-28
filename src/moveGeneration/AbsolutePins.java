@@ -18,7 +18,12 @@ public class AbsolutePins {
 			}
 		}
 	}
-	
+
+	/**
+	* Generates a bitboard representing the squares in between the two input squares
+	* @param i one square
+	* @param j another square
+	*/
 	private static long generateBetween(int i, int j) {
 	    // If `i` and `j` are the same, there's no path.
 	    if (i == j) return 0L;

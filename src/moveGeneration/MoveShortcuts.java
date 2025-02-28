@@ -3,6 +3,9 @@ package moveGeneration;
 import board.MoveEncoding;
 import board.Position;
 
+/**
+* This class is used to generate moves based on a template so that we don't need to explicitely set all fields in MoveGenerator
+*/
 public class MoveShortcuts {
 /*
     Move templates

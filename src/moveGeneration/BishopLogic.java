@@ -127,6 +127,10 @@ public class BishopLogic {
         return (attacksWithoutBlockers ^ attacks) | (attacks & attacksWithoutBlockers);
     }
 
+    /*
+     * Private methods primarity for generating move boards or indexing
+     */
+
     /**
      * Given a blocker board and square, returns the index of the corresponding move board
      *
@@ -134,13 +138,11 @@ public class BishopLogic {
      * @param square       square
      * @return index of moveBoards that corresponds with the blockerboard for a bishop on that square
      */
-    protected static int getIndexForBlocker(long blockerBoard, int square) {
+    private static int getIndexForBlocker(long blockerBoard, int square) {
         // Function to get the index
         return (int) ((magicNumbers[square] * blockerBoard) >> (64 - numBits[square])
                 & ((1 << numBits[square]) - 1));
     }
-
-//Implemented Methods:
 
     /**
      * populates long[][] with moveboards indexable with the magic numbers
@@ -156,14 +158,13 @@ public class BishopLogic {
         }
     }
 
-
     /**
      * Returns all blockerBoards for a given blockerMask, each
      *
      * @param blockerMask an arbitrary blocker-mask
      * @return list of all blockerBoards for a blockerMask
      */
-    protected static List<Long> generateBlockerBoards(long blockerMask) {
+    private static List<Long> generateBlockerBoards(long blockerMask) {
         String binaryRep = Long.toBinaryString(blockerMask);
         int length = binaryRep.length();
 
@@ -188,7 +189,6 @@ public class BishopLogic {
             permutations.add(perm);
         }
 
-
         return permutations;
     }
 
@@ -199,7 +199,7 @@ public class BishopLogic {
      * @param moveBoards    moveBoards of square
      * @param blockerBoards blockerBoards of square
      */
-    protected static List<Long> sortMoveBoards(int square, List<Long> moveBoards, List<Long> blockerBoards) {
+    private static List<Long> sortMoveBoards(int square, List<Long> moveBoards, List<Long> blockerBoards) {
         // Combine moveBoards and blockerBoards into pairs
         List<Pair> combinedList = new ArrayList<>();
         for (int i = 0; i < moveBoards.size(); i++) {
@@ -242,8 +242,7 @@ public class BishopLogic {
      * @param blockerBoards      blockerBoards
      * @return sorted move boards such that indexing works
      */
-    protected static List<List<Long>> sortAllMoveBoards(List<List<Long>> unsortedMoveBoards, List<List<Long>> blockerBoards) {
-
+    private static List<List<Long>> sortAllMoveBoards(List<List<Long>> unsortedMoveBoards, List<List<Long>> blockerBoards) {
         List<List<Long>> moveBoards = new ArrayList<>();
         for (int i = 0; i < 64; i++) {
             moveBoards.add(sortMoveBoards(i, unsortedMoveBoards.get(i), blockerBoards.get(i)));
@@ -258,7 +257,7 @@ public class BishopLogic {
      * @param square square
      * @return moveBoardList
      */
-    protected static List<Long> generateMoveBoards(int square, List<Long> blockerBoards) {
+    private static List<Long> generateMoveBoards(int square, List<Long> blockerBoards) {
         List<Long> moveBoardList = new ArrayList<>();
         for (Long blockerBoard : blockerBoards) {
             moveBoardList.add(generateMoveBoard(blockerBoard, square));
@@ -272,7 +271,7 @@ public class BishopLogic {
      *
      * @return List<List < Long>> blockerBoards, every blocker configuration for each square
      */
-    protected static List<List<Long>> generateAllBlockerBoards() {
+    private static List<List<Long>> generateAllBlockerBoards() {
         List<List<Long>> blockerBoards = new ArrayList<>();
         for (int i = 0; i < 64; i++) {
             blockerBoards.add(generateBlockerBoards(blockerMasks[i]));
@@ -286,7 +285,7 @@ public class BishopLogic {
      * @param blockerBoards blockerBoards
      * @return moveBoards
      */
-    protected static List<List<Long>> generateAllMoveBoards(List<List<Long>> blockerBoards) {
+    private static List<List<Long>> generateAllMoveBoards(List<List<Long>> blockerBoards) {
         List<List<Long>> moveBoards = new ArrayList<>();
         for (int i = 0; i < 64; i++) {
             moveBoards.add(generateMoveBoards(i, blockerBoards.get(i)));

@@ -10,14 +10,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 /*
- UCI is designed to ignore bad commands, so don't worry about debug statements
+
 */
 public class CommandHandler {
     private final Map<String, Command> initialCommands;
     private final Map<String, Command> uciCommands;
     private Map<String, Command> currentCommands;
 
-    private final ChessEngine chessEngine;
 
     /**
     * Initializes lists of commands
@@ -25,9 +24,8 @@ public class CommandHandler {
     @SuppressWarnings("SpellCheckingInspection")
     public CommandHandler(ChessEngine chessEngine) {
 
-        this.chessEngine = chessEngine;
 
-        uciCommands = new HashMap<String, Command>();
+        uciCommands = new HashMap<>();
         uciCommands.put("debug", new Debug(chessEngine));
         uciCommands.put("go", new Go(chessEngine));
         uciCommands.put("isready", new IsReady(chessEngine));
@@ -58,8 +56,7 @@ public class CommandHandler {
             String input = scanner.nextLine();
             String[] parts = input.split("\\s+");
 
-
-            String[] arguments = null;
+            String[] arguments;
 
             // Handle different sizes of inputs
             if (parts.length == 0 ) {
@@ -71,10 +68,16 @@ public class CommandHandler {
                 arguments = Arrays.copyOfRange(parts, 1, parts.length);
             }
 
+            // Execute the command. First word is the command, following are arguments which are passed to the command
             executeCommand(parts[0], arguments);
         }
     }
 
+    /**
+    * Executes a command if the command is contained in our command list
+    * @param command first token of the input
+    * @param arguments all other tokens
+    */
     public void executeCommand(String command, String[] arguments) {
         Command action = currentCommands.get(command.toLowerCase());
         if (action != null) {
@@ -84,6 +87,9 @@ public class CommandHandler {
         }
     }
 
+    /**
+    * Modifies the list of acceptable commands to allow UCI
+    */
     public void acceptUCICommands() {
         currentCommands = uciCommands;
     }

@@ -1,10 +1,7 @@
 package moveGeneration;
 
 import board.*;
-import customExceptions.InvalidPositionException;
-
 import java.util.Arrays;
-import java.util.List;
 
 public class MoveGenerator {
 
@@ -59,7 +56,6 @@ public class MoveGenerator {
             return generateMovesDoubleCheck(position, moveBuffer, firstNonMove);
         }
     }
-
 
     public static int generateMovesNoChecks(Position position, int[] moveBuffer, int firstNonMove) {
         firstNonMove = generatePawnMoves(position, moveBuffer, firstNonMove, ~0L);

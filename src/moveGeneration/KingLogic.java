@@ -1,6 +1,5 @@
 package moveGeneration;
 
-import board.Color;
 import board.Position;
 
 public class KingLogic {
@@ -69,6 +68,9 @@ public class KingLogic {
         return result;
     }
 
+    /**
+    * Generates bitboards for king moves of all squares
+    */
     private static void generateMoveBoards() {
         for (int i = 0; i < 64; i++) {
             moveBoards[i] = generateMoveBoard(i);

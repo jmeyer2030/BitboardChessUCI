@@ -26,15 +26,21 @@ public class KnightLogic {
 	public static long getAttackBoard(int square, Position position) {
 		return knightMoves[square];
 	}
-	
-	
-	
+
+	/**
+	* Populates the knight moves array that can be indexed to give the moves of a knight
+	*/
 	private static void generateAllKnightMoves() {
 		for (int i = 0; i < 64; i++) {
 			knightMoves[i] = generateKnightMoves(i);
 		}
 	}
-	
+
+	/**
+	* Generates a bitboard representing knight moves from a given square
+	* @param square knight square
+	* @return bitboard representation of where the knight can move to
+	*/
 	private static long generateKnightMoves(int square) {
 	    long knightMove = 0b00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000L;
 	    // Possible knight moves relative to the current square

@@ -1,6 +1,5 @@
 package userFeatures.commands.uci;
 
-import board.Color;
 import board.MoveEncoding;
 import engine.search.Search;
 import engine.search.SearchState;
@@ -19,7 +18,6 @@ public class Go implements Command {
 
     public HashMap<String, String> subCommands;
     public List<String> searchMoves;
-
     public ChessEngine chessEngine;
 
     @SuppressWarnings("SpellCheckingInspection")
@@ -29,7 +27,7 @@ public class Go implements Command {
     }
 
     /**
-    *
+    * Executes the command
     */
     @Override
     public void execute(String[] arguments) {
@@ -92,9 +90,11 @@ public class Go implements Command {
     * Executes the search based on stored parameters
     */
     public void executeSearch() {
+        // Apply move to chessEngine's position state position
         applySearchMoves();
         Position position = chessEngine.positionState.position;
 
+        // Get the time we are allocating to the search
         String activeTimeStr;
         if (position.activePlayer == 0) {
             activeTimeStr = subCommands.get("wtime");
@@ -104,8 +104,9 @@ public class Go implements Command {
         long time = Long.parseLong(activeTimeStr);
         long computeTime = TimeManagement.millisForMove(time, 0);
 
-        SearchState searchState = new SearchState(chessEngine.positionState);
 
+
+        SearchState searchState = new SearchState(chessEngine.positionState);
         System.out.println("Beginning search:");
         Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime, searchState);
 

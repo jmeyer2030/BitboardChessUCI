@@ -13,20 +13,24 @@ Represents the internally stored position/state of a chess engine:
 */
 public class PositionState {
     public Position position;
+
     public final TranspositionTable tt;
     public ThreeFoldTable threeFoldTable;
+
     public int[] moveBuffer;
     public int[] moveScores;
+    public int firstNonMove;
 
-    public PositionState(int numBits, Position position) {
+    public PositionState(int numBits) {
         if (numBits == 0) {
             this.tt = null;
         } else {
             this.tt = new TranspositionTable(numBits);
         }
 
-        this.position = new Position(position);
+        this.position = new Position();
         this.threeFoldTable = new ThreeFoldTable();
+        this.firstNonMove = 0;
         this.moveBuffer = new int[2048];
         this.moveScores = new int[2048];
     }

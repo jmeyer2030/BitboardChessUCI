@@ -18,6 +18,11 @@ public class SetPosition implements Command {
         this.chessEngine = chessEngine;
     }
 
+
+    /**
+    * Sets up chessEngine.positionState as specified by the command.
+    * Resets fields threefold and updates it with moves from position command.
+    */
     @Override
     public void execute(String[] arguments) {
         if (chessEngine.positionState == null) {

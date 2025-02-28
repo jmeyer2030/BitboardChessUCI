@@ -1,6 +1,5 @@
 package userFeatures.commands.uci;
 
-import board.Position;
 import board.PositionState;
 import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
@@ -16,7 +15,7 @@ public class UCINewGame implements Command {
 
     @Override
     public void execute(String[] arguments) {
-        chessEngine.positionState = new PositionState(chessEngine.ttSize, new Position());
+        chessEngine.positionState = new PositionState(chessEngine.ttSize);
         chessEngine.logger.log(Level.INFO, "New game created successfully");
     }
 }

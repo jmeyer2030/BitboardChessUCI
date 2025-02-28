@@ -22,7 +22,6 @@ public class UCIMode implements Command {
     */
     @Override
     public void execute(String[] arguments) {
-        chessEngine.setCommandMode(ChessEngine.CommandMode.UCI);
         handler.acceptUCICommands();
         System.out.print(chessEngine.getID());
         System.out.print("uciok\n");
