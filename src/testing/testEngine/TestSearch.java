@@ -3,9 +3,9 @@ package testing.testEngine;
 import board.FEN;
 import board.MoveEncoding;
 import board.Position;
+import board.PositionState;
 import customExceptions.InvalidPositionException;
 import engine.search.Search;
-import engine.search.SearchState;
 import moveGeneration.MoveGenerator;
 
 public class TestSearch {
@@ -32,7 +32,7 @@ public class TestSearch {
         //System.out.println("Position: \n" + position.getDisplayBoard());
         int depth = 6;
         long start = System.currentTimeMillis();
-        Search.iterativeDeepening(position, 10_000, new SearchState(18));
+        Search.iterativeDeepening(position, 10_000, new PositionState(18));
         //Search.iterativeDeepeningFixedDepth(position, 5);
         long end = System.currentTimeMillis();
         System.out.println("Time elapsed: " + (end - start));
@@ -57,9 +57,9 @@ public class TestSearch {
     public static void negaMaxTimeTest(Position position, int depth) throws InterruptedException, InvalidPositionException {
         System.out.println("Transposition Table Negamax: ");
         long start = System.currentTimeMillis();
-        SearchState searchState = new SearchState(18);
+        PositionState positionState = new PositionState(18);
         try {
-            Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, searchState, true);
+            Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, positionState, true);
             long end = System.currentTimeMillis();
             long elapsed = end - start;
 

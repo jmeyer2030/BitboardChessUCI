@@ -1,8 +1,5 @@
 package testing.testZobrist;
 import board.*;
-import engine.search.Search;
-import engine.search.SearchState;
-import moveGeneration.MoveGenerator;
 import org.junit.jupiter.api.*;
 import zobrist.*;
 
@@ -19,7 +16,7 @@ public class testThreeFoldTable {
         ThreeFoldTable threeFoldTable = new ThreeFoldTable();
 
 
-        SearchState searchState = new SearchState(18);
+        PositionState positionState = new PositionState(18);
 
         //Search.MoveValue mv = Search.iterativeDeepening(position, 5_000, searchState);
 

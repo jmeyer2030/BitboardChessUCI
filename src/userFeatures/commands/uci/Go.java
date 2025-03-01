@@ -2,7 +2,6 @@ package userFeatures.commands.uci;
 
 import board.MoveEncoding;
 import engine.search.Search;
-import engine.search.SearchState;
 import engine.TimeManagement;
 import moveGeneration.MoveGenerator;
 import userFeatures.ChessEngine;
@@ -90,6 +89,8 @@ public class Go implements Command {
     * Executes the search based on stored parameters
     */
     public void executeSearch() {
+        //chessEngine.positionState.firstNonMove = 0;
+
         // Apply move to chessEngine's position state position
         applySearchMoves();
         Position position = chessEngine.positionState.position;
@@ -105,10 +106,8 @@ public class Go implements Command {
         long computeTime = TimeManagement.millisForMove(time, 0);
 
 
-
-        SearchState searchState = new SearchState(chessEngine.positionState);
         System.out.println("Beginning search:");
-        Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime, searchState);
+        Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime, chessEngine.positionState);
 
         if (moveValue.bestMove == 0) {
             System.out.println("ACK MOVE IS NULL!!!!");

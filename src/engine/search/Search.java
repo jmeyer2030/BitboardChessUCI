@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 
 import board.MoveEncoding;
 import board.Position;
+import board.PositionState;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
 import zobrist.ThreeFoldTable;
@@ -42,7 +43,7 @@ public class Search {
      * @param limitMillis time  limit in milliseconds for the search
      * @return moveValue associated with the deepest search of the position
      */
-    public static MoveValue iterativeDeepening(Position position, long limitMillis, SearchState searchState) {
+    public static MoveValue iterativeDeepening(Position position, long limitMillis, PositionState positionState) {
         // Create a list representing the best moves generated at each depth
         List<MoveValue> searchResults = new ArrayList<>();
 
@@ -58,7 +59,7 @@ public class Search {
             depth++;
 
             // Create and submit search task
-            Callable<MoveValue> task = getMoveValueCallable(position, depth, position, searchState);
+            Callable<MoveValue> task = getMoveValueCallable(position, depth, position, positionState);
             Future<MoveValue> future = executor.submit(task);
 
             try {
@@ -93,9 +94,15 @@ public class Search {
                     executor.shutdownNow();
                 }
 
+                // reset firstNonMove since search timed out
+                positionState.firstNonMove = 0;
+
+
                 break; //Exit the search loop
             } catch (ExecutionException e) { // This should never happen so we throw an exception
+                System.out.println(e.getCause());
                 System.out.println(e.getMessage());
+                e.printStackTrace();
                 throw new RuntimeException("Unexpected execution exception caught");
             } catch (InterruptedException e) {
                 System.out.println(e.getMessage());
@@ -107,10 +114,10 @@ public class Search {
     }
 
     public static void iterativeDeepeningFixedDepth(Position position, int depth) {
-        SearchState searchState = new SearchState(18);
+        PositionState positionState = new PositionState(18);
         for (int i = 1; i <= depth; i++) {
             try {
-                MoveValue result = negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState, true);
+                MoveValue result = negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true);
                 System.out.println(result.value);
                 System.out.println(MoveEncoding.getLAN(result.bestMove));
             } catch (InterruptedException e) {
@@ -122,10 +129,10 @@ public class Search {
     }
 
 
-    private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, Position copy, SearchState searchState) {
+    private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, Position copy, PositionState positionState) {
         return () -> {
             try {
-                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchState, true);
+                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true);
             } catch (InterruptedException e) {
                 System.out.println("Negamax was interrupted.");
                 throw e;
@@ -140,7 +147,7 @@ public class Search {
     /**
      *
      */
-    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, SearchState searchState, boolean isRoot)
+    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, PositionState positionState, boolean isRoot)
             throws InterruptedException, InvalidPositionException {
 
         nodes++;
@@ -153,14 +160,14 @@ public class Search {
         int alphaOrig = alpha;
 
         // Generate moves and store buffer indices
-        int firstMove = searchState.firstNonMove;
-        int firstNonMove = MoveGenerator.generateAllMoves(position, searchState.moveBuffer, searchState.firstNonMove);
-        searchState.firstNonMove = firstNonMove;
+        int firstMove = positionState.firstNonMove;
+        int firstNonMove = MoveGenerator.generateAllMoves(position, positionState.moveBuffer, positionState.firstNonMove);
+        positionState.firstNonMove = firstNonMove;
 
         // Test if game has ended
         int numMoves = firstNonMove - firstMove;
-        if (!isRoot && gameOver(numMoves, position, searchState.threeFoldTable)) { // if root, we shouldn't check for game end
-            searchState.firstNonMove = firstMove;
+        if (!isRoot && gameOver(numMoves, position, positionState.threeFoldTable)) { // if root, we shouldn't check for game end
+            positionState.firstNonMove = firstMove;
             if (position.inCheck) {
                 return new MoveValue(NEG_INFINITY, 0); // Previously subtracted depth left
             } else {
@@ -169,13 +176,13 @@ public class Search {
         }
 
         // Check transposition table
-        if (searchState.tt != null && searchState.tt.elementIsUseful(position.zobristHash, depthLeft)) {
-            int score = searchState.tt.getScore(position.zobristHash);
-            int nodeType = searchState.tt.getNodeType(position.zobristHash);
-            int bestMove = searchState.tt.getBestMove(position.zobristHash);
+        if (positionState.tt != null && positionState.tt.elementIsUseful(position.zobristHash, depthLeft)) {
+            int score = positionState.tt.getScore(position.zobristHash);
+            int nodeType = positionState.tt.getNodeType(position.zobristHash);
+            int bestMove = positionState.tt.getBestMove(position.zobristHash);
 
             if (nodeType == 0) { // Exact
-                searchState.firstNonMove = firstMove;
+                positionState.firstNonMove = firstMove;
                 return new MoveValue(score, bestMove);
             } else if (nodeType == 1) { // Lower bound
                 alpha = Math.max(alpha, score);
@@ -184,15 +191,15 @@ public class Search {
             }
 
             if (alpha > beta) {
-                searchState.firstNonMove = firstMove;
+                positionState.firstNonMove = firstMove;
                 return new MoveValue(score, bestMove);
             }
         }
 
         // Check if search depth reached
         if (depthLeft == 0) {
-            searchState.firstNonMove = firstMove;
-            return new MoveValue(quiescenceSearch(alpha, beta, position, searchState), 0);
+            positionState.firstNonMove = firstMove;
+            return new MoveValue(quiescenceSearch(alpha, beta, position, positionState), 0);
         }
 
         /*
@@ -211,32 +218,33 @@ public class Search {
 
             int score;
             try {
-                score = -negamax(-beta, -beta + 1, depthLeft - 3, position, searchState, false).value;
+                score = -negamax(-beta, -beta + 1, depthLeft - 3, position, positionState, false).value;
             } finally {
                 position.unmakeNullMove();
             }
 
             // If a null move failed high over beta, then certainly the best move would as well, so we prune
             if (score >= beta) {
-                searchState.firstNonMove = firstMove;
+
+                positionState.firstNonMove = firstMove;
                 return new MoveValue(beta, 0);
             }
         }
 
         // Move order
-        MoveOrder.scoreMoves(position, searchState, firstMove, firstNonMove);
+        MoveOrder.scoreMoves(position, positionState, firstMove, firstNonMove);
         MoveValue bestMoveValue = new MoveValue(Integer.MIN_VALUE, 0);
 
         // Search loop
         for (int i = firstMove; i < firstNonMove; i++) {
             if (Thread.currentThread().isInterrupted()) {
-                searchState.firstNonMove = firstMove;
+                positionState.firstNonMove = firstMove;
                 throw new InterruptedException("Negamax was interrupted by iterative deepening");
             }
 
             // Selection sort and get move
-            MoveOrder.bestMoveFirst(searchState, i, firstNonMove);
-            int move = searchState.moveBuffer[i];
+            MoveOrder.bestMoveFirst(positionState, i, firstNonMove);
+            int move = positionState.moveBuffer[i];
 
             // Futility pruning
             /*
@@ -248,25 +256,25 @@ public class Search {
 
             // "open" the position
             position.makeMove(move);
-            searchState.threeFoldTable.addPosition(position.zobristHash, move);
+            positionState.threeFoldTable.addPosition(position.zobristHash, move);
 
             int score;
             try {
                 if (i == firstMove) {
                     // Full window search for first move
-                    score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState, false).value;
+                    score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false).value;
                 } else {
                     // Else try to disprove that the pv is the best move with a null-window search
-                    score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, searchState, false).value;
+                    score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false).value;
 
                     // If disproved, then re-search with full window
                     if (score > alpha) {
-                        score = -negamax(-beta, -alpha, depthLeft - 1, position, searchState, false).value;
+                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false).value;
                     }
                 }
             } finally {
                 // Close the position
-                searchState.threeFoldTable.popPosition();
+                positionState.threeFoldTable.popPosition();
                 position.unMakeMove(move);
             }
 
@@ -289,14 +297,18 @@ public class Search {
 
             // Prune when alpha >= beta because the opponent wouldn't make a move that gets here
             if (alpha >= beta) {
+                // If not a capture, add to history heuristic since beta cutoff
+                if (!MoveEncoding.getIsCapture(move)) {
+                    positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft);
+                }
                 break;
             }
         }
 
         // After search, reset first nonMove
-        searchState.firstNonMove = firstMove;
+        positionState.firstNonMove = firstMove;
 
-        if (searchState.tt != null && bestMoveValue.bestMove != 0) {
+        if (positionState.tt != null && bestMoveValue.bestMove != 0) {
             NodeType nodeType;
             if (bestMoveValue.value <= alphaOrig) { // Failed to find a better move (than is known to exist with alpha), so the value is AT MAXIMUM score
                 nodeType = NodeType.UPPER_BOUND;
@@ -306,13 +318,13 @@ public class Search {
                 nodeType = NodeType.EXACT;
             }
 
-            searchState.tt.addElement(position.zobristHash, bestMoveValue.bestMove, depthLeft, bestMoveValue.value, nodeType);
+            positionState.tt.addElement(position.zobristHash, bestMoveValue.bestMove, depthLeft, bestMoveValue.value, nodeType);
         }
 
         return bestMoveValue;
     }
 
-    public static int quiescenceSearch(int alpha, int beta, Position position, SearchState searchState) {
+    public static int quiescenceSearch(int alpha, int beta, Position position, PositionState positionState) {
         nodes++;
         int standPat = position.nnue.computeOutput(position.activePlayer);
 
@@ -323,34 +335,34 @@ public class Search {
             alpha = standPat;
 
         // Generate loud moves (captures, promotions, checks, etc.)
-        int initialFirstNonMove = searchState.firstNonMove;
-        int newFirstNonMove = MoveGenerator.generateAllMoves(position, searchState.moveBuffer, searchState.firstNonMove);
-        searchState.firstNonMove = newFirstNonMove;
+        int initialFirstNonMove = positionState.firstNonMove;
+        int newFirstNonMove = MoveGenerator.generateAllMoves(position, positionState.moveBuffer, positionState.firstNonMove);
+        positionState.firstNonMove = newFirstNonMove;
 
         // Move order
-        MoveOrder.scoreMoves(position, searchState, initialFirstNonMove, newFirstNonMove);
+        MoveOrder.scoreMoves(position, positionState, initialFirstNonMove, newFirstNonMove);
 
         for (int i = initialFirstNonMove; i < newFirstNonMove; i++) {
-            MoveOrder.bestMoveFirst(searchState, i, newFirstNonMove);
-            int move = searchState.moveBuffer[i];
+            MoveOrder.bestMoveFirst(positionState, i, newFirstNonMove);
+            int move = positionState.moveBuffer[i];
             if (!MoveEncoding.getIsCapture(move))
                 continue;
 
             // "open" the position
             position.makeMove(move);
-            searchState.threeFoldTable.addPosition(position.zobristHash, move);
+            positionState.threeFoldTable.addPosition(position.zobristHash, move);
 
             // compute the score
             int score;
             try {
-                score = -quiescenceSearch(-beta, -alpha, position, searchState);
+                score = -quiescenceSearch(-beta, -alpha, position, positionState);
             } finally { // "close" the position
                 position.unMakeMove(move);
-                searchState.threeFoldTable.popPosition();
+                positionState.threeFoldTable.popPosition();
             }
 
             if (score >= beta) {
-                searchState.firstNonMove = initialFirstNonMove;
+                positionState.firstNonMove = initialFirstNonMove;
                 return score;
             }
             if (score > bestValue)
@@ -359,7 +371,7 @@ public class Search {
                 alpha = score;
         }
 
-        searchState.firstNonMove = initialFirstNonMove;
+        positionState.firstNonMove = initialFirstNonMove;
         return bestValue;
     }
 

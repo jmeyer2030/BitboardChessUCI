@@ -2,8 +2,8 @@ package testing.testEngine;
 
 import board.FEN;
 import board.Position;
+import board.PositionState;
 import engine.search.Search;
-import engine.search.SearchState;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -34,7 +34,7 @@ public class testSearchSuite {
 
                 System.out.println("TESTING FEN: " + fenString + " TEST PROGRESS: " + lineNumber + "/" + 126);
                 try {
-                    Search.MoveValue result = Search.iterativeDeepening(position, 50, new SearchState(18));
+                    Search.MoveValue result = Search.iterativeDeepening(position, 50, new PositionState(18));
                     if (result.bestMove == 0) {
                         fail();
                     }

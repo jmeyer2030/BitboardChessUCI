@@ -1,5 +1,6 @@
 package board;
 
+import engine.search.HistoryHeuristic;
 import zobrist.ThreeFoldTable;
 import zobrist.transposition.TranspositionTable;
 
@@ -16,6 +17,7 @@ public class PositionState {
 
     public final TranspositionTable tt;
     public ThreeFoldTable threeFoldTable;
+    public HistoryHeuristic historyHeuristic;
 
     public int[] moveBuffer;
     public int[] moveScores;
@@ -28,6 +30,7 @@ public class PositionState {
             this.tt = new TranspositionTable(numBits);
         }
 
+        this.historyHeuristic = new HistoryHeuristic();
         this.position = new Position();
         this.threeFoldTable = new ThreeFoldTable();
         this.firstNonMove = 0;
