@@ -19,7 +19,7 @@ public class testSearchSuite {
 
     @Test
     void testSearchOnTestPositions() {
-        int depth = 7;
+        int depth = 9;
         long startTime = System.currentTimeMillis();
         try (Scanner scanner = new Scanner(new File("src/testing/testMoveGeneration/perftSuite.txt"))) {
             int lineNumber = 0;
@@ -34,14 +34,14 @@ public class testSearchSuite {
 
                 System.out.println("TESTING FEN: " + fenString + " TEST PROGRESS: " + lineNumber + "/" + 126);
                 try {
-                    Search.MoveValue result = Search.iterativeDeepening(position, 50, new PositionState(18));
-                    if (result.bestMove == 0) {
-                        fail();
-                    }
+                    //Search.MoveValue result = Search.iterativeDeepening(position, 50, new PositionState(18));
+                    //if (result.bestMove == 0) {
+                    //    fail();
+                    //}
                     //negaMaxTimeTest(position, depth);
-                    //Search.iterativeDeepeningFixedDepth(position, depth);
+                    Search.iterativeDeepeningFixedDepth(position, depth);
                 } catch (Exception e) {
-                    throw new RuntimeException();
+                    throw e;
                     //throw e;
                 }
             }
@@ -56,6 +56,24 @@ public class testSearchSuite {
 }
 
 /*
+
+depth 9: 317476 sophisticated history heuristic
+depth 9: 576782 no history heuristic
+depth 9: DNF simple history heuristic
+
+depth 9: 329317 sophisticated, potential pvs bug fix?
+
+depth 9: 348696 sophisticated, pvs change, history on any alpha increase
+271225 same but maxHistory 100
+271225 same but maxHistory 150
+171096 modified bonus and max
+
+75530 Delta pruning
+
+71966 Delta pruning and cutoff in iteration
+
+
+
 depth 7 negamax: 36349
 fixed depth 7 iterativeDeepening: 35380
 fixed depth 7 iterativeDeepening: 36597

@@ -3,21 +3,18 @@ package engine.search;
 import board.MoveEncoding;
 
 public class HistoryHeuristic {
-    private int maxHistory;
+    private int maxHistory = 20000;
     private int[][][] history;
 
     public HistoryHeuristic() {
-        maxHistory = 0;
         history = new int[2][64][64];
     }
 
-    public void addMove(int color, int move, int depth) {
+    public void addMove(int color, int move, int depth, int bonus) {
         int from = MoveEncoding.getStart(move);
         int to = MoveEncoding.getDestination(move);
-        int bonus = depth * depth;
-        //int clampedBonus = Math.clamp(bonus, -maxHistory, maxHistory);
-        //history[color][from][to] += clampedBonus - history[color][from][to] * Math.abs(clampedBonus) / maxHistory;
-        history[color][from][to] += bonus;
+        int clampedBonus = Math.clamp(bonus, -maxHistory, maxHistory);
+        history[color][from][to] += clampedBonus - history[color][from][to] * Math.abs(clampedBonus) / maxHistory;
     }
 
     public int getHeuristic(int move, int color) {

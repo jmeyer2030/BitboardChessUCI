@@ -15,6 +15,8 @@ import java.util.List;
 
 
 public class Search {
+    public static int[] pieceValues = new int[]{100, 300, 325, 500, 900};
+
     public static int nodes = 0;
 
     // Values representing very high scores minimizing risk of over/underflow
@@ -117,9 +119,9 @@ public class Search {
         PositionState positionState = new PositionState(18);
         for (int i = 1; i <= depth; i++) {
             try {
-                MoveValue result = negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true);
-                System.out.println(result.value);
-                System.out.println(MoveEncoding.getLAN(result.bestMove));
+                MoveValue result = negamax(NEG_INFINITY, POS_INFINITY, i, position, positionState, true);
+                String moveLAN = MoveEncoding.getLAN(result.bestMove);
+                System.out.println("Depth: " + i + " | Move: " + moveLAN + " | Value: " + result.value);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (InvalidPositionException e) {
@@ -168,8 +170,8 @@ public class Search {
         int numMoves = firstNonMove - firstMove;
         if (!isRoot && gameOver(numMoves, position, positionState.threeFoldTable)) { // if root, we shouldn't check for game end
             positionState.firstNonMove = firstMove;
-            if (position.inCheck) {
-                return new MoveValue(NEG_INFINITY, 0); // Previously subtracted depth left
+            if (position.inCheck && numMoves == 0) { // Checkmate IF in check AND no moves (otherwise could be repetition)
+                return new MoveValue(NEG_INFINITY, 0);
             } else {
                 return new MoveValue(0, 0);
             }
@@ -202,15 +204,13 @@ public class Search {
             return new MoveValue(quiescenceSearch(alpha, beta, position, positionState), 0);
         }
 
-        /*
-        if (depthLeft == 1 && !MoveGenerator.kingAttacked(position, position.activePlayer)) {
-            int margin = 150;
-            int eval = StaticEvaluation.negamaxEvaluatePosition(position);
-            if (eval + margin <= alpha) {
-                return new MoveValue(eval, 0);
-            }
+        // Futility Pruning
+        int eval = position.nnue.computeOutput(position.activePlayer);
+        int margin = 150 * depthLeft;
+        if (!isRoot && eval >= beta + margin && fpConditionsMet(position, positionState)) {
+            positionState.firstNonMove = firstMove;
+            return new MoveValue(eval, 0);
         }
-        */
 
         // Null Move Pruning
         if (!isRoot && depthLeft >= 3 && nmpConditionsMet(position)) {
@@ -254,6 +254,7 @@ public class Search {
             }
             */
 
+
             // "open" the position
             position.makeMove(move);
             positionState.threeFoldTable.addPosition(position.zobristHash, move);
@@ -268,7 +269,7 @@ public class Search {
                     score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false).value;
 
                     // If disproved, then re-search with full window
-                    if (score > alpha) {
+                    if (score > alpha && (beta - alpha > 1)) {
                         score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false).value;
                     }
                 }
@@ -290,19 +291,25 @@ public class Search {
                 bestMoveValue.bestMove = move;
             }
 
-            // Update alpha when score is better
+            // If this is a new lower bound
             if (score > alpha) {
+                // Update alpha
                 alpha = score;
+
+                // If not a capture, add to history heuristic
+                int bonus = 300 * depthLeft - 250;
+                boolean moveIsQuiet = !MoveEncoding.getIsCapture(move);
+                if (moveIsQuiet) {
+                    positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft, bonus);
+                }
+
+                // Prune when alpha >= beta because the opponent wouldn't make a move that gets here
+                if (alpha >= beta) {
+                    break;
+                }
             }
 
-            // Prune when alpha >= beta because the opponent wouldn't make a move that gets here
-            if (alpha >= beta) {
-                // If not a capture, add to history heuristic since beta cutoff
-                if (!MoveEncoding.getIsCapture(move)) {
-                    positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft);
-                }
-                break;
-            }
+
         }
 
         // After search, reset first nonMove
@@ -329,10 +336,26 @@ public class Search {
         int standPat = position.nnue.computeOutput(position.activePlayer);
 
         int bestValue = standPat;
-        if (standPat >= beta)
-            return standPat;
-        if (alpha < standPat)
-            alpha = standPat;
+
+        if (bestValue >= beta)
+            return bestValue;
+
+        if (alpha < bestValue)
+            alpha = bestValue;
+
+        /*
+        int bigDelta = 975; // Queen value
+        if (bestValue + bigDelta < alpha) {
+            return alpha;
+        }
+        */
+
+        /*
+        if (alpha < bestValue) {
+            alpha = bestValue;
+        }
+        */
+
 
         // Generate loud moves (captures, promotions, checks, etc.)
         int initialFirstNonMove = positionState.firstNonMove;
@@ -345,8 +368,17 @@ public class Search {
         for (int i = initialFirstNonMove; i < newFirstNonMove; i++) {
             MoveOrder.bestMoveFirst(positionState, i, newFirstNonMove);
             int move = positionState.moveBuffer[i];
+
             if (!MoveEncoding.getIsCapture(move))
                 continue;
+
+            // Delta cutoff
+            /*
+            if (standPat + pieceValues[MoveEncoding.getCapturedPiece(move)] + 200 < alpha &&
+                    !MoveEncoding.getIsPromotion(move))
+                continue;
+                */
+
 
             // "open" the position
             position.makeMove(move);
@@ -385,6 +417,13 @@ public class Search {
         } else {
             return false;
         }
+    }
+
+    public static boolean fpConditionsMet(Position position, PositionState positionState) {
+        if (!MoveGenerator.kingAttacked(position, position.activePlayer) && // Not in check
+                positionState.tt.getBestMove(position.zobristHash) != 0) // tt move dne
+            return true;
+        return false;
     }
 
     public static boolean nmpConditionsMet(Position position) {

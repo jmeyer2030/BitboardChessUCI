@@ -83,8 +83,7 @@ public class MoveOrder {
         }
 
         if (MoveEncoding.getIsCapture(move)) {
-            // Shows preference to equal captures over quiet moves
-            value += 500 + evaluateExchange(move);
+            value += 50_000 + evaluateExchange(move);
         } else {
             value += positionState.historyHeuristic.getHeuristic(move, position.activePlayer);
         }
