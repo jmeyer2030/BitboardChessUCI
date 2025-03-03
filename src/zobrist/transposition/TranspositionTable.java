@@ -1,7 +1,12 @@
 package zobrist.transposition;
 
 import engine.search.NodeType;
-
+/*
+THERE IS OFTEN OVERWRITING IN THE TRANSPOSITION TABLE:
+IF THERE IS A BUG, OR AN ENTRY ISN'T STORED AS EXPECTED,
+    - IT WAS PROBABLY OVERWRITTEN
+THIS IS OK
+*/
 public class TranspositionTable {
     private final long indexMask;
 
@@ -54,6 +59,17 @@ public class TranspositionTable {
         return this.score[getIndex(zobristHash)];
     }
 
+    public int checkedGetScore(long zobristHash) {
+        int index = getIndex(zobristHash);
+
+        // Return if the hash isn't the one stored
+        if (this.zobristHash[index] != zobristHash) {
+            return Integer.MAX_VALUE;
+        }
+
+        return score[index];
+    }
+
     public int getBestMove(long zobristHash) {
         return this.bestMove[getIndex(zobristHash)];
     }
@@ -86,6 +102,11 @@ public class TranspositionTable {
         int index = getIndex(zobristHash);
 
         return (this.zobristHash[index] == zobristHash) && (this.depth[index] >= depth) && (this.bestMove[index] != 0);
+    }
+
+    public boolean elementExists(long zobristHash) {
+        int index = getIndex(zobristHash);
+        return this.zobristHash[index] == zobristHash;
     }
 
     public void addElement(long zobristHash, int bestMove, int depth, int score, NodeType nodeType) {

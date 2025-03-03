@@ -136,8 +136,8 @@ public class Position {
         pinnedPieces = new int[64];
         Arrays.fill(pinnedPieces, -1);
 
-        hmcStack = new Stack<Integer>();
-        epStack = new Stack<Integer>();
+        hmcStack = new Stack<>();
+        epStack = new Stack<>();
         castleRightsStack = new Stack<Byte>();
 
         // Initialize bitboards for occupancy and individual pieces
@@ -283,6 +283,16 @@ public class Position {
     /*
      * Make and unMake
      */
+
+    /**
+     * Removes a piece Updating:
+     *   - zobrist has
+     *   - occupancy, piece colors, pieceCounts, and pieces
+     *   - NNUE feature
+     * @param square to remove the piece
+     * @param pieceType of the piece
+     * @param color of the removed piece
+     */
     private void removePiece(int square, int pieceType, int color) {
         this.zobristHash ^= Hashing.pieceSquare[square][color][pieceType];
         this.occupancy &= ~(1L << square);
@@ -293,6 +303,15 @@ public class Position {
         nnue.removeFeature(pieceType, color, square);
     }
 
+    /**
+    * Adds a piece Updating:
+    *   - zobrist has
+    *   - occupancy, piece colors, pieceCounts, and pieces
+    *   - NNUE feature
+    * @param square of the piece
+    * @param pieceType of the piece
+    * @param color of the piece
+    */
     private void addPiece(int square, int pieceType, int color) {
         this.zobristHash ^= Hashing.pieceSquare[square][color][pieceType];
         this.occupancy |= (1L << square);
@@ -303,7 +322,9 @@ public class Position {
         nnue.addFeature(pieceType, color, square);
     }
 
-
+    /**
+    * Makes a passing move and updates related fields
+    */
     public void makeNullMove() {
         // Push stored things
         hmcStack.push(this.halfMoveCount);
@@ -332,12 +353,14 @@ public class Position {
         this.zobristHash ^= Hashing.sideToMove[1];
     }
 
-
+    /**
+    * Unmakes a passing move and updates related fields
+    */
     public void unmakeNullMove() {
         // Switch active player
         this.activePlayer = 1 - activePlayer;
 
-        zobristHash ^= Hashing.castleRights[castleRights];
+        //zobristHash ^= Hashing.castleRights[castleRights];
 
         // Pop stored things
         halfMoveCount = hmcStack.pop();
@@ -350,12 +373,13 @@ public class Position {
         // Switch active player hash
         this.zobristHash ^= Hashing.sideToMove[0];
         this.zobristHash ^= Hashing.sideToMove[1];
-        zobristHash ^= Hashing.castleRights[castleRights];
+        //zobristHash ^= Hashing.castleRights[castleRights];
 
-        if (enPassant != 0) { // Should always be 0
+        if (enPassant != 0) { // Move before was double push
             zobristHash ^= Hashing.enPassant[enPassant % 8];
         }
     }
+
     /**
      * Applies a move
      */
@@ -465,14 +489,17 @@ public class Position {
         this.zobristHash ^= Hashing.sideToMove[activePlayer];
         this.zobristHash ^= Hashing.castleRights[castleRights];
 
+        /*
         try {
             validPosition();
         } catch (InvalidPositionException ipe) {
             throw new IllegalStateException();
         }
+        */
 
         this.checkers = MoveGenerator.computeCheckers(this);
         this.inCheck = Long.numberOfTrailingZeros(checkers) == 64 ? false : true;
+
     }
 
     /**
@@ -549,8 +576,6 @@ public class Position {
         if (enPassant != 0) {
             zobristHash ^= Hashing.enPassant[enPassant % 8];
         }
-
-
     }
 
 

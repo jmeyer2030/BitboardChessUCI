@@ -2,7 +2,6 @@ package testing.testEngine;
 
 import board.FEN;
 import board.Position;
-import board.PositionState;
 import engine.search.Search;
 import org.junit.jupiter.api.Test;
 
@@ -10,13 +9,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-import static testing.testEngine.TestSearch.negaMaxTimeTest;
 import static testing.testMoveGeneration.testPerftSuite.getFEN;
 
 public class testSearchSuite {
-
     @Test
     void testSearchOnTestPositions() {
         int depth = 9;
@@ -51,7 +46,7 @@ public class testSearchSuite {
 
         long endTime = System.currentTimeMillis();
         System.out.println("Elapsed time: " + (endTime - startTime));
-        System.out.println("Total searched depth: " + Search.searchedDepth);
+        //System.out.println("Total searched depth: " + Search.searchedDepth);
     }
 }
 
@@ -71,6 +66,8 @@ depth 9: 348696 sophisticated, pvs change, history on any alpha increase
 75530 Delta pruning
 
 71966 Delta pruning and cutoff in iteration
+
+86513 NO delta pruning
 
 
 

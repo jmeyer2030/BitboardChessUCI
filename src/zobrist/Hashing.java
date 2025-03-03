@@ -63,7 +63,7 @@ public class Hashing {
         }
 
         // Init sideToMove
-        sideToMove[0] = -1L;
+        sideToMove[0] = 0L;
         sideToMove[1] = random.nextLong();
     }
 

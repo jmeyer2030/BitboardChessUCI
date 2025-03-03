@@ -113,12 +113,16 @@ public class Go implements Command {
             System.out.println("ACK MOVE IS NULL!!!!");
         }
 
-        String ttBestMove = MoveEncoding.getLAN(chessEngine.positionState.tt.getBestMove(position.zobristHash));
+        /* DEBUG CODE: SEE IF TT ENTRY MATCHES THE RETURN
+        String ttBestMove = MoveEncoding.getLAN(chessEngine.positionState.tt.checkedGetBestMove(position.zobristHash));
         String valueBestMove = MoveEncoding.getLAN(moveValue.bestMove);
-
         if (!ttBestMove.equals(valueBestMove)) {
+            System.out.println(chessEngine.positionState.position.getDisplayBoard());
+            System.out.println("TT Best move: " + ttBestMove);
+            System.out.println("deepening Best move: " + valueBestMove);
             System.out.println("Best Move diff!");
         }
+        */
 
         System.out.println("bestmove " + MoveEncoding.getLAN(moveValue.bestMove));
     }

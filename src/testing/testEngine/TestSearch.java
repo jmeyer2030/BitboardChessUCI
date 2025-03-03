@@ -6,10 +6,8 @@ import board.Position;
 import board.PositionState;
 import customExceptions.InvalidPositionException;
 import engine.search.Search;
-import moveGeneration.MoveGenerator;
 
 public class TestSearch {
-
     public static void main(String[] args) throws InterruptedException, InvalidPositionException {
         /*
         FEN fen = new FEN("r6r/p1pkBQ2/6p1/8/4n3/8/PbP1KP1P/R7 b - - 0 1");
@@ -36,7 +34,6 @@ public class TestSearch {
         //Search.iterativeDeepeningFixedDepth(position, 5);
         long end = System.currentTimeMillis();
         System.out.println("Time elapsed: " + (end - start));
-        System.out.println(Search.nodes);
         //negaMaxTimeTest(position, depth);
     }
 
