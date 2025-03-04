@@ -1,6 +1,7 @@
 package board;
 
 import engine.search.HistoryHeuristic;
+import engine.search.KillerMoves;
 import zobrist.ThreeFoldTable;
 import zobrist.transposition.TranspositionTable;
 
@@ -18,6 +19,7 @@ public class PositionState {
     public final TranspositionTable tt;
     public ThreeFoldTable threeFoldTable;
     public HistoryHeuristic historyHeuristic;
+    public KillerMoves killerMoves;
 
     public int[] moveBuffer;
     public int[] moveScores;
@@ -36,6 +38,7 @@ public class PositionState {
         this.firstNonMove = 0;
         this.moveBuffer = new int[2048];
         this.moveScores = new int[2048];
+        this.killerMoves = new KillerMoves();
     }
 
     public void applyMove(int move) {

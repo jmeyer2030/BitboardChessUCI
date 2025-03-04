@@ -56,7 +56,7 @@ public class TestSearch {
         long start = System.currentTimeMillis();
         PositionState positionState = new PositionState(18);
         try {
-            Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, positionState, true);
+            Search.MoveValue result = Search.negamax(Search.NEG_INFINITY, Search.POS_INFINITY, depth, position, positionState, true, 0);
             long end = System.currentTimeMillis();
             long elapsed = end - start;
 

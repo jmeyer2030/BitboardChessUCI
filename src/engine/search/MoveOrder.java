@@ -16,10 +16,10 @@ public class MoveOrder {
      * @param firstMove    the start of the move-window in the table
      * @param firstNonMove the first non-move after the window
      */
-    public static void scoreMoves(Position position, PositionState positionState, int firstMove, int firstNonMove) {
+    public static void scoreMoves(Position position, PositionState positionState, int firstMove, int firstNonMove, int ply) {
         // Iterate over moves in the window
         for (int i = firstMove; i < firstNonMove; i++) {
-            positionState.moveScores[i] = scoreMove(position, positionState, positionState.moveBuffer[i]);
+            positionState.moveScores[i] = scoreMove(position, positionState, positionState.moveBuffer[i], ply);
         }
     }
 
@@ -71,7 +71,7 @@ public class MoveOrder {
      * @param move        move to evaluate
      * @return score of the move
      */
-    private static int scoreMove(Position position, PositionState positionState, int move) {
+    private static int scoreMove(Position position, PositionState positionState, int move, int ply) { // int ply
         int value = 0;
 
         if (positionState.tt.checkedGetBestMove(position.zobristHash) != 0) {
@@ -85,6 +85,13 @@ public class MoveOrder {
         if (MoveEncoding.getIsCapture(move)) {
             value += 50_000 + evaluateExchange(move);
         } else {
+            if (move == positionState.killerMoves.killerMoves[0][ply]) {
+                value += 30_000;
+            } else if (move == positionState.killerMoves.killerMoves[1][ply]) {
+                value += 29_000;
+            }
+
+
             value += positionState.historyHeuristic.getHeuristic(move, position.activePlayer);
         }
 

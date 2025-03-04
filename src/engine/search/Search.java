@@ -51,7 +51,7 @@ public class Search {
 
         // Initialize search depth and search while time hasn't been exceeded
         int depth = 0;
-        while (depth < 1000) {
+        while (depth < 256) {
             depth++;
 
             // Create and submit search task
@@ -120,7 +120,7 @@ public class Search {
             try {
                 MoveValue result;
 
-                result = negamax(NEG_INFINITY, POS_INFINITY, i, position, positionState, true);
+                result = negamax(NEG_INFINITY, POS_INFINITY, i, position, positionState, true, 0);
 
                 String moveLAN = MoveEncoding.getLAN(result.bestMove);
                 System.out.println("Depth: " + i + " | Move: " + moveLAN + " | Value: " + result.value);
@@ -136,7 +136,7 @@ public class Search {
     private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
         return () -> {
             try {
-                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true);
+                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true, 0);
             } catch (InterruptedException e) {
                 System.out.println("Negamax was interrupted.");
                 throw e;
@@ -150,8 +150,9 @@ public class Search {
 
     /**
      * PVS Search
+     * @param ply the current ply we are on. The initial call to search is ply 0, then if we look at their children that would be ply 1.
      */
-    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, PositionState positionState, boolean isRoot)
+    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, PositionState positionState, boolean isRoot, int ply)
             throws InterruptedException, InvalidPositionException {
 
         // Check for signal to interrupt the search
@@ -205,7 +206,7 @@ public class Search {
                 depthLeft++;
             } else {
                 positionState.firstNonMove = firstMove;
-                return new MoveValue(quiescenceSearch(alpha, beta, position, positionState), 0);
+                return new MoveValue(quiescenceSearch(alpha, beta, position, positionState, ply + 1), 0);
             }
         }
 
@@ -226,7 +227,7 @@ public class Search {
             position.makeNullMove();
             int score;
             try {
-                score = -negamax(-beta, -beta + 1, depthLeft - reduction, position, positionState, false).value;
+                score = -negamax(-beta, -beta + 1, depthLeft - reduction, position, positionState, false, ply + 1).value;
             } finally {
                 position.unmakeNullMove();
             }
@@ -238,7 +239,7 @@ public class Search {
         }
 
         // Move order
-        MoveOrder.scoreMoves(position, positionState, firstMove, firstNonMove);
+        MoveOrder.scoreMoves(position, positionState, firstMove, firstNonMove, ply);
         MoveValue bestMoveValue = new MoveValue(Integer.MIN_VALUE, 0);
 
         // Search loop
@@ -260,14 +261,14 @@ public class Search {
             try {
                 if (i == firstMove) {
                     // Full window search for first move
-                    score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false).value;
+                    score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
                 } else {
                     // Else try to disprove that the pv is the best move with a null-window search
-                    score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false).value;
+                    score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
 
                     // If disproved, then re-search with full window
                     if (score > alpha && (beta - alpha > 1)) {
-                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false).value;
+                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
                     }
                 }
             } finally {
@@ -296,6 +297,15 @@ public class Search {
                 // If not a capture, add to history heuristic
                 int bonus = 300 * depthLeft - 250;
                 if (!MoveEncoding.getIsCapture(move)) {
+                    // Check that the killer move isn't the same
+                    //if (positionState.killerMoves.killerMoves[0][ply] != move) {
+                        // If not, add it. Else nothing.
+                        positionState.killerMoves.killerMoves[1][ply] = positionState.killerMoves.killerMoves[0][ply];
+                        positionState.killerMoves.killerMoves[0][ply] = move;
+                    //}
+
+
+
                     positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft, bonus);
                 }
 
@@ -325,7 +335,7 @@ public class Search {
         return bestMoveValue;
     }
 
-    public static int quiescenceSearch(int alpha, int beta, Position position, PositionState positionState) {
+    public static int quiescenceSearch(int alpha, int beta, Position position, PositionState positionState, int ply) {
         int standPat = position.nnue.computeOutput(position.activePlayer);
 
         int bestValue = standPat;
@@ -350,7 +360,7 @@ public class Search {
 
 
         // Move order
-        MoveOrder.scoreMoves(position, positionState, initialFirstNonMove, newFirstNonMove);
+        MoveOrder.scoreMoves(position, positionState, initialFirstNonMove, newFirstNonMove, ply);
 
         for (int i = initialFirstNonMove; i < newFirstNonMove; i++) {
             MoveOrder.bestMoveFirst(positionState, i, newFirstNonMove);
@@ -367,7 +377,7 @@ public class Search {
             // compute the score
             int score;
             try {
-                score = -quiescenceSearch(-beta, -alpha, position, positionState);
+                score = -quiescenceSearch(-beta, -alpha, position, positionState, ply + 1);
             } finally { // "close" the position
                 position.unMakeMove(move);
                 positionState.threeFoldTable.popPosition();
