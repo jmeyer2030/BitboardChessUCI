@@ -91,7 +91,6 @@ public class Search {
                 // reset firstNonMove since search timed out
                 positionState.firstNonMove = 0;
 
-
                 break; //Exit the search loop
             } catch (ExecutionException e) { // This should never happen so we throw an exception
                 System.out.println(e.getCause());
@@ -105,6 +104,29 @@ public class Search {
         }
 
         return searchResults.get(searchResults.size() - 1);
+    }
+
+    /**
+    * Generates a Callable task that runs negamax
+    * @param position negamax param
+    * @param depth negamax param
+    * @param positionState negamax param
+    *
+    * @return MoveValue callable
+    */
+    private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
+        return () -> {
+            try {
+                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true, 0);
+            } catch (InterruptedException e) {
+                System.out.println("Negamax was interrupted.");
+                throw e;
+            } catch (InvalidPositionException ipe) {
+                System.out.println("IPE caught at callable");
+                ipe.printStackTrace();
+                throw ipe;
+            }
+        };
     }
 
     /**
@@ -130,22 +152,6 @@ public class Search {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-
-    private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
-        return () -> {
-            try {
-                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true, 0);
-            } catch (InterruptedException e) {
-                System.out.println("Negamax was interrupted.");
-                throw e;
-            } catch (InvalidPositionException ipe) {
-                System.out.println("IPE caught at callable");
-                ipe.printStackTrace();
-                throw ipe;
-            }
-        };
     }
 
     /**
@@ -353,6 +359,11 @@ public class Search {
         return bestMoveValue;
     }
 
+
+    /**
+    *
+    *
+    */
     public static int quiescenceSearch(int alpha, int beta, Position position, PositionState positionState, int ply) {
         int standPat = position.nnue.computeOutput(position.activePlayer);
 
@@ -457,7 +468,12 @@ public class Search {
      * @param position position
      * @return if we can do NMP
      */
-    /*
+    public static boolean nmpConditionsMet(Position position) {
+        return !position.inCheck && (position.pieceCounts[0][1] + position.pieceCounts[1][1] != 0 || position.pieceCounts[0][2] + position.pieceCounts[1][2] != 0 || position.pieceCounts[0][3] + position.pieceCounts[1][3] != 0 || position.pieceCounts[0][4] + position.pieceCounts[1][4] != 0);
+    }
+}
+
+/*
     public static boolean nmpConditionsMet(Position position) {
         int color = position.activePlayer;
         if (position.inCheck || // If in check OR
@@ -469,10 +485,6 @@ public class Search {
         return true;
     }
     */
-    public static boolean nmpConditionsMet(Position position) {
-        return !position.inCheck && (position.pieceCounts[0][1] + position.pieceCounts[1][1] != 0 || position.pieceCounts[0][2] + position.pieceCounts[1][2] != 0 || position.pieceCounts[0][3] + position.pieceCounts[1][3] != 0 || position.pieceCounts[0][4] + position.pieceCounts[1][4] != 0);
-    }
-}
 
 
 /*

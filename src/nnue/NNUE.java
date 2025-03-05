@@ -1,6 +1,5 @@
 package nnue;
 
-import board.FEN;
 import board.Position;
 
 import java.io.IOException;
@@ -9,10 +8,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
-* Represents an Efficiently Updatable Neural Network
-*  - Contains and loads network weights and sizes
-*  - Instantiations contain Accumulators
-*/
+ * Represents an Efficiently Updatable Neural Network
+ * - Trained using Stock Fish training data using Bullet Lib
+ * <p>
+ * - Contains and loads network weights and sizes
+ * - Instantiations contain Accumulators, allow incremental updates, and output computation
+ */
 public class NNUE {
     private static final int INPUT_SIZE = 768;
     private static final int HIDDEN_LAYER_SIZE = 128;
@@ -31,37 +32,26 @@ public class NNUE {
     public int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
 
     /**
-    * Initializes weights and biases from quantised.bin on class load
-    */
+     * Initializes weights and biases from quantised.bin on class load
+     */
     static {
         loadNetworkFromBinary();
     }
 
     /**
-    * Creates the nn and fills it's accumulators
-    */
+     * Creates the nn and fills it's accumulators
+     */
     public NNUE(Position position) {
         fillAccumulators(position);
     }
 
-    public static void main(String[] args) {
-        FEN fen = new FEN("2Q5/8/8/8/8/6k1/8/4K3 w - - 0 1"); // WHITE WAY WINNING
-        //FEN fen = new FEN("2q5/8/8/8/8/6k1/8/4K3 w - - 0 1"); // BLACK WAY WINNING
-        //FEN fen = new FEN("8/8/3k4/8/8/3K4/8/8 w - - 0 1"); // ONLY KINGS
-        //FEN fen = new FEN("rnb1k2r/1pq1bppp/p2ppn2/6B1/3NPP2/2N2Q2/PPP3PP/2KR1B1R b kq - 4 9"); // Equal opening
-        //FEN fen = new FEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
-        //FEN fen = new FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"); // startpos
-        Position position = new Position(fen);
-        //Position position = new Position();
-        System.out.println(position.nnue.computeOutput(position.activePlayer));
-    }
-
     /**
-    * Adds a feature to the accumulators
-    * @param piece piece to add
-    * @param color color of the piece
-    * @param square square of the piece
-    */
+     * Adds a feature to the accumulators
+     *
+     * @param piece  piece to add
+     * @param color  color of the piece
+     * @param square square of the piece
+     */
     public void addFeature(int piece, int color, int square) {
         int whitePerspectiveVal = piece + (color == 0 ? 0 : 6); // If piece is white, 0-5
         int blackPerspectiveVal = piece + (color == 0 ? 6 : 0); // If piece is white, 6-11
@@ -78,8 +68,9 @@ public class NNUE {
 
     /**
      * Removes a feature to the accumulators
-     * @param piece piece to remove
-     * @param color color of the piece
+     *
+     * @param piece  piece to remove
+     * @param color  color of the piece
      * @param square square of the piece
      */
     public void removeFeature(int piece, int color, int square) {
@@ -96,9 +87,10 @@ public class NNUE {
     }
 
     /**
-    * Fills accumulators by iterating over pieces and adding them as features
-    * @param position to fill accumulators from
-    */
+     * Fills accumulators by iterating over pieces and adding them as features
+     *
+     * @param position to fill accumulators from
+     */
     public void fillAccumulators(Position position) {
         // First add biases
         for (int i = 0; i < 128; i++) {
@@ -124,10 +116,9 @@ public class NNUE {
     }
 
     /**
-    * Computes the output GIVEN that the accumulator states are already accurate
-    */
+     * Computes the output GIVEN that the accumulator states are already accurate
+     */
     public int computeOutput(int activePlayer) {
-        //int outputActivation = outputBias;
         int outputActivation = 0;
 
         for (int hiddenIndex = 0; hiddenIndex < HIDDEN_LAYER_SIZE; hiddenIndex++) {
@@ -147,17 +138,20 @@ public class NNUE {
     }
 
     /**
-    * squared clipped relu, binds a value between upper and lower bounds and squares it
-    * @param upperBound maximum value input value can be
-    */
+     * squared clipped relu, binds a value between upper and lower bounds and squares it
+     *
+     * @param upperBound maximum value input value can be
+     */
     public int screlu(int upperBound, int value) {
         int clipped = Math.min(Math.max(value, 0), upperBound);
         return clipped * clipped;
     }
 
     /**
-    * Retrieves the binary network data and returns it as a byte array
-    */
+     * Retrieves the binary network data and returns it as a short array
+     *
+     * @return shortArray of weights and biases of the network
+     */
     private static short[] getNetworkBytes() {
 
         byte[] dataAsByteArr;
@@ -185,11 +179,11 @@ public class NNUE {
     }
 
     /**
-    * Initializes network weights and biases
-    *
-    * Expected Data format:
-    * input weights -> input Biases -> hidden weights -> hidden biases -> Output bias -> padding
-    */
+     * Initializes network weights and biases
+     * <p>
+     * Expected Data format:
+     * input weights -> input Biases -> hidden weights -> hidden biases -> Output bias -> padding
+     */
     private static void loadNetworkFromBinary() {
         short[] nnShorts = getNetworkBytes();
 
@@ -214,7 +208,7 @@ public class NNUE {
         // Get output weights
         startShort += 128;
         for (int hlNeuron = 0; hlNeuron < 256; hlNeuron++) {
-            int byteIndex = startShort + hlNeuron ;
+            int byteIndex = startShort + hlNeuron;
             outputWeights[hlNeuron] = nnShorts[byteIndex];
         }
 

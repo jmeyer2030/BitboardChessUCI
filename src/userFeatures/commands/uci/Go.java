@@ -26,8 +26,8 @@ public class Go implements Command {
     }
 
     /**
-    * Executes the command
-    */
+     * Executes the command
+     */
     @Override
     public void execute(String[] arguments) {
         // Add arguments to fields
@@ -37,14 +37,13 @@ public class Go implements Command {
 
         // Reset fields to inital state
         this.startingParams();
-
-
     }
 
     /**
-    * Parses arguments so that they can be used for search
-    * @param arguments
-    */
+     * Parses arguments so that they can be used for search
+     *
+     * @param arguments from the input
+     */
     public void fillSearchTerms(String[] arguments) {
         String currentSubCommand = null;
         for (String argument : arguments) {
@@ -64,9 +63,9 @@ public class Go implements Command {
     }
 
     /**
-    * Resets internally stored command parameters
-    * For use on initialization and after command is executed
-    */
+     * Resets internally stored command parameters
+     * For use on initialization and after command is executed
+     */
     public void startingParams() {
         this.searchMoves = new LinkedList<String>();
         this.subCommands = new HashMap<String, String>();
@@ -86,8 +85,8 @@ public class Go implements Command {
     }
 
     /**
-    * Executes the search based on stored parameters
-    */
+     * Executes the search based on stored parameters
+     */
     public void executeSearch() {
         //chessEngine.positionState.firstNonMove = 0;
 

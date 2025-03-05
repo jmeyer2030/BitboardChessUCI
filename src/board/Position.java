@@ -93,7 +93,7 @@ public class Position {
 
         zobristHash = Hashing.computeZobrist(this);
 
-        pieceCounts = new int[][] {new int[] {8, 2, 2, 2, 1, 1}, new int[] {8, 2, 2, 2, 1, 1}};
+        pieceCounts = new int[][]{new int[]{8, 2, 2, 2, 1, 1}, new int[]{8, 2, 2, 2, 1, 1}};
         checkers = 0;
 
         this.nnue = new NNUE(this);
@@ -121,7 +121,7 @@ public class Position {
 
         this.pinnedPieces = Arrays.copyOf(position.pinnedPieces, 64);
 
-        this.pieceCounts = new int[][] {Arrays.copyOf(position.pieceCounts[0], 6), Arrays.copyOf(position.pieceCounts[1], 6)};
+        this.pieceCounts = new int[][]{Arrays.copyOf(position.pieceCounts[0], 6), Arrays.copyOf(position.pieceCounts[1], 6)};
         this.checkers = position.checkers;
 
         this.nnue = new NNUE(this);
@@ -131,7 +131,7 @@ public class Position {
      * Build from FEN
      */
     public Position(FEN fen) {
-        pieceCounts = new int[][] {new int[6], new int[6]};
+        pieceCounts = new int[][]{new int[6], new int[6]};
 
         pinnedPieces = new int[64];
         Arrays.fill(pinnedPieces, -1);
@@ -286,12 +286,13 @@ public class Position {
 
     /**
      * Removes a piece Updating:
-     *   - zobrist has
-     *   - occupancy, piece colors, pieceCounts, and pieces
-     *   - NNUE feature
-     * @param square to remove the piece
+     * - zobrist has
+     * - occupancy, piece colors, pieceCounts, and pieces
+     * - NNUE feature
+     *
+     * @param square    to remove the piece
      * @param pieceType of the piece
-     * @param color of the removed piece
+     * @param color     of the removed piece
      */
     private void removePiece(int square, int pieceType, int color) {
         this.zobristHash ^= Hashing.pieceSquare[square][color][pieceType];
@@ -304,14 +305,15 @@ public class Position {
     }
 
     /**
-    * Adds a piece Updating:
-    *   - zobrist has
-    *   - occupancy, piece colors, pieceCounts, and pieces
-    *   - NNUE feature
-    * @param square of the piece
-    * @param pieceType of the piece
-    * @param color of the piece
-    */
+     * Adds a piece Updating:
+     * - zobrist has
+     * - occupancy, piece colors, pieceCounts, and pieces
+     * - NNUE feature
+     *
+     * @param square    of the piece
+     * @param pieceType of the piece
+     * @param color     of the piece
+     */
     private void addPiece(int square, int pieceType, int color) {
         this.zobristHash ^= Hashing.pieceSquare[square][color][pieceType];
         this.occupancy |= (1L << square);
@@ -323,8 +325,8 @@ public class Position {
     }
 
     /**
-    * Makes a passing move and updates related fields
-    */
+     * Makes a passing move and updates related fields
+     */
     public void makeNullMove() {
         // Push stored things
         hmcStack.push(this.halfMoveCount);
@@ -354,8 +356,8 @@ public class Position {
     }
 
     /**
-    * Unmakes a passing move and updates related fields
-    */
+     * Unmakes a passing move and updates related fields
+     */
     public void unmakeNullMove() {
         // Switch active player
         this.activePlayer = 1 - activePlayer;
@@ -489,17 +491,8 @@ public class Position {
         this.zobristHash ^= Hashing.sideToMove[activePlayer];
         this.zobristHash ^= Hashing.castleRights[castleRights];
 
-        /*
-        try {
-            validPosition();
-        } catch (InvalidPositionException ipe) {
-            throw new IllegalStateException();
-        }
-        */
-
         this.checkers = MoveGenerator.computeCheckers(this);
         this.inCheck = Long.numberOfTrailingZeros(checkers) == 64 ? false : true;
-
     }
 
     /**

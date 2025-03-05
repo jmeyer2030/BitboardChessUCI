@@ -12,6 +12,7 @@ Represents the internally stored position/state of a chess engine:
     tt
     three-fold
     moveBuffer
+    killer moves
 */
 public class PositionState {
     public Position position;

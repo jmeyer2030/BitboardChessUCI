@@ -12,9 +12,9 @@ public class MoveOrder {
     /**
      * Assigns scores to moves in the corresponding positionState.moveScores
      *
-     * @param positionState  source of move tables
-     * @param firstMove    the start of the move-window in the table
-     * @param firstNonMove the first non-move after the window
+     * @param positionState source of move tables
+     * @param firstMove     the start of the move-window in the table
+     * @param firstNonMove  the first non-move after the window
      */
     public static void scoreMoves(Position position, PositionState positionState, int firstMove, int firstNonMove, int ply) {
         // Iterate over moves in the window
@@ -28,9 +28,9 @@ public class MoveOrder {
      * - Finding the move with the highest value within the window
      * - Swapping its location with the first element in the window
      *
-     * @param positionState  used to access moveBuffer and moveScores
-     * @param firstMove    the first move to start our search
-     * @param firstNonMove the element after the last move to search
+     * @param positionState used to access moveBuffer and moveScores
+     * @param firstMove     the first move to start our search
+     * @param firstNonMove  the element after the last move to search
      */
     public static void bestMoveFirst(PositionState positionState, int firstMove, int firstNonMove) {
         // Initialize to first move, so that we are safe if firstMove == firstNonMove
@@ -62,16 +62,17 @@ public class MoveOrder {
      * - Promotions
      * - Winning captures
      * - Neutral captures
-     * - @Todo: KILLER MOVES
+     * - KILLER MOVES
      * - Quiet moves
      * - Losing captures
      *
-     * @param position    used just for the hash
+     * @param position      used just for the hash
      * @param positionState used for the tt
-     * @param move        move to evaluate
+     * @param move          move to evaluate
+     * @param ply           current ply in the search
      * @return score of the move
      */
-    private static int scoreMove(Position position, PositionState positionState, int move, int ply) { // int ply
+    private static int scoreMove(Position position, PositionState positionState, int move, int ply) {
         int value = 0;
 
         if (positionState.tt.checkedGetBestMove(position.zobristHash) != 0) {
@@ -91,10 +92,8 @@ public class MoveOrder {
                 value += 29_000;
             }
 
-
             value += positionState.historyHeuristic.getHeuristic(move, position.activePlayer);
         }
-
 
         return value;
     }
