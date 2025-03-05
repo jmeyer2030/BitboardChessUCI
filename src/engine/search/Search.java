@@ -150,6 +150,7 @@ public class Search {
 
     /**
      * PVS Search
+     *
      * @param ply the current ply we are on. The initial call to search is ply 0, then if we look at their children that would be ply 1.
      */
     public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, PositionState positionState, boolean isRoot, int ply)
@@ -253,6 +254,8 @@ public class Search {
             MoveOrder.bestMoveFirst(positionState, i, firstNonMove);
             int move = positionState.moveBuffer[i];
 
+            boolean wasInCheck = position.inCheck;
+
             // "open" the position
             position.makeMove(move);
             positionState.threeFoldTable.addPosition(position.zobristHash, move);
@@ -264,7 +267,23 @@ public class Search {
                     score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
                 } else {
                     // Else try to disprove that the pv is the best move with a null-window search
-                    score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
+                    // Use late move reduction on non-pv moves
+                    int numFullSearches = 4; // non-PV full searches
+                    int reduction = 1;
+                    if (i < firstMove + numFullSearches || // If move is within the first numFullSearches
+                            depthLeft <= 3 || // If low depth left
+                            move == positionState.killerMoves.killerMoves[0][ply] || move == positionState.killerMoves.killerMoves[1][ply] || // Move is a killer
+                            position.inCheck || wasInCheck) { // In check or causes a check
+
+                        // Run full search
+                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
+                    } else { // Reduce search
+                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1 - reduction, position, positionState, false, ply + 1).value;
+
+                        if (score >= beta) { // If search fails high, research at full depth
+                            score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
+                        }
+                    }
 
                     // If disproved, then re-search with full window
                     if (score > alpha && (beta - alpha > 1)) {
@@ -298,12 +317,11 @@ public class Search {
                 int bonus = 300 * depthLeft - 250;
                 if (!MoveEncoding.getIsCapture(move)) {
                     // Check that the killer move isn't the same
-                    //if (positionState.killerMoves.killerMoves[0][ply] != move) {
+                    if (positionState.killerMoves.killerMoves[0][ply] != move) {
                         // If not, add it. Else nothing.
                         positionState.killerMoves.killerMoves[1][ply] = positionState.killerMoves.killerMoves[0][ply];
                         positionState.killerMoves.killerMoves[0][ply] = move;
-                    //}
-
+                    }
 
 
                     positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft, bonus);
@@ -451,7 +469,6 @@ public class Search {
         return true;
     }
     */
-
     public static boolean nmpConditionsMet(Position position) {
         return !position.inCheck && (position.pieceCounts[0][1] + position.pieceCounts[1][1] != 0 || position.pieceCounts[0][2] + position.pieceCounts[1][2] != 0 || position.pieceCounts[0][3] + position.pieceCounts[1][3] != 0 || position.pieceCounts[0][4] + position.pieceCounts[1][4] != 0);
     }
