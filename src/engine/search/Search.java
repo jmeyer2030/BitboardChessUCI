@@ -258,6 +258,9 @@ public class Search {
 
             // Selection sort and get move
             MoveOrder.bestMoveFirst(positionState, i, firstNonMove);
+
+
+
             int move = positionState.moveBuffer[i];
 
             boolean wasInCheck = position.inCheck;
@@ -395,7 +398,9 @@ public class Search {
             MoveOrder.bestMoveFirst(positionState, i, newFirstNonMove);
             int move = positionState.moveBuffer[i];
 
-            if (!MoveEncoding.getIsCapture(move))
+
+            // If not capture or SEE evaluation is negative, prune
+            if (!MoveEncoding.getIsCapture(move) || positionState.moveScores[i] - 50_000 < 0)
                 continue;
 
 

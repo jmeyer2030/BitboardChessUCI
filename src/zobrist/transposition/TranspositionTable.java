@@ -2,10 +2,7 @@ package zobrist.transposition;
 
 import engine.search.NodeType;
 /*
-THERE IS OFTEN OVERWRITING IN THE TRANSPOSITION TABLE:
-IF THERE IS A BUG, OR AN ENTRY ISN'T STORED AS EXPECTED,
-    - IT WAS PROBABLY OVERWRITTEN
-THIS IS OK
+Overwrites are relatively common. This is not an issue with the tt or hashing, just a reality of how hashing works.
 */
 public class TranspositionTable {
     private final long indexMask;

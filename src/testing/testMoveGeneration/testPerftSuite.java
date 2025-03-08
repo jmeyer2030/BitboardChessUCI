@@ -7,7 +7,6 @@ import testing.Perft;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

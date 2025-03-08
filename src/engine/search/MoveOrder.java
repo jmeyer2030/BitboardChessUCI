@@ -62,9 +62,9 @@ public class MoveOrder {
      * - Promotions
      * - Winning captures
      * - Neutral captures
+     * - Losing captures
      * - KILLER MOVES
      * - Quiet moves
-     * - Losing captures
      *
      * @param position      used just for the hash
      * @param positionState used for the tt
@@ -75,7 +75,7 @@ public class MoveOrder {
     private static int scoreMove(Position position, PositionState positionState, int move, int ply) {
         int value = 0;
 
-        if (positionState.tt.checkedGetBestMove(position.zobristHash) != 0) {
+        if (positionState.tt.checkedGetBestMove(position.zobristHash) == move) {
             value += 1_000_000;
         }
 
@@ -84,7 +84,7 @@ public class MoveOrder {
         }
 
         if (MoveEncoding.getIsCapture(move)) {
-            value += 50_000 + evaluateExchange(move);
+            value += 50_000 + SEE.see(move, position);
         } else {
             if (move == positionState.killerMoves.killerMoves[0][ply]) {
                 value += 30_000;

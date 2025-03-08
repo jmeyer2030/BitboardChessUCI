@@ -2,8 +2,8 @@ package board;
 
 import moveGeneration.MoveGenerator;
 import nnue.NNUE;
-import testing.testMoveGeneration.Testing;
 import customExceptions.InvalidPositionException;
+import testing.testMoveGeneration.Testing;
 import zobrist.Hashing;
 
 import java.util.Arrays;
@@ -16,10 +16,12 @@ import java.util.Stack;
  */
 public class Position {
 
+    // Stores information that could be lost when making a move so that it can be recovered in unmake
     public Stack<Integer> hmcStack;
     public Stack<Integer> epStack;
     public Stack<Byte> castleRightsStack;
 
+    // Castling related locations and masks
     public static int[][] castleRookStarts = new int[][]{{7, 0}, {63, 56}}; // [activePlayer][castleSide] [0][0] is white king
     public static int[][] castleRookDestinations = new int[][]{{5, 3}, {61, 59}}; // [activePlayer][castleSide] [0][0] is white king
     public static byte[] castleRightsMask = new byte[]{0b0000_0011, 0b0000_1100}; //[activePlayer] is mask to remove rights of active player

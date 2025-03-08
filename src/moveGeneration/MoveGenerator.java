@@ -1,6 +1,7 @@
 package moveGeneration;
 
 import board.*;
+
 import java.util.Arrays;
 
 public class MoveGenerator {
@@ -85,8 +86,8 @@ public class MoveGenerator {
      * Generates a bitboard representing the locations of checkers of the active player's king
      */
     public static long computeCheckers(Position position) {
-        int kingSquare = position.kingLocs[position.activePlayer];
 
+        int kingSquare = position.kingLocs[position.activePlayer];
         // Get intersections of attacks from king and enemy pieces of the correct type
         long pawnAttacks = PawnLogic.getAttackBoard(kingSquare, position.activePlayer) & position.pieces[0] & position.pieceColors[1 - position.activePlayer];
         long knightAttacks = KnightLogic.getAttackBoard(kingSquare, position) & position.pieces[1] & position.pieceColors[1 - position.activePlayer];
@@ -94,6 +95,26 @@ public class MoveGenerator {
         long rookAttacks = RookLogic.getAttackBoard(kingSquare, position.occupancy) & (position.pieces[3] | position.pieces[4]) & position.pieceColors[1 - position.activePlayer];
 
         return pawnAttacks | knightAttacks | bishopAttacks | rookAttacks;
+    }
+
+    /**
+     * Generates a bitboard representing the locations of attackers of a square.
+     *
+     * @param position      position to check
+     * @param square        to check for attackers
+     * @return bitboard representing pieces of attackerColor that are attacking square in position
+     */
+    public static long getSEEAttackers(Position position, int square) {
+
+        // Get intersections of attacks from king and enemy pieces of the correct type
+        long pawnAttacks = PawnLogic.getAttackBoard(square, 0) & position.pieces[0] & position.pieceColors[1];
+        pawnAttacks |= PawnLogic.getAttackBoard(square, 1) & position.pieces[0] & position.pieceColors[0];
+        long knightAttacks = KnightLogic.getAttackBoard(square, position) & position.pieces[1];
+        long bishopAttacks = BishopLogic.getAttackBoard(square, position.occupancy) & (position.pieces[2] | position.pieces[4]);
+        long rookAttacks = RookLogic.getAttackBoard(square, position.occupancy) & (position.pieces[3] | position.pieces[4]);
+        long kingAttacks = KingLogic.getKingAttacks(square);
+
+        return pawnAttacks | knightAttacks | bishopAttacks | rookAttacks | kingAttacks;
     }
 
     /**
