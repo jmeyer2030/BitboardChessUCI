@@ -15,7 +15,7 @@ import static testing.testMoveGeneration.testPerftSuite.getFEN;
 *  - Searches over a suite of positions to depth 9, printing results and time
 *
 * NOTE: Search depth is not a metric of engine performance, over aggressive pruning will be quick but have poor results
-*  - Use only to verify expectations of search speedup and accuracy
+*  - Use only to verify expectations of search speedup and rough functionality
 */
 public class testSearchSuite {
     @Test

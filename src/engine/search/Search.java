@@ -399,10 +399,22 @@ public class Search {
             int move = positionState.moveBuffer[i];
 
 
-            // If not capture or SEE evaluation is negative, prune
-            if (!MoveEncoding.getIsCapture(move) || positionState.moveScores[i] - 50_000 < 0)
+            // If not capture
+            if (!MoveEncoding.getIsCapture(move)) {
                 continue;
+            }
 
+            // If SEE evaluation is negative and not in check
+            /*
+            if (!position.inCheck && positionState.moveScores[i] - 50_000 + 200 < 0) {
+                continue;
+            }
+            */
+            /*
+            if (!position.inCheck && SEE.see(move, position) + 200 < 0) {
+                continue;
+            }
+            */
 
             // "open" the position
             position.makeMove(move);

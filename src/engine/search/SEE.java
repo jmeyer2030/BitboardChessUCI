@@ -7,8 +7,6 @@ import moveGeneration.BishopLogic;
 import moveGeneration.MoveGenerator;
 import moveGeneration.RookLogic;
 
-import java.util.Arrays;
-
 /**
 * Static Exchange Evaluation:
 * Evaluates the material change after a sequence of captures on a given square
@@ -32,11 +30,11 @@ public class SEE {
     }
 
 
-
     public record pieceTypeAndBitboard(long bitboard, int pieceType) {};
 
-
     public static final int[] value = {100, 325, 325, 500, 1000, Integer.MAX_VALUE - 100_000};
+
+    // Pre-initialized gain array (perhaps saves some time allocating memory)
     public static final int[] gain = new int[32];
 
     /**

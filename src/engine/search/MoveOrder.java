@@ -4,6 +4,8 @@ import board.MoveEncoding;
 import board.Position;
 import board.PositionState;
 
+import java.time.chrono.JapaneseChronology;
+
 public class MoveOrder {
 
     // Rough piece values used for MVV-LVA
@@ -84,6 +86,8 @@ public class MoveOrder {
         }
 
         if (MoveEncoding.getIsCapture(move)) {
+            //value += 50_000 + mvvlva(move);
+            //value += 50_000 + evaluateExchange(move, position);
             value += 50_000 + SEE.see(move, position);
         } else {
             if (move == positionState.killerMoves.killerMoves[0][ply]) {
@@ -104,9 +108,26 @@ public class MoveOrder {
      * @param move
      * @return exchange evaluation
      */
-    private static int evaluateExchange(int move) {
+    private static int mvvlva(int move) {
         return pieceValues[MoveEncoding.getCapturedPiece(move)] - pieceValues[MoveEncoding.getMovedPiece(move)];
     }
 
+
+    /**
+    * For winning captures, just return MVVLVA
+    * For losing captures, return SEE
+    *
+    * @param move to score
+    * @param position the move is made on
+    */
+    private static int evaluateExchange(int move, Position position) {
+        int mvvlvaScore = mvvlva(move);
+
+        if (mvvlvaScore > 0) {
+            return mvvlvaScore;
+        } else {
+            return SEE.see(move, position);
+        }
+    }
 
 }
