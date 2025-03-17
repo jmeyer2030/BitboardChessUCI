@@ -9,6 +9,7 @@ import board.PositionState;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
 import zobrist.ThreeFoldTable;
+import engine.search.Quiesce;
 
 import java.util.List;
 
@@ -18,6 +19,12 @@ public class Search {
     // Values representing very high scores minimizing risk of over/underflow
     public static final int POS_INFINITY = 100_000_000;
     public static final int NEG_INFINITY = -100_000_000;
+
+    public static final int MATED_VALUE = 90_000_000;
+    public static final int MATED_SCORE = 80_000_000;
+
+    public static final int[] futilityMargin = {0, 200, 500, 900};
+    //public static final int[] futilityMargin = {0, 200, 300, 500};
 
     /**
      * Class representing a move and evaluation
@@ -51,7 +58,8 @@ public class Search {
 
         // Initialize search depth and search while time hasn't been exceeded
         int depth = 0;
-        while (depth < 256) {
+        int maxDepth = 256;
+        while (depth < maxDepth) {
             depth++;
 
             // Create and submit search task
@@ -70,9 +78,15 @@ public class Search {
                         MoveEncoding.getLAN(searchResults.getLast().bestMove)
                         + " score cp " + searchResults.getLast().value);
 
-                // Stop searching if mate
-                if (Math.abs(searchResults.getLast().value) >= (POS_INFINITY - 1000))
-                    return searchResults.getLast();
+                // If mate found, only search with 3 higher depth
+                if (Math.abs(searchResults.getLast().value) >= (MATED_SCORE) && searchResults.size() >= 3) {
+                    int size = searchResults.size();
+                    int lastValue = searchResults.get(size - 1).value;
+                    int secondValue = searchResults.get(size - 2).value;
+                    int thirdValue = searchResults.get(size - 3).value;
+                    if (lastValue == secondValue && secondValue == thirdValue)
+                        break;
+                }
 
             } catch (TimeoutException te) {
                 System.out.println("Function timed out!");
@@ -107,17 +121,17 @@ public class Search {
     }
 
     /**
-    * Generates a Callable task that runs negamax
-    * @param position negamax param
-    * @param depth negamax param
-    * @param positionState negamax param
-    *
-    * @return MoveValue callable
-    */
+     * Generates a Callable task that runs negamax
+     *
+     * @param position      negamax param
+     * @param depth         negamax param
+     * @param positionState negamax param
+     * @return MoveValue callable
+     */
     private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
         return () -> {
             try {
-                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true, 0);
+                return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true, 0, false);
             } catch (InterruptedException e) {
                 System.out.println("Negamax was interrupted.");
                 throw e;
@@ -142,7 +156,7 @@ public class Search {
             try {
                 MoveValue result;
 
-                result = negamax(NEG_INFINITY, POS_INFINITY, i, position, positionState, true, 0);
+                result = negamax(NEG_INFINITY, POS_INFINITY, i, position, positionState, true, 0, false);
 
                 String moveLAN = MoveEncoding.getLAN(result.bestMove);
                 System.out.println("Depth: " + i + " | Move: " + moveLAN + " | Value: " + result.value);
@@ -157,9 +171,17 @@ public class Search {
     /**
      * PVS Search
      *
-     * @param ply the current ply we are on. The initial call to search is ply 0, then if we look at their children that would be ply 1.
+     * @param alpha         the score that the active player is guaranteed in another branch
+     * @param beta          the score the non-active player is guaranteed in another branch
+     * @param depthLeft     the depth left in the current search
+     * @param position      the position to search
+     * @param positionState the state of the position/search
+     * @param isRoot        if this call is the root
+     * @param ply           the current ply we are on. The initial call to search is ply 0, then if we look at their children that would be ply 1.
+     * @param isPV          if the current node is the principle variation
+     * @return moveValue the best move and it's associated score
      */
-    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, PositionState positionState, boolean isRoot, int ply)
+    public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, PositionState positionState, boolean isRoot, int ply, boolean isPV)
             throws InterruptedException, InvalidPositionException {
 
         // Check for signal to interrupt the search
@@ -180,61 +202,70 @@ public class Search {
         if (!isRoot && gameOver(numMoves, position, positionState.threeFoldTable)) { // if root, we shouldn't check for game end
             positionState.firstNonMove = firstMove;
             if (position.inCheck && numMoves == 0) { // Checkmate IF in check AND no moves (otherwise could be repetition)
-                return new MoveValue(NEG_INFINITY, 0);
+                return new MoveValue(-(MATED_VALUE - ply), 0);
             } else {
                 return new MoveValue(0, 0);
             }
         }
 
         // Check transposition table
+        int eval = 0; // If tt, save eval for use in RFP
+        boolean foundTTScore = false;
         if (positionState.tt != null && positionState.tt.elementIsUseful(position.zobristHash, depthLeft)) {
-            int score = positionState.tt.getScore(position.zobristHash);
+            foundTTScore = true;
+            eval = positionState.tt.getScore(position.zobristHash);
             int nodeType = positionState.tt.getNodeType(position.zobristHash);
             int bestMove = positionState.tt.getBestMove(position.zobristHash);
 
+            eval = scoreFromTT(eval, ply);
+
             if (nodeType == 0) { // Exact
                 positionState.firstNonMove = firstMove;
-                return new MoveValue(score, bestMove);
+                return new MoveValue(eval, bestMove);
             } else if (nodeType == 1) { // Lower bound
-                alpha = Math.max(alpha, score);
+                alpha = Math.max(alpha, eval);
             } else { // Upper bound
-                beta = Math.min(beta, score);
+                beta = Math.min(beta, eval);
             }
 
-            if (alpha > beta) {
+            if (alpha >= beta) {
                 positionState.firstNonMove = firstMove;
-                return new MoveValue(score, bestMove);
+                return new MoveValue(eval, bestMove);
             }
         }
 
-        // Check if search depth reached
+        // Check if search depth reached (consider check extensions?)
         if (depthLeft == 0) {
-            if (position.inCheck) {
-                depthLeft++;
-            } else {
-                positionState.firstNonMove = firstMove;
-                return new MoveValue(quiescenceSearch(alpha, beta, position, positionState, ply + 1), 0);
-            }
+            positionState.firstNonMove = firstMove;
+
+            //return new MoveValue(position.nnue.computeOutput(position.activePlayer), 0);
+            return new MoveValue(Quiesce.quiescenceSearch(alpha, beta, position, positionState, ply + 1), 0);
         }
 
-        // Futility Pruning
-        int eval = position.nnue.computeOutput(position.activePlayer);
-        int margin = 150 * depthLeft;
+        if (!foundTTScore) {
+            eval = position.nnue.computeOutput(position.activePlayer);
+        }
 
-        if (!isRoot && eval >= beta + margin && fpConditionsMet(position, positionState)) { // First check easy exits
+        // Reverse Futility Pruning
+        int margin = 150 * depthLeft;
+        // If not root, eval is so good that it and a margin is better than beta
+        // If opponent is getting mated, don't reduce so we can find quicker mates
+
+        if (!isRoot && eval >= beta + margin && !position.inCheck && !isPV && beta > -MATED_SCORE) {
             positionState.firstNonMove = firstMove;
             return new MoveValue(eval, 0);
         }
 
+
         // Null Move Pruning
-        //boolean isNullWindow = (alpha == beta - 1);
+        //if (!isRoot && depthLeft >= 3 && eval >= beta && !position.inCheck && numMoves >= 7) {
         if (!isRoot && depthLeft >= 3 && eval >= beta && nmpConditionsMet(position)) {
             // Plys fewer to search
             int reduction = 3;
             position.makeNullMove();
             int score;
             try {
-                score = -negamax(-beta, -beta + 1, depthLeft - reduction, position, positionState, false, ply + 1).value;
+                score = -negamax(-beta, -beta + 1, depthLeft - reduction, position, positionState, false, ply + 1, false).value;
             } finally {
                 position.unmakeNullMove();
             }
@@ -244,6 +275,13 @@ public class Search {
                 return new MoveValue(score, 0); // Proposed change return score instead of beta
             }
         }
+
+        // Check if we can use futility pruning (low depth, not pv, not in check, not looking for mate, quiet move unlikely to increase alpha)
+        boolean useFutilityPruning = false;
+        if (depthLeft <= 3 && !isPV && !position.inCheck && Math.abs(alpha) < MATED_SCORE && eval + futilityMargin[depthLeft] <= alpha) {
+            useFutilityPruning = true;
+        }
+
 
         // Move order
         MoveOrder.scoreMoves(position, positionState, firstMove, firstNonMove, ply);
@@ -259,21 +297,35 @@ public class Search {
             // Selection sort and get move
             MoveOrder.bestMoveFirst(positionState, i, firstNonMove);
 
-
-
             int move = positionState.moveBuffer[i];
 
+
+            // Store if we were in check to see if we can reduce later
             boolean wasInCheck = position.inCheck;
+
 
             // "open" the position
             position.makeMove(move);
             positionState.threeFoldTable.addPosition(position.zobristHash, move);
 
+
+            if (useFutilityPruning && // Set to use fp
+                    i != firstMove && // Not the pv move
+                    !MoveEncoding.getIsCapture(move) && // not a capture (possible to increase alpha)
+                    !MoveEncoding.getIsPromotion(move) && // not a promotion
+                    !position.inCheck) { // not a check
+                // Close the position
+                positionState.threeFoldTable.popPosition();
+                position.unMakeMove(move);
+                continue;
+            }
+
+
             int score;
             try {
                 if (i == firstMove) {
                     // Full window search for first move
-                    score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
+                    score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, true).value;
                 } else {
                     // Else try to disprove that the pv is the best move with a null-window search
                     // Use late move reduction on non-pv moves
@@ -285,30 +337,24 @@ public class Search {
                             position.inCheck || wasInCheck) { // In check or causes a check
 
                         // Run full search
-                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
+                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value;
                     } else { // Reduce search
-                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1 - reduction, position, positionState, false, ply + 1).value;
+                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1 - reduction, position, positionState, false, ply + 1, false).value;
 
                         if (score >= beta) { // If search fails high, research at full depth
-                            score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
+                            score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value;
                         }
                     }
 
                     // If disproved, then re-search with full window
                     if (score > alpha && (beta - alpha > 1)) {
-                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1).value;
+                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value;
                     }
                 }
             } finally {
                 // Close the position
                 positionState.threeFoldTable.popPosition();
                 position.unMakeMove(move);
-            }
-
-            if (score > 99_000_000) { // If score evaluates to a mate for us, decrement since that evaluation is on next ply
-                score = score - 1;
-            } else if (score < -99_000_000) { // If score is mate for them, increment since its on next ply
-                score = score + 1;
             }
 
             // Update best move when score is better
@@ -322,22 +368,28 @@ public class Search {
                 // Update alpha
                 alpha = score;
 
-                // If not a capture, add to history heuristic
-                int bonus = 300 * depthLeft - 250;
-                if (!MoveEncoding.getIsCapture(move)) {
-                    // Check that the killer move isn't the same
-                    if (positionState.killerMoves.killerMoves[0][ply] != move) {
-                        // If not, add it. Else nothing.
-                        positionState.killerMoves.killerMoves[1][ply] = positionState.killerMoves.killerMoves[0][ply];
-                        positionState.killerMoves.killerMoves[0][ply] = move;
-                    }
-
-
-                    positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft, bonus);
-                }
 
                 // Prune when alpha >= beta because the opponent wouldn't make a move that gets here
                 if (alpha >= beta) {
+                    // If not a capture, add to history heuristic
+                    if (!MoveEncoding.getIsCapture(move)) {
+                        // Check that the killer move isn't the same
+                        if (positionState.killerMoves.killerMoves[0][ply] != move) {
+                            // If not, add it. Else nothing.
+                            positionState.killerMoves.killerMoves[1][ply] = positionState.killerMoves.killerMoves[0][ply];
+                            positionState.killerMoves.killerMoves[0][ply] = move;
+                        }
+
+                        int bonus = 300 * depthLeft - 250;
+                        positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft, bonus);
+
+                        // For each other quiet searched, penalize
+                        for (int j = firstMove; j < i; j++) {
+                            if (!MoveEncoding.getIsCapture(positionState.moveBuffer[j]))
+                                positionState.historyHeuristic.addMove(position.activePlayer, positionState.moveBuffer[j], depthLeft, -bonus);
+                        }
+                    }
+
                     break;
                 }
             }
@@ -348,6 +400,10 @@ public class Search {
 
         if (positionState.tt != null && bestMoveValue.bestMove != 0) {
             NodeType nodeType;
+
+            // Adjust for whatever ply we're on (if mate)
+            int ttValue = scoreToTT(bestMoveValue.value, ply);
+
             if (bestMoveValue.value <= alphaOrig) { // Failed to find a better move (than is known to exist with alpha), so the value is AT MAXIMUM score
                 nodeType = NodeType.UPPER_BOUND;
             } else if (bestMoveValue.value >= beta) { // The value is greater than beta, so an opponent would PRUNE it, but the value is at LEAST score
@@ -356,92 +412,12 @@ public class Search {
                 nodeType = NodeType.EXACT;
             }
 
-            positionState.tt.addElement(position.zobristHash, bestMoveValue.bestMove, depthLeft, bestMoveValue.value, nodeType);
+            positionState.tt.addElement(position.zobristHash, bestMoveValue.bestMove, depthLeft, ttValue, nodeType);
         }
 
         return bestMoveValue;
     }
 
-
-    /**
-    *
-    *
-    */
-    public static int quiescenceSearch(int alpha, int beta, Position position, PositionState positionState, int ply) {
-        int standPat = position.nnue.computeOutput(position.activePlayer);
-
-        int bestValue = standPat;
-
-        if (standPat >= beta)
-            return bestValue;
-
-        if (alpha < standPat)
-            alpha = standPat;
-
-
-        // Generate moves
-        int initialFirstNonMove = positionState.firstNonMove;
-        int newFirstNonMove = MoveGenerator.generateAllMoves(position, positionState.moveBuffer, positionState.firstNonMove);
-        positionState.firstNonMove = newFirstNonMove;
-
-        // look for checkmate
-        int numMoves = newFirstNonMove - initialFirstNonMove;
-        if (numMoves == 0 && position.inCheck) {
-            return NEG_INFINITY;
-        }
-
-
-        // Move order
-        MoveOrder.scoreMoves(position, positionState, initialFirstNonMove, newFirstNonMove, ply);
-
-        for (int i = initialFirstNonMove; i < newFirstNonMove; i++) {
-            MoveOrder.bestMoveFirst(positionState, i, newFirstNonMove);
-            int move = positionState.moveBuffer[i];
-
-
-            // If not capture
-            if (!MoveEncoding.getIsCapture(move)) {
-                continue;
-            }
-
-            // If SEE evaluation is negative and not in check
-            /*
-            if (!position.inCheck && positionState.moveScores[i] - 50_000 + 200 < 0) {
-                continue;
-            }
-            */
-            /*
-            if (!position.inCheck && SEE.see(move, position) + 200 < 0) {
-                continue;
-            }
-            */
-
-            // "open" the position
-            position.makeMove(move);
-            positionState.threeFoldTable.addPosition(position.zobristHash, move);
-
-            // compute the score
-            int score;
-            try {
-                score = -quiescenceSearch(-beta, -alpha, position, positionState, ply + 1);
-            } finally { // "close" the position
-                position.unMakeMove(move);
-                positionState.threeFoldTable.popPosition();
-            }
-
-            bestValue = Math.max(bestValue, score);
-
-            alpha = Math.max(alpha, score);
-
-            if (alpha >= beta) {
-                positionState.firstNonMove = initialFirstNonMove;
-                return bestValue;
-            }
-        }
-
-        positionState.firstNonMove = initialFirstNonMove;
-        return bestValue;
-    }
 
     /**
      * Returns true if the game has ended.
@@ -462,47 +438,62 @@ public class Search {
     }
 
     /**
-     * Futility Pruning conditions NOT met if:
+     * Futility Pruning conditions NOT met if any apply:
      * - Position is in check
      * - TT move doesn't exist
+     * - PV node
      *
-     * @param position      position
-     * @param positionState positionState (for tt)
+     * @param position position
      * @return if we can do FP
      */
-    public static boolean fpConditionsMet(Position position, PositionState positionState) {
-        if (position.inCheck && // In Check
-                positionState.tt.getBestMove(position.zobristHash) == 0) // tt move dne
+    public static boolean fpConditionsMet(Position position, boolean isPV) {
+        if (position.inCheck ||
+                isPV)
             return false;
         return true;
     }
+    /*
+    public static boolean fpConditionsMet(Position position, PositionState positionState, int alpha, int beta) {
+        if (position.inCheck)  // In Check
+            return false;
+        return true;
+    }
+    */
 
     /**
-     * Null Move pruning conditions are NOT met if:
+     * Null Move pruning conditions are NOT met if any:
      * - position is in check
-     * - there are only kings and pawns
+     * - active player has only kings and pawns
+     * An alternative approach worth testing:
+     * - We can NMP iff legal moves >= 8 (8 is arbitrary, but suggests no zugzwang)
      *
      * @param position position
      * @return if we can do NMP
      */
     public static boolean nmpConditionsMet(Position position) {
-        return !position.inCheck && (position.pieceCounts[0][1] + position.pieceCounts[1][1] != 0 || position.pieceCounts[0][2] + position.pieceCounts[1][2] != 0 || position.pieceCounts[0][3] + position.pieceCounts[1][3] != 0 || position.pieceCounts[0][4] + position.pieceCounts[1][4] != 0);
-    }
-}
-
-/*
-    public static boolean nmpConditionsMet(Position position) {
         int color = position.activePlayer;
         if (position.inCheck || // If in check OR
-                (position.pieceCounts[color][1] + position.pieceCounts[color][2] + // Active player only has pawns
-                        position.pieceCounts[color][3] + position.pieceCounts[color][4]) == 0) {
+                (position.pieceCounts[color][1] == 0 && position.pieceCounts[color][2] == 0 && // STM no non-pawn pieces
+                        position.pieceCounts[color][3] == 0 && position.pieceCounts[color][4] == 0))
             return false;
-        }
-
         return true;
     }
-    */
 
+    public static int scoreToTT(int score, int ply) {
+        return (score > MATED_SCORE) ? score + ply : score < -MATED_SCORE ? score - ply : score;
+    }
+
+    public static int scoreFromTT(int score, int ply) {
+        return (score > MATED_SCORE) ? score - ply : score < -MATED_SCORE ? score + ply : score;
+    }
+
+}
+
+     /*
+    public static boolean nmpConditionsMet(Position position) {
+        return !position.inCheck && (position.pieceCounts[0][1] + position.pieceCounts[1][1] != 0 || position.pieceCounts[0][2] + position.pieceCounts[1][2] != 0 || position.pieceCounts[0][3] + position.pieceCounts[1][3] != 0 || position.pieceCounts[0][4] + position.pieceCounts[1][4] != 0);
+    }
+    */
 
 /*
     Aspiration window search for the getMoveValueCallable

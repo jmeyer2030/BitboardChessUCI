@@ -13,7 +13,7 @@ public class ChessEngine {
     public Logger logger;
 
     // Engine Information:
-    public final String ENGINE_NAME = "DriftWood 3.0";
+    public final String ENGINE_NAME = "DriftWood 4.21";
     public final String AUTHOR = "Joshua Meyer";
 
     // Engine Settings:

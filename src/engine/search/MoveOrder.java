@@ -87,8 +87,8 @@ public class MoveOrder {
 
         if (MoveEncoding.getIsCapture(move)) {
             //value += 50_000 + mvvlva(move);
-            //value += 50_000 + evaluateExchange(move, position);
-            value += 50_000 + SEE.see(move, position);
+            value += 50_000 + evaluateExchange(move, position);
+            //value += 50_000 + SEE.see(move, position);
         } else {
             if (move == positionState.killerMoves.killerMoves[0][ply]) {
                 value += 30_000;
