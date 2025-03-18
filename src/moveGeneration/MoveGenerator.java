@@ -100,8 +100,8 @@ public class MoveGenerator {
     /**
      * Generates a bitboard representing the locations of attackers of a square.
      *
-     * @param position      position to check
-     * @param square        to check for attackers
+     * @param position position to check
+     * @param square   to check for attackers
      * @return bitboard representing pieces of attackerColor that are attacking square in position
      */
     public static long getSEEAttackers(Position position, int square) {
@@ -414,8 +414,6 @@ public class MoveGenerator {
      * @param position position to generate moves for
      * @return Move list
      */
-
-
     private static int generateKingMoves(Position position, int[] moveBuffer, int firstNonMove, boolean inCheck) {
         long kingList = position.pieceColors[position.activePlayer] & position.pieces[5];
 

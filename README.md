@@ -1,14 +1,12 @@
 # DriftWood Chess Engine
 
 
-
-
 ## History:
 
 This project is the intersection of my interest in programming and chess. 
 I first learned about the minimax algorithm in a class I took in 2022, and it inspired me
 to create a chess program for the first time. It was not very strong, and I didn't feel
-satisifed with the result. I revisited the project in late 2024, and decided to do a 
+satisfied with the result. I revisited the project in late 2024, and decided to do a 
 rewrite with a more performant feature set.
 
 ## Overview:
@@ -24,42 +22,65 @@ data that has been generated independently. Generating data independently would
 require a lot of time, and the data would be better if my engine were stronger,
 so this is low priority. 
 
+## Build and Run:
+
 
 ## Features:
 
 ### Board and Move Generation:
+
 - Bitboard position representation
 - Magic bitboards for sliding piece moves
 - Move buffer for efficient storage of moves
 - 32-bit integer move representation
 
 ### Evaluation:
+
 - NNUE Static Evaluation
     - Trained with Stock Fish data using the Bullet NNUE Trainer
     - (768 -> 256) x 2 -> 1 Architecture
+    - Iterative accumulator updates 
 
 ### Search:
+
 - General:
   - Iterative Deepening
   - Fail soft framework
   - Principle variation search
   - Transposition tables with zobrist hashing
   - Three-fold repetition detection
+  - Mate Scoring
 - Move Ordering:
-  - Principle Variation:
-  - MVVLVA
-  - Killer Moves
-  - History Heuristic
+  - Scoring, then best move grabbed (rather than sorting all) 
+  - Criteria: 
+    - Principle Variation
+    - Promotions 
+    - MVV-LVA (for positive MVV-LVA captures)
+    - Static Exchange Evaluation (for negative MVV-LVA captures)
+    - Killer Moves
+    - History Heuristic
 - Pruning:
   - Alpha-Beta Pruning
   - Null Move Pruning
-  - Futility Pruning
+  - Futility Pruning (depth <= 3)
+  - Reverse Futility Pruning
 - Other:
   - Late Move Reduction
 - Quiescence Search:
-  - SEE (in progress)
+  - Alpha-beta pruning 
   - Delta Pruning (in progress)
   - Futility Pruning (in progress)
+
+### Move Generation:
+
+- Not in check legal moves
+- Single check legal moves
+- Double check legal moves
+- Absolute pin detection
+  - "inBetween" table
+- int move encoding
+- Precomputed move tables
+  - Magic bitboards for sliding pieces and magic number generation
 
 ## UCI Commands:
 
@@ -72,10 +93,17 @@ so this is low priority.
 
 
 ## Issues/TODO:
-- Struggles with checkmates in the endgame
-  - Possibly related to TT overwrites or pruning
-- SEE Implementation
+
+- Add Maven support
+- Aspiration windows
+  - idea:
+    - If no tt information, full window
+    - else if mating/mated evaluation, set window of mated scores
+    - else set window to tt score +- constant
+        - if fails high, bind beta pos inf
+        - if fails low, bind alpha neg inf
 
 ## Strength:
-- ~2100 CCRL blitz based on a large number of games played against a 2100 CCRL engine 
+
+- ~2400 CCRL blitz based on a large number of games played against a 2400 CCRL engine 
 

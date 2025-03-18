@@ -9,7 +9,6 @@ import board.PositionState;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
 import zobrist.ThreeFoldTable;
-import engine.search.Quiesce;
 
 import java.util.List;
 
@@ -142,6 +141,67 @@ public class Search {
             }
         };
     }
+    /*
+    private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
+        return () -> {
+            int alpha = NEG_INFINITY;
+            int beta = POS_INFINITY;
+
+            if (positionState.tt.elementExists(position.zobristHash)) {
+                int score = positionState.tt.getScore(position.zobristHash);
+
+                int betaInc = 50;
+                int alphaInc = 50;
+
+                alpha = score - alphaInc;
+                beta = score + betaInc;
+
+                if (score >= MATED_SCORE) {
+                    alpha = MATED_SCORE;
+                    beta = MATED_VALUE;
+                } else if (score <= -MATED_SCORE) {
+                    alpha = -MATED_SCORE;
+                    beta = -MATED_VALUE;
+                }
+
+                MoveValue result;
+                try {
+                    result = negamax(alpha, beta, depth, position, positionState, true, 0, false);
+                } catch (InterruptedException e) {
+                    System.out.println("Negamax was interrupted.");
+                    throw e;
+                } catch (InvalidPositionException ipe) {
+                    System.out.println("IPE caught at callable");
+                    ipe.printStackTrace();
+                    throw ipe;
+                }
+
+
+                if (result.value >= beta) { // If failed high
+                    beta = POS_INFINITY;
+                    System.out.println("Failed high");
+                } else if (result.value <= alpha) { // If failed low
+                    alpha = NEG_INFINITY;
+                    System.out.println("Failed low");
+                } else {
+                    System.out.println("Didn't Fail?");
+                    return result;
+                }
+            }
+            try {
+                return negamax(alpha, beta, depth, position, positionState, true, 0, false);
+            } catch (InterruptedException e) {
+                System.out.println("Negamax was interrupted.");
+                throw e;
+            } catch (InvalidPositionException ipe) {
+                System.out.println("IPE caught at callable");
+                ipe.printStackTrace();
+                throw ipe;
+            }
+        };
+    }
+    */
+
 
     /**
      * Realistically tests the search speed by stopping search at a certain depth rather than time
@@ -156,13 +216,16 @@ public class Search {
             try {
                 MoveValue result;
 
-                result = negamax(NEG_INFINITY, POS_INFINITY, i, position, positionState, true, 0, false);
+                result = getMoveValueCallable(position, i, positionState).call();
+                //result = negamax(NEG_INFINITY, POS_INFINITY, i, position, positionState, true, 0, false);
 
                 String moveLAN = MoveEncoding.getLAN(result.bestMove);
                 System.out.println("Depth: " + i + " | Move: " + moveLAN + " | Value: " + result.value);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (InvalidPositionException e) {
+                throw new RuntimeException(e);
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
@@ -237,8 +300,6 @@ public class Search {
         // Check if search depth reached (consider check extensions?)
         if (depthLeft == 0) {
             positionState.firstNonMove = firstMove;
-
-            //return new MoveValue(position.nnue.computeOutput(position.activePlayer), 0);
             return new MoveValue(Quiesce.quiescenceSearch(alpha, beta, position, positionState, ply + 1), 0);
         }
 
