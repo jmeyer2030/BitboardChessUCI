@@ -27,12 +27,10 @@ so this is low priority.
 
 ## Features:
 
-### Board and Move Generation:
-
+### Board:
 - Bitboard position representation
-- Magic bitboards for sliding piece moves
-- Move buffer for efficient storage of moves
-- 32-bit integer move representation
+- Make/UnMake move
+  - Iterative feature updates
 
 ### Evaluation:
 
