@@ -24,6 +24,13 @@ so this is low priority.
 
 ## Build and Run:
 
+Awaiting Maven implementation but for now the easiest way to build DriftWood is to:
+ - Clone this repo
+ - Open this project in intellij idea or eclipse using JDK21 (latest LTS release)
+ - Configure userFeatures.ChessEngine as the main class
+ - Build artifacts 
+
+On windows, use: "java -jar DriftWood.jar". This will open run driftwood from a command line interface.
 
 ## Features:
 
