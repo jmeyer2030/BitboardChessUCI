@@ -1,6 +1,7 @@
 package userFeatures.commands.uci;
 
 import board.MoveEncoding;
+import engine.search.Ponder;
 import engine.search.Search;
 import engine.TimeManagement;
 import moveGeneration.MoveGenerator;
@@ -15,13 +16,19 @@ import java.util.List;
 
 public class Go implements Command {
 
+    // List of subcommands, e.g. ponder, wtime, btime, etc.
     public HashMap<String, String> subCommands;
+
+    // List of moves if "searchmoves" is used
     public List<String> searchMoves;
+
     public ChessEngine chessEngine;
 
     @SuppressWarnings("SpellCheckingInspection")
     public Go(ChessEngine chessEngine) {
         this.chessEngine = chessEngine;
+
+        // initialize starting fields
         this.startingParams();
     }
 
@@ -33,9 +40,9 @@ public class Go implements Command {
         // Add arguments to fields
         this.fillSearchTerms(arguments);
 
-        this.executeSearch();
+        this.executeCommand();
 
-        // Reset fields to inital state
+        // Reset fields to initial state
         this.startingParams();
     }
 
@@ -54,6 +61,10 @@ public class Go implements Command {
                 if (argument.equals("infinite")) {
                     subCommands.put("infinite", "true");
                 }
+
+                if (argument.equals("ponder")) {
+                    subCommands.put("ponder", "true");
+                }
             } else if ("searchmoves".equals(currentSubCommand)) {
                 searchMoves.add(argument);
             } else {
@@ -66,7 +77,7 @@ public class Go implements Command {
      * Resets internally stored command parameters
      * For use on initialization and after command is executed
      */
-    public void startingParams() {
+    private void startingParams() {
         this.searchMoves = new LinkedList<String>();
         this.subCommands = new HashMap<String, String>();
 
@@ -82,6 +93,14 @@ public class Go implements Command {
         subCommands.put("mate", null);
         subCommands.put("movetime", null);
         subCommands.put("infinite", null);
+    }
+
+    public void executeCommand() {
+        if ("true".equals(subCommands.get("ponder"))) {
+            executePonder();
+        } else {
+            executeSearch();
+        }
     }
 
     /**
@@ -104,28 +123,15 @@ public class Go implements Command {
         long time = Long.parseLong(activeTimeStr);
         long computeTime = TimeManagement.millisForMove(time, 0);
 
-
         System.out.println("Beginning search:");
         Search.MoveValue moveValue = Search.iterativeDeepening(position, computeTime, chessEngine.positionState);
 
-        if (moveValue.bestMove == 0) {
-            System.out.println("ACK MOVE IS NULL!!!!");
-        }
-
-        /* DEBUG CODE: SEE IF TT ENTRY MATCHES THE RETURN
-        String ttBestMove = MoveEncoding.getLAN(chessEngine.positionState.tt.checkedGetBestMove(position.zobristHash));
-        String valueBestMove = MoveEncoding.getLAN(moveValue.bestMove);
-        if (!ttBestMove.equals(valueBestMove)) {
-            System.out.println(chessEngine.positionState.position.getDisplayBoard());
-            System.out.println("TT Best move: " + ttBestMove);
-            System.out.println("deepening Best move: " + valueBestMove);
-            System.out.println("Best Move diff!");
-        }
-        */
-
-        System.out.println("bestmove " + MoveEncoding.getLAN(moveValue.bestMove));
+        System.out.println("bestmove " + MoveEncoding.getLAN(moveValue.bestMove) + " ponder " + MoveEncoding.getLAN(chessEngine.positionState.pvTable.getBestResponse()));
     }
 
+    public void executePonder() {
+        Ponder.startPondering(chessEngine.positionState.position, chessEngine.positionState);
+    }
 
     public void applySearchMoves() {
         Position position = chessEngine.positionState.position;

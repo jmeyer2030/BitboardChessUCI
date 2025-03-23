@@ -77,7 +77,17 @@ public class MoveOrder {
     private static int scoreMove(Position position, PositionState positionState, int move, int ply) {
         int value = 0;
 
+        if (ply == 0) {
+            // get pv from triangular pv table
+            int pvMove = positionState.pvTable.getPVMove();
+
+            if (pvMove == move) {
+                value += 2_000_000;
+            }
+        }
+
         if (positionState.tt.checkedGetBestMove(position.zobristHash) == move) {
+
             value += 1_000_000;
         }
 

@@ -2,6 +2,7 @@ package board;
 
 import engine.search.HistoryHeuristic;
 import engine.search.KillerMoves;
+import engine.search.TriangularPVTable;
 import zobrist.ThreeFoldTable;
 import zobrist.transposition.TranspositionTable;
 
@@ -21,6 +22,7 @@ public class PositionState {
     public ThreeFoldTable threeFoldTable;
     public HistoryHeuristic historyHeuristic;
     public KillerMoves killerMoves;
+    public TriangularPVTable pvTable;
 
     public int[] moveBuffer;
     public int[] moveScores;
@@ -33,6 +35,7 @@ public class PositionState {
             this.tt = new TranspositionTable(numBits);
         }
 
+        this.pvTable = new TriangularPVTable();
         this.historyHeuristic = new HistoryHeuristic();
         this.position = new Position();
         this.threeFoldTable = new ThreeFoldTable();

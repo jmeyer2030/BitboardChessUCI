@@ -1,5 +1,6 @@
 package userFeatures.commands.uci;
 
+import engine.search.Ponder;
 import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 
@@ -12,6 +13,8 @@ public class Stop implements Command {
 
     @Override
     public void execute(String[] arguments) {
-
+        if (Ponder.isPondering()) {
+            Ponder.stopPondering();
+        }
     }
 }

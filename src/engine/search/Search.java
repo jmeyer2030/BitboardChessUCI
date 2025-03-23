@@ -25,6 +25,9 @@ public class Search {
     public static final int[] futilityMargin = {0, 200, 500, 900};
     //public static final int[] futilityMargin = {0, 200, 300, 500};
 
+    public static final int MAX_SEARCH_DEPTH = 256;
+
+
     /**
      * Class representing a move and evaluation
      */
@@ -57,8 +60,7 @@ public class Search {
 
         // Initialize search depth and search while time hasn't been exceeded
         int depth = 0;
-        int maxDepth = 256;
-        while (depth < maxDepth) {
+        while (depth < MAX_SEARCH_DEPTH) {
             depth++;
 
             // Create and submit search task
@@ -74,7 +76,7 @@ public class Search {
                 searchResults.add(result);
 
                 System.out.println("info depth " + depth + " pv " +
-                        MoveEncoding.getLAN(searchResults.getLast().bestMove)
+                        positionState.pvTable.getPVLine()
                         + " score cp " + searchResults.getLast().value);
 
                 // If mate found, only search with 3 higher depth
@@ -116,6 +118,10 @@ public class Search {
             }
         }
 
+        if (searchResults.size() == 0) {
+            throw new RuntimeException("Search failed because a single depth search didn't finish in time");
+        }
+
         return searchResults.get(searchResults.size() - 1);
     }
 
@@ -127,7 +133,7 @@ public class Search {
      * @param positionState negamax param
      * @return MoveValue callable
      */
-    private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
+    public static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
         return () -> {
             try {
                 return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true, 0, false);
@@ -141,66 +147,6 @@ public class Search {
             }
         };
     }
-    /*
-    private static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
-        return () -> {
-            int alpha = NEG_INFINITY;
-            int beta = POS_INFINITY;
-
-            if (positionState.tt.elementExists(position.zobristHash)) {
-                int score = positionState.tt.getScore(position.zobristHash);
-
-                int betaInc = 50;
-                int alphaInc = 50;
-
-                alpha = score - alphaInc;
-                beta = score + betaInc;
-
-                if (score >= MATED_SCORE) {
-                    alpha = MATED_SCORE;
-                    beta = MATED_VALUE;
-                } else if (score <= -MATED_SCORE) {
-                    alpha = -MATED_SCORE;
-                    beta = -MATED_VALUE;
-                }
-
-                MoveValue result;
-                try {
-                    result = negamax(alpha, beta, depth, position, positionState, true, 0, false);
-                } catch (InterruptedException e) {
-                    System.out.println("Negamax was interrupted.");
-                    throw e;
-                } catch (InvalidPositionException ipe) {
-                    System.out.println("IPE caught at callable");
-                    ipe.printStackTrace();
-                    throw ipe;
-                }
-
-
-                if (result.value >= beta) { // If failed high
-                    beta = POS_INFINITY;
-                    System.out.println("Failed high");
-                } else if (result.value <= alpha) { // If failed low
-                    alpha = NEG_INFINITY;
-                    System.out.println("Failed low");
-                } else {
-                    System.out.println("Didn't Fail?");
-                    return result;
-                }
-            }
-            try {
-                return negamax(alpha, beta, depth, position, positionState, true, 0, false);
-            } catch (InterruptedException e) {
-                System.out.println("Negamax was interrupted.");
-                throw e;
-            } catch (InvalidPositionException ipe) {
-                System.out.println("IPE caught at callable");
-                ipe.printStackTrace();
-                throw ipe;
-            }
-        };
-    }
-    */
 
 
     /**
@@ -229,6 +175,8 @@ public class Search {
                 throw new RuntimeException(e);
             }
         }
+
+        System.out.println(positionState.pvTable.getPVLine());
     }
 
     /**
@@ -249,8 +197,10 @@ public class Search {
 
         // Check for signal to interrupt the search
         if (Thread.currentThread().isInterrupted()) {
+            System.out.println("interrupted in negamax!");
             throw new InterruptedException("Negamax was interrupted by iterative deepening");
         }
+        positionState.pvTable.setPVLength(ply);
 
         // Store alpha at the start of the search (so that we can see if search increased it)
         int alphaOrig = alpha;
@@ -351,6 +301,7 @@ public class Search {
         // Search loop
         for (int i = firstMove; i < firstNonMove; i++) {
             if (Thread.currentThread().isInterrupted()) {
+                System.out.println("interrupted in negamax!");
                 positionState.firstNonMove = firstMove;
                 throw new InterruptedException("Negamax was interrupted by iterative deepening");
             }
@@ -428,6 +379,8 @@ public class Search {
             if (score > alpha) {
                 // Update alpha
                 alpha = score;
+
+                positionState.pvTable.writePVMove(move, ply);
 
 
                 // Prune when alpha >= beta because the opponent wouldn't make a move that gets here
