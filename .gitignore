@@ -1,21 +1,11 @@
-# Ignore compiled class files
+# Compiled class files
+*.class
+
+# Build directories
 build/
-
-#ignore report
-report/
-
-#Eclipse Specific:
-Chess2/.settings/
-
-bin/
-
-.classpath
-
-.project
-
-#intellij specific
-.idea/
-.idea
-
-# compiled class files
+target/
 out/
+
+# Intellij specific
+.idea/
+*.iml
