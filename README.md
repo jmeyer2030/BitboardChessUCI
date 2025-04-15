@@ -1,5 +1,23 @@
 # DriftWood Chess Engine
 
+## Table of Contents
+
+- [Motive](#motive)
+- [Overview](#overview)
+- [Setup](#setup)
+  - [1. Verify requirments](#1-verify-requirments)
+  - [2. Clone the repository](#2-clone-the-repository)
+  - [3. Build](#3-build)
+  - [4. Run](#4-run)
+- [Technical Features](#technical-features)
+  - [Board](#board)
+  - [Evaluation](#evaluation)
+  - [Search](#search)
+  - [Move Generation](#move-generation)
+  - [UCI Commands](#uci-commands)
+- [Issues/TODO](#issuestodo)
+- [Strength](#strength)
+
 # Motive
 
 This project is the intersection of my interest in programming and chess. 
@@ -8,18 +26,20 @@ to create a chess program for the first time. It was not very strong, and I didn
 satisfied with the result. I revisited the project in late 2024, and decided to do a 
 rewrite with a more performant feature set.
 
-# Overview:
+# Overview
 
-This chess engine does not include a GUI, and thus requires an external GUI or 
-application that uses UCI commands to play against or to test.
-I personally prefer CuteChess but there are many others that will work.
+This chess engine does not include a GUI, and thus it is strongly recommended to use
+an external GUI or application that uses UCI commands to play against or to test.
+I personally prefer CuteChess but there are many others that will work. In setup, there
+are basic instructions for testing in the terminal.
+
  - https://github.com/cutechess/cutechess/releases
 
 DriftWood NNUE was trained on StockFish evaluations, and thus will not be submitted
 to CCRL or any other chess engine rating groups or competitions until it is trained on
 data that has been generated independently.
 
-# Setup:
+# Setup
 
 ## 1. Verify requirments
 
@@ -85,21 +105,21 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
  ```
  Then use "go" to analyze. wtime and btime specifications are required.
 
-# Technical Features:
+# Technical Features
 
-## Board:
+## Board
 - Bitboard position representation
 - Make/UnMake move
   - Iterative nnue feature updates
 
-## Evaluation:
+## Evaluation
 
 - NNUE Static Evaluation
     - Trained with Stock Fish data using the Bullet NNUE Trainer
     - (768 -> 256) x 2 -> 1 Architecture
     - Iterative accumulator updates 
 
-## Search:
+## Search
 
 - General:
   - Iterative Deepening
@@ -129,7 +149,7 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
   - Delta Pruning (in progress)
   - Futility Pruning (in progress)
 
-## Move Generation:
+## Move Generation
 
 - Not in check legal moves
 - Single check legal moves
@@ -140,7 +160,7 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
 - Precomputed move tables
   - Magic bitboards for sliding pieces and magic number generation
 
-## UCI Commands:
+## UCI Commands
 
 - uci
 - ucinewgame
@@ -150,7 +170,7 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
 - quit
 
 
-# Issues/TODO:
+# Issues/TODO
 - Fix tests
 - HCE and generate training data for NN 
 - Aspiration windows
@@ -161,6 +181,6 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
         - if fails high, bind beta pos inf
         - if fails low, bind alpha neg inf
 
-# Strength:
+# Strength
 
 - ~2400 CCRL blitz based on a large number of games played against a 2400 CCRL chess engine
