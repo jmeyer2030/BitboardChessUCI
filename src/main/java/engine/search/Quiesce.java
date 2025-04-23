@@ -24,10 +24,10 @@ public class Quiesce {
 
         int bestValue = standPat;
 
-        if (standPat >= beta && !position.inCheck) // And not in check
+        if (standPat >= beta/* && !position.inCheck*/) // And not in check
             return bestValue;
 
-        if (alpha < standPat && !position.inCheck) // and not in check, we shouldn't use standpat at all if in check
+        if (alpha < standPat /*&& !position.inCheck*/) // and not in check, we shouldn't use standpat at all if in check
             alpha = standPat;
 
 
@@ -52,7 +52,7 @@ public class Quiesce {
 
 
             // if not a capture and not in check, skip. In check, we search all evasions
-            if (!MoveEncoding.getIsCapture(move) && !position.inCheck) {
+            if (!MoveEncoding.getIsCapture(move)/* && !position.inCheck*/) {
                 continue;
             }
 
