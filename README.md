@@ -30,10 +30,12 @@ rewrite with a more performant feature set.
 
 This chess engine does not include a GUI, and thus it is strongly recommended to use
 an external GUI or application that uses UCI commands to play against or to test.
-I personally prefer CuteChess but there are many others that will work. In setup, there
-are basic instructions for testing in the terminal.
+I personally prefer CuteChess but there are many others that will work. 
 
  - https://github.com/cutechess/cutechess/releases
+
+If you do not wish to use an external GUI, there are instructions on how to use basic
+uci commands to evaluate positions in the "setup" section.
 
 DriftWood NNUE was trained on StockFish evaluations, and thus will not be submitted
 to CCRL or any other chess engine rating groups or competitions until it is trained on
@@ -60,9 +62,9 @@ cd BitboardChessUCI
 mvn package
 ```
 
-At this point, you have built the .jar which can be used in a GUI such as cutechess.
-You can add this .jar as an engine to cutechess, some others however will only take
- .bat files, which you can create by making a .txt file as follows:
+At this point, you have built the .jar which can be used in certain GUIs. Others, such as
+cutechess, require a .bat. To create a .bat, make a .txt with the following text, adjusting
+the path to wherever the .jar is (probably ending with /BitboardChessUci/target/driftwood-5.0.jar):
 ```bash
 @echo off
 java -jar C:path/to/file/driftwood-5.0.jar
