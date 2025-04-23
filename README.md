@@ -127,7 +127,7 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
   - Iterative Deepening
   - Fail soft framework
   - Principle variation search
-  - Transposition tables with main.java.zobrist hashing
+  - Transposition tables with zobrist hashing
   - Three-fold repetition detection
   - Mate Scoring
 - Move Ordering:
@@ -157,10 +157,11 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
 - Single check legal moves
 - Double check legal moves
 - Absolute pin detection
-  - "inBetween" table to restrict piece moves
-- Integer move encoding
+  - "inBetween" table to restrict pinned piece moves
+- int move encoding
 - Precomputed move tables
   - Magic bitboards for sliding pieces and magic number generation
+    - Generation code removed, now hard coded.
 
 ## UCI Commands
 
@@ -169,19 +170,15 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
 - position (startpos, fen, moves)
 - go wtime ... btime ...
     - Currently only the active player's time is considered
+- ponder
 - quit
 
 
 # Issues/TODO
-- Fix tests
+
 - HCE and generate training data for NN 
-- Aspiration windows
-  - idea:
-    - If no tt information, full window
-    - else if mating/mated evaluation, set window of mated scores
-    - else set window to tt score +- constant
-        - if fails high, bind beta pos inf
-        - if fails low, bind alpha neg inf
+- Aspiration windows?
+- More aggressive pruning options?
 
 # Strength
 
