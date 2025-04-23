@@ -1,6 +1,6 @@
-package main.java.zobrist;
+package zobrist;
 
-import main.java.board.MoveEncoding;
+import board.MoveEncoding;
 
 import java.util.ArrayList;
 

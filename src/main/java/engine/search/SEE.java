@@ -1,11 +1,11 @@
-package main.java.engine.search;
+package engine.search;
 
-import main.java.board.FEN;
-import main.java.board.MoveEncoding;
-import main.java.board.Position;
-import main.java.moveGeneration.BishopLogic;
-import main.java.moveGeneration.MoveGenerator;
-import main.java.moveGeneration.RookLogic;
+import board.FEN;
+import board.MoveEncoding;
+import board.Position;
+import moveGeneration.BishopLogic;
+import moveGeneration.MoveGenerator;
+import moveGeneration.RookLogic;
 
 /**
 * Static Exchange Evaluation:

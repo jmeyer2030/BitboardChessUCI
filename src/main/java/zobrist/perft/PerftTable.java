@@ -1,4 +1,4 @@
-package main.java.zobrist.perft;
+package zobrist.perft;
 
 public class PerftTable {
     private final int numBits;

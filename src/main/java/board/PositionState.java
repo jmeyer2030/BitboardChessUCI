@@ -1,10 +1,10 @@
-package main.java.board;
+package board;
 
-import main.java.engine.search.HistoryHeuristic;
-import main.java.engine.search.KillerMoves;
-import main.java.engine.search.TriangularPVTable;
-import main.java.zobrist.ThreeFoldTable;
-import main.java.zobrist.transposition.TranspositionTable;
+import engine.search.HistoryHeuristic;
+import engine.search.KillerMoves;
+import engine.search.TriangularPVTable;
+import zobrist.ThreeFoldTable;
+import zobrist.transposition.TranspositionTable;
 
 /*
 Represents the internally stored position/state of a chess main.java.engine:

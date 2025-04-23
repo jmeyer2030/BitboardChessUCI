@@ -1,9 +1,9 @@
-package test.java;
+package perft;
 
-import main.java.board.MoveEncoding;
-import main.java.board.Position;
-import main.java.customExceptions.InvalidPositionException;
-import main.java.moveGeneration.MoveGenerator;
+import board.MoveEncoding;
+import board.Position;
+import customExceptions.InvalidPositionException;
+import moveGeneration.MoveGenerator;
 
 public class Perft {
 

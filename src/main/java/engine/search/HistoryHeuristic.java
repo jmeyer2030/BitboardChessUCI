@@ -1,6 +1,6 @@
-package main.java.engine.search;
+package engine.search;
 
-import main.java.board.MoveEncoding;
+import board.MoveEncoding;
 
 public class HistoryHeuristic {
     private int maxHistory = 20000;

@@ -1,7 +1,7 @@
-package main.java.nnue;
+package nnue;
 
-import main.java.board.FEN;
-import main.java.board.Position;
+import board.FEN;
+import board.Position;
 
 import java.io.IOException;
 import java.io.InputStream;

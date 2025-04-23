@@ -1,8 +1,8 @@
-package main.java.userFeatures.commands.uci;
+package userFeatures.commands.uci;
 
-import main.java.engine.search.Ponder;
-import main.java.userFeatures.ChessEngine;
-import main.java.userFeatures.commands.Command;
+import engine.search.Ponder;
+import userFeatures.ChessEngine;
+import userFeatures.commands.Command;
 
 public class Stop implements Command {
     public ChessEngine chessEngine;

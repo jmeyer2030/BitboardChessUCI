@@ -1,4 +1,4 @@
-package test.java.testMoveGeneration;
+package testMoveGeneration;
 
 public class DebugPerft {
     public static void main(String[] args) {

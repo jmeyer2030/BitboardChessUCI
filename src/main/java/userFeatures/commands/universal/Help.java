@@ -1,7 +1,7 @@
-package main.java.userFeatures.commands.universal;
+package userFeatures.commands.universal;
 
 
-import main.java.userFeatures.commands.Command;
+import userFeatures.commands.Command;
 
 public class Help implements Command {
 

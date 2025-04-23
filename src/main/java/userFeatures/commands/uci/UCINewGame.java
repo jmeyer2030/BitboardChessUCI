@@ -1,8 +1,8 @@
-package main.java.userFeatures.commands.uci;
+package userFeatures.commands.uci;
 
-import main.java.board.PositionState;
-import main.java.userFeatures.ChessEngine;
-import main.java.userFeatures.commands.Command;
+import board.PositionState;
+import userFeatures.ChessEngine;
+import userFeatures.commands.Command;
 
 import java.util.logging.Level;
 

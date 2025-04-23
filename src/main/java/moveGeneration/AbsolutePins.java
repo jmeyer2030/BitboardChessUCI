@@ -1,4 +1,4 @@
-package main.java.moveGeneration;
+package moveGeneration;
 
 public class AbsolutePins {
 	public static final long[][] inBetween = new long[64][];

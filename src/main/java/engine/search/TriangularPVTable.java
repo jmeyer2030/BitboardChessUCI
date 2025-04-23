@@ -1,8 +1,8 @@
-package main.java.engine.search;
+package engine.search;
 
-import main.java.board.MoveEncoding;
+import board.MoveEncoding;
 
-import static main.java.engine.search.Search.MAX_SEARCH_DEPTH;
+import static engine.search.Search.MAX_SEARCH_DEPTH;
 
 /**
 * Represents a triangular PV table:

@@ -1,7 +1,7 @@
-package main.java.moveGeneration;
+package moveGeneration;
 
-import main.java.board.MoveEncoding;
-import main.java.board.Position;
+import board.MoveEncoding;
+import board.Position;
 
 /**
 * This class is used to generate moves based on a template so that we don't need to explicitely set all fields in MoveGenerator

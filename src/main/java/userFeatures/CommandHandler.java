@@ -1,9 +1,9 @@
-package main.java.userFeatures;
+package userFeatures;
 
-import main.java.userFeatures.commands.*;
-import main.java.userFeatures.commands.initial.*;
-import main.java.userFeatures.commands.uci.Debug;
-import main.java.userFeatures.commands.uci.*;
+import userFeatures.commands.*;
+import userFeatures.commands.initial.*;
+import userFeatures.commands.uci.Debug;
+import userFeatures.commands.uci.*;
 
 import java.util.Arrays;
 import java.util.HashMap;

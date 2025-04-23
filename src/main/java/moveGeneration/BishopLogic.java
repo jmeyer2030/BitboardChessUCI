@@ -1,8 +1,8 @@
-package main.java.moveGeneration;
+package moveGeneration;
 
 import java.util.*;
 
-import main.java.board.Position;
+import board.Position;
 
 public class BishopLogic {
 
@@ -132,14 +132,13 @@ public class BishopLogic {
      */
 
     /**
-     * Given a blocker main.java.board and square, returns the index of the corresponding move main.java.board
+     * Given a blocker board and square, returns the index of the corresponding move board
      *
      * @param blockerBoard blockerboard
      * @param square       square
      * @return index of moveBoards that corresponds with the blockerboard for a bishop on that square
      */
     private static int getIndexForBlocker(long blockerBoard, int square) {
-        // Function to get the index
         return (int) ((magicNumbers[square] * blockerBoard) >> (64 - numBits[square])
                 & ((1 << numBits[square]) - 1));
     }
@@ -337,7 +336,7 @@ public class BishopLogic {
     }
 
     /**
-     * Returns a move main.java.board for a bishop blockerBoard
+     * Returns a move board for a bishop blockerBoard
      *
      * @param blockerBoard, a bishop blockerBoard
      * @param square,       the square associated with the blockerBoard

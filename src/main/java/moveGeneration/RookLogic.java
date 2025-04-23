@@ -1,8 +1,8 @@
-package main.java.moveGeneration;
+package moveGeneration;
 
 import java.util.*;
 
-import main.java.board.Position;
+import board.Position;
 
 public class RookLogic {
 

@@ -1,6 +1,6 @@
-package main.java.zobrist.transposition;
+package zobrist.transposition;
 
-import main.java.engine.search.NodeType;
+import engine.search.NodeType;
 /*
 Overwrites are relatively common. This is not an issue with the tt or hashing, just a reality of how hashing works.
 

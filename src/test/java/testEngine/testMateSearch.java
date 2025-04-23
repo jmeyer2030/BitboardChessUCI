@@ -1,10 +1,10 @@
-package test.java.testEngine;
+package testEngine;
 
-import main.java.board.FEN;
-import main.java.board.MoveEncoding;
-import main.java.board.Position;
-import main.java.board.PositionState;
-import main.java.engine.search.Search;
+import board.FEN;
+import board.MoveEncoding;
+import board.Position;
+import board.PositionState;
+import engine.search.Search;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

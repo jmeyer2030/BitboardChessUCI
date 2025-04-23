@@ -1,9 +1,9 @@
-package test.java.testMoveGeneration;
+package testMoveGeneration;
 
-import main.java.board.FEN;
-import main.java.board.Position;
+import board.FEN;
+import board.Position;
 import org.junit.jupiter.api.Test;
-import test.java.Perft;
+import perft.Perft;
 
 import java.io.File;
 import java.io.IOException;

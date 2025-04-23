@@ -1,7 +1,7 @@
-package main.java.userFeatures.commands.uci;
+package userFeatures.commands.uci;
 
-import main.java.userFeatures.ChessEngine;
-import main.java.userFeatures.commands.Command;
+import userFeatures.ChessEngine;
+import userFeatures.commands.Command;
 
 public class IsReady implements Command {
     public ChessEngine chessEngine;

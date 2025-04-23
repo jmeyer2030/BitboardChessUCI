@@ -1,12 +1,12 @@
-package main.java.userFeatures.commands.uci;
+package userFeatures.commands.uci;
 
-import main.java.board.FEN;
-import main.java.board.Position;
-import main.java.customExceptions.InvalidPositionException;
-import main.java.moveGeneration.MoveGenerator;
-import main.java.userFeatures.ChessEngine;
-import main.java.userFeatures.commands.Command;
-import main.java.zobrist.ThreeFoldTable;
+import board.FEN;
+import board.Position;
+import customExceptions.InvalidPositionException;
+import moveGeneration.MoveGenerator;
+import userFeatures.ChessEngine;
+import userFeatures.commands.Command;
+import zobrist.ThreeFoldTable;
 
 import java.util.logging.Level;
 

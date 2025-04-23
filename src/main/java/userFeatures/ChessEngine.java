@@ -1,7 +1,7 @@
-package main.java.userFeatures;
+package userFeatures;
 
-import main.java.board.PositionState;
-import main.java.system.Logging;
+import board.PositionState;
+import system.Logging;
 
 import java.util.logging.Logger;
 
@@ -31,7 +31,7 @@ public class ChessEngine {
     }
 
     /**
-    * Begins chess main.java.engine, usable from console
+    * Begins chess engine, usable from console
     */
     public static void main(String[] args) {
         ChessEngine chessEngine = new ChessEngine();

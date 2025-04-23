@@ -1,11 +1,11 @@
-package main.java.engine.search;
+package engine.search;
 
-import main.java.board.MoveEncoding;
-import main.java.board.Position;
-import main.java.board.PositionState;
-import main.java.moveGeneration.MoveGenerator;
+import board.MoveEncoding;
+import board.Position;
+import board.PositionState;
+import moveGeneration.MoveGenerator;
 
-import static main.java.engine.search.Search.NEG_INFINITY;
+import static engine.search.Search.NEG_INFINITY;
 
 public class Quiesce {
 
@@ -24,10 +24,10 @@ public class Quiesce {
 
         int bestValue = standPat;
 
-        if (standPat >= beta)
+        if (standPat >= beta && !position.inCheck) // And not in check
             return bestValue;
 
-        if (alpha < standPat)
+        if (alpha < standPat && !position.inCheck) // and not in check, we shouldn't use standpat at all if in check
             alpha = standPat;
 
 
@@ -36,7 +36,7 @@ public class Quiesce {
         int newFirstNonMove = MoveGenerator.generateAllMoves(position, positionState.moveBuffer, positionState.firstNonMove);
         positionState.firstNonMove = newFirstNonMove;
 
-        // look for checkmate
+        // look for checkmate, probably don't care about stalemates because these should be seen by main search.
         int numMoves = newFirstNonMove - initialFirstNonMove;
         if (numMoves == 0 && position.inCheck) {
             return NEG_INFINITY;
@@ -51,8 +51,8 @@ public class Quiesce {
             int move = positionState.moveBuffer[i];
 
 
-            // If not capture
-            if (!MoveEncoding.getIsCapture(move)) {
+            // if not a capture and not in check, skip. In check, we search all evasions
+            if (!MoveEncoding.getIsCapture(move) && !position.inCheck) {
                 continue;
             }
 

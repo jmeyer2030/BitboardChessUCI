@@ -1,6 +1,6 @@
-package test.java.testMoveGeneration;
+package testMoveGeneration;
 
-import static test.java.testMoveGeneration.quickTestPerft.*;
+import static testMoveGeneration.quickTestPerft.*;
 
 public class testPerftMain {
     public static void main(String[] args) {

@@ -1,6 +1,6 @@
-package main.java.userFeatures.commands.initial;
+package userFeatures.commands.initial;
 
-import main.java.userFeatures.commands.Command;
+import userFeatures.commands.Command;
 
 public class SayHello implements Command {
     @Override

@@ -1,15 +1,15 @@
-package test.java.testEngine;
+package testEngine;
 
-import main.java.board.FEN;
-import main.java.board.Position;
-import main.java.engine.search.Search;
+import board.FEN;
+import board.Position;
+import engine.search.Search;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
-import static test.java.testMoveGeneration.testPerftSuite.getFEN;
+import static testMoveGeneration.testPerftSuite.getFEN;
 /**
 * Serves as a way to benchmark search speed.
 *  - Searches over a suite of positions to depth 9, printing results and time

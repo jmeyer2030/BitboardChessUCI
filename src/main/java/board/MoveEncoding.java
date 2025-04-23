@@ -1,4 +1,4 @@
-package main.java.board;
+package board;
 
 public final class MoveEncoding {
 /*

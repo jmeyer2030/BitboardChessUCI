@@ -1,8 +1,8 @@
-package test.java.testEngine;
+package testEngine;
 
-import main.java.board.Position;
-import main.java.board.PositionState;
-import main.java.engine.search.Search;
+import board.Position;
+import board.PositionState;
+import engine.search.Search;
 
 public class testSearch {
     public static void main(String[] args) {

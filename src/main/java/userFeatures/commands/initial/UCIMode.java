@@ -1,8 +1,8 @@
-package main.java.userFeatures.commands.initial;
+package userFeatures.commands.initial;
 
-import main.java.userFeatures.CommandHandler;
-import main.java.userFeatures.ChessEngine;
-import main.java.userFeatures.commands.Command;
+import userFeatures.CommandHandler;
+import userFeatures.ChessEngine;
+import userFeatures.commands.Command;
 
 public class UCIMode implements Command {
 

@@ -1,4 +1,4 @@
-package main.java.userFeatures.commands.uci;
+package userFeatures.commands.uci;
 
 public class TestSleep {
 }

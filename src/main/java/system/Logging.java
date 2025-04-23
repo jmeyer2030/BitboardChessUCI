@@ -1,4 +1,4 @@
-package main.java.system;
+package system;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;

@@ -1,12 +1,12 @@
-package main.java.engine.search;
+package engine.search;
 
-import main.java.board.Position;
-import main.java.board.PositionState;
+import board.Position;
+import board.PositionState;
 
 import java.util.concurrent.*;
 
-import static main.java.engine.search.Search.MAX_SEARCH_DEPTH;
-import static main.java.engine.search.Search.getMoveValueCallable;
+import static engine.search.Search.MAX_SEARCH_DEPTH;
+import static engine.search.Search.getMoveValueCallable;
 
 /**
  * Ponders the position in position state

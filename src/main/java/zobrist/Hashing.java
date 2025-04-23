@@ -1,4 +1,4 @@
-package main.java.zobrist;
+package zobrist;
 /*
 * Generate an array of pseudorandom numbers
 * - one for each piece at each square (12 * 64)
@@ -19,7 +19,7 @@ package main.java.zobrist;
 * Overlap is possible, but very rare and can be ignored at negligible cost
 */
 
-import main.java.board.Position;
+import board.Position;
 
 import java.util.Random;
 

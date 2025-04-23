@@ -1,6 +1,6 @@
-package main.java.moveGeneration;
+package moveGeneration;
 
-import main.java.board.*;
+import board.*;
 
 import java.util.Arrays;
 

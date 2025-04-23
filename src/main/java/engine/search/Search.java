@@ -1,14 +1,14 @@
-package main.java.engine.search;
+package engine.search;
 
 import java.util.ArrayList;
 import java.util.concurrent.*;
 
-import main.java.board.MoveEncoding;
-import main.java.board.Position;
-import main.java.board.PositionState;
-import main.java.customExceptions.InvalidPositionException;
-import main.java.moveGeneration.MoveGenerator;
-import main.java.zobrist.ThreeFoldTable;
+import board.MoveEncoding;
+import board.Position;
+import board.PositionState;
+import customExceptions.InvalidPositionException;
+import moveGeneration.MoveGenerator;
+import zobrist.ThreeFoldTable;
 
 import java.util.List;
 

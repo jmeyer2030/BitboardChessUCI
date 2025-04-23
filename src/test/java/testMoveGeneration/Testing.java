@@ -1,4 +1,4 @@
-package test.java.testMoveGeneration;
+package testMoveGeneration;
 
 import java.util.Arrays;
 import java.util.HashSet;

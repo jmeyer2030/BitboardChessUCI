@@ -1,6 +1,6 @@
-package main.java.moveGeneration;
+package moveGeneration;
 
-import main.java.board.Position;
+import board.Position;
 
 public class KingLogic {
 

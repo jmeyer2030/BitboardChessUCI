@@ -1,8 +1,8 @@
-package test.java.testMoveGeneration;
+package testMoveGeneration;
 
-import main.java.board.*;
+import board.*;
 import org.junit.jupiter.api.Test;
-import test.java.Perft;
+import perft.Perft;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

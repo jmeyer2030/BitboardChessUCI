@@ -1,13 +1,13 @@
-package main.java.userFeatures.commands.uci;
+package userFeatures.commands.uci;
 
-import main.java.board.MoveEncoding;
-import main.java.engine.search.Ponder;
-import main.java.engine.search.Search;
-import main.java.engine.TimeManagement;
-import main.java.moveGeneration.MoveGenerator;
-import main.java.userFeatures.ChessEngine;
-import main.java.userFeatures.commands.Command;
-import main.java.board.Position;
+import board.MoveEncoding;
+import engine.search.Ponder;
+import engine.search.Search;
+import engine.TimeManagement;
+import moveGeneration.MoveGenerator;
+import userFeatures.ChessEngine;
+import userFeatures.commands.Command;
+import board.Position;
 
 import java.util.HashMap;
 import java.util.LinkedList;

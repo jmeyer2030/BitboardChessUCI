@@ -1,9 +1,9 @@
-package main.java.board;
+package board;
 
-import main.java.moveGeneration.MoveGenerator;
-import main.java.nnue.NNUE;
-import main.java.customExceptions.InvalidPositionException;
-import main.java.zobrist.Hashing;
+import moveGeneration.MoveGenerator;
+import nnue.NNUE;
+import customExceptions.InvalidPositionException;
+import zobrist.Hashing;
 
 import java.util.Arrays;
 import java.util.LinkedList;

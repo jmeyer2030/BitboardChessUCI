@@ -1,8 +1,8 @@
-package main.java.engine.search;
+package engine.search;
 
-import main.java.board.MoveEncoding;
-import main.java.board.Position;
-import main.java.board.PositionState;
+import board.MoveEncoding;
+import board.Position;
+import board.PositionState;
 
 public class MoveOrder {
 
