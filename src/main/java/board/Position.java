@@ -753,7 +753,7 @@ public class Position {
      * - pieceColors[0-1] (with OR operator) is equivalent to occupancy
      * - pieces[0-5] (with OR operator) is equivalent to occupancy
      */
-    public void validPosition() throws InvalidPositionException {
+    public void validPosition() {
         // Test pieceColors no overlap
         long pieceColorsAND = pieceColors[0] & pieceColors[1];
         if (pieceColorsAND != 0)

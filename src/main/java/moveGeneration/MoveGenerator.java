@@ -188,7 +188,7 @@ public class MoveGenerator {
     /**
      * Generates and returns all pawn moves
      * En Passant moves have the issue that they remove two pieces on the same rank which can lead to a discovered attack
-     * Additionally the captured piece isn't the square that they move to leading to not seeing a ep as capturing a checker
+     * Additionally the captured piece isn't the square that the pawn moves to, leading to not seeing an ep as capturing a checker
      * These are handled manually in the ep generation section
      * <p>
      * For EP, we need to make sure:

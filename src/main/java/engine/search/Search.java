@@ -193,7 +193,7 @@ public class Search {
      * @return moveValue the best move and it's associated score
      */
     public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, PositionState positionState, boolean isRoot, int ply, boolean isPV)
-            throws InterruptedException, InvalidPositionException {
+            throws InterruptedException {
 
         // Check for signal to interrupt the search
         if (Thread.currentThread().isInterrupted()) {
