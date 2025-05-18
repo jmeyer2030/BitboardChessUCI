@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class testPerftSuite {
     @Test
     void testAll() {
-        try (Scanner scanner = new Scanner(new File("src/testing/testMoveGeneration/perftSuite.txt"))) {
+        try (Scanner scanner = new Scanner(new File("src/test/resources/perftSuite.txt"))) {
             int lineNumber = 0;
             while (scanner.hasNextLine()) {
                 lineNumber++;

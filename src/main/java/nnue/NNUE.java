@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Represents an Efficiently Updatable Neural Network
@@ -23,14 +25,32 @@ public class NNUE {
     private static final int QB = 64;
     private static final int SCALE = 400;
 
+
     private static final short[][] hiddenLayerWeights = new short[HIDDEN_LAYER_SIZE][INPUT_SIZE];
     private static final short[] hiddenLayerBias = new short[HIDDEN_LAYER_SIZE];
 
     private static final short[] outputWeights = new short[HIDDEN_LAYER_SIZE * 2];
     private static short outputBias;
 
-    public int[] whiteAccumulator = new int[HIDDEN_LAYER_SIZE];
-    public int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
+    private int[] whiteAccumulator = new int[HIDDEN_LAYER_SIZE];
+    private int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
+
+    // Stores added features for lazy updates
+    private List<Integer> whiteAccumulatorAdd = new LinkedList<>();
+    private List<Integer> blackAccumulatorAdd = new LinkedList<>();
+    private List<Integer> whiteAccumulatorRemove = new LinkedList<>();
+    private List<Integer> blackAccumulatorRemove = new LinkedList<>();
+
+
+    private static final int ACCUMULATOR_LAZY_SIZE = 1024;
+
+    private int addIndex = 0;
+    private int[] whiteAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
+    private int[] blackAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
+
+    private int removeIndex = 0;
+    private int[] whiteAccumulatorRemoveIndices = new int[ACCUMULATOR_LAZY_SIZE];
+    private int[] blackAccumulatorRemoveIndices = new int[ACCUMULATOR_LAZY_SIZE];
 
     /**
      * Initializes weights and biases from quantised.bin on class load
@@ -59,12 +79,24 @@ public class NNUE {
 
         int whitePerspectiveIndex = 64 * whitePerspectiveVal + square;
         int blackPerspectiveIndex = 64 * blackPerspectiveVal + (square ^ 0b111000);
-        //int blackPerspectiveIndex = 64 * blackPerspectiveVal + (square);
 
+        whiteAccumulatorAddIndices[addIndex] = whitePerspectiveIndex;
+        blackAccumulatorAddIndices[addIndex] = blackPerspectiveIndex;
+
+        addIndex++;
+
+        if (addIndex >= ACCUMULATOR_LAZY_SIZE)
+            processAccumulatorChanges();
+            //throw new RuntimeException("Add lazy accumulator overflow");
+        // Lazily store feature updates
+        //whiteAccumulatorAdd.add(whitePerspectiveIndex);
+        //blackAccumulatorAdd.add(blackPerspectiveIndex);
+        /*
         for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
             whiteAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][whitePerspectiveIndex];
             blackAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][blackPerspectiveIndex];
         }
+        */
     }
 
     /**
@@ -78,13 +110,74 @@ public class NNUE {
         int whitePieceVal = piece + (color == 0 ? 0 : 6); // If piece is white, 0-5
         int blackPieceVal = piece + (color == 0 ? 6 : 0); // If piece is white, 6-11
 
-        int whiteIndex = 64 * whitePieceVal + square;
-        int blackIndex = 64 * blackPieceVal + (square ^ 0b111000);
+        int whitePerspectiveIndex = 64 * whitePieceVal + square;
+        int blackPerspectiveIndex = 64 * blackPieceVal + (square ^ 0b111000);
 
+        whiteAccumulatorRemoveIndices[removeIndex] = whitePerspectiveIndex;
+        blackAccumulatorRemoveIndices[removeIndex] = blackPerspectiveIndex;
+
+        removeIndex++;
+
+        if (removeIndex >= ACCUMULATOR_LAZY_SIZE)
+            processAccumulatorChanges();
+            //throw new RuntimeException("Remove lazy accumulator overflow");
+
+        // Lazily store feature updates
+        //whiteAccumulatorRemove.add(whitePerspectiveIndex);
+        //blackAccumulatorRemove.add(blackPerspectiveIndex);
+
+        /*
         for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
             whiteAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][whiteIndex];
             blackAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][blackIndex];
         }
+        */
+    }
+
+    public void processAccumulatorChanges() {
+        // For each piece (note that white and black sizes should always be equal
+        /*
+        while (!whiteAccumulatorAdd.isEmpty()) {
+            int whiteAdd = whiteAccumulatorAdd.removeFirst();
+            int blackAdd = blackAccumulatorAdd.removeFirst();
+            for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
+                whiteAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][whiteAdd];
+                blackAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][blackAdd];
+            }
+        }
+
+        while (!whiteAccumulatorRemove.isEmpty()) {
+            int whiteRemove = whiteAccumulatorRemove.removeFirst();
+            int blackRemove = blackAccumulatorRemove.removeFirst();
+            for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
+                whiteAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][whiteRemove];
+                blackAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][blackRemove];
+            }
+        }
+        */
+
+        for (int i = 0; i < addIndex; i++) {
+            int whiteAdd = whiteAccumulatorAddIndices[i];
+            int blackAdd = blackAccumulatorAddIndices[i];
+            for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
+                whiteAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][whiteAdd];
+                blackAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][blackAdd];
+            }
+        }
+
+        addIndex = 0;
+
+        for (int i = 0; i < removeIndex; i++) {
+            int whiteRemove = whiteAccumulatorRemoveIndices[i];
+            int blackRemove = blackAccumulatorRemoveIndices[i];
+            for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
+                whiteAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][whiteRemove];
+                blackAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][blackRemove];
+            }
+        }
+
+        removeIndex = 0;
+
     }
 
     /**
@@ -114,12 +207,15 @@ public class NNUE {
                 }
             }
         }
+        processAccumulatorChanges();
     }
 
     /**
      * Computes the output GIVEN that the accumulator states are already accurate
      */
     public int computeOutput(int activePlayer) {
+        processAccumulatorChanges();
+
         int outputActivation = 0;
 
         for (int hiddenIndex = 0; hiddenIndex < HIDDEN_LAYER_SIZE; hiddenIndex++) {
