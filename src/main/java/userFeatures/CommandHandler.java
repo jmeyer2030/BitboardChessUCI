@@ -23,8 +23,6 @@ public class CommandHandler {
     */
     @SuppressWarnings("SpellCheckingInspection")
     public CommandHandler(ChessEngine chessEngine) {
-
-
         uciCommands = new HashMap<>();
         uciCommands.put("debug", new Debug(chessEngine));
         uciCommands.put("go", new Go(chessEngine));

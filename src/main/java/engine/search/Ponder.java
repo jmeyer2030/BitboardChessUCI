@@ -6,7 +6,7 @@ import board.PositionState;
 import java.util.concurrent.*;
 
 import static engine.search.Search.MAX_SEARCH_DEPTH;
-import static engine.search.Search.getMoveValueCallable;
+import static engine.search.Search.getSearchCallable;
 
 /**
  * Ponders the position in position state
@@ -29,7 +29,7 @@ public class Ponder {
            while (pondering && depth < MAX_SEARCH_DEPTH) {
                depth++;
 
-               Callable<Search.MoveValue> task = getMoveValueCallable(position, depth, positionState);
+               Callable<Search.MoveValue> task = getSearchCallable(position, depth, positionState);
 
                Future<Search.MoveValue> future = executor.submit(task);
 

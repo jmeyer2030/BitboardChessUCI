@@ -64,7 +64,7 @@ public class Search {
             depth++;
 
             // Create and submit search task
-            Callable<MoveValue> task = getMoveValueCallable(position, depth, positionState);
+            Callable<MoveValue> task = getSearchCallable(position, depth, positionState);
             Future<MoveValue> future = executor.submit(task);
 
             try {
@@ -133,7 +133,7 @@ public class Search {
      * @param positionState negamax param
      * @return MoveValue callable
      */
-    public static Callable<MoveValue> getMoveValueCallable(Position position, int depth, PositionState positionState) {
+    public static Callable<MoveValue> getSearchCallable(Position position, int depth, PositionState positionState) {
         return () -> {
             try {
                 return negamax(NEG_INFINITY, POS_INFINITY, depth, position, positionState, true, 0, false);
@@ -162,7 +162,7 @@ public class Search {
             try {
                 MoveValue result;
 
-                result = getMoveValueCallable(position, i, positionState).call();
+                result = getSearchCallable(position, i, positionState).call();
                 //result = negamax(NEG_INFINITY, POS_INFINITY, i, position, positionState, true, 0, false);
 
                 String moveLAN = MoveEncoding.getLAN(result.bestMove);
@@ -332,7 +332,7 @@ public class Search {
                 continue;
             }
 
-
+            // PV search
             int score;
             try {
                 if (i == firstMove) {
@@ -466,13 +466,6 @@ public class Search {
             return false;
         return true;
     }
-    /*
-    public static boolean fpConditionsMet(Position position, PositionState positionState, int alpha, int beta) {
-        if (position.inCheck)  // In Check
-            return false;
-        return true;
-    }
-    */
 
     /**
      * Null Move pruning conditions are NOT met if any:

@@ -21,7 +21,7 @@ public class ChessEngine {
     public int ttSize = 18;
 
     // Engine state
-    public boolean isReady = true; // if main.java.engine is ready to search or add a position, this should be true.
+    public boolean isReady = true; // if ready to search or add a position, this should be true.
 
     // Position state:
     public PositionState positionState;

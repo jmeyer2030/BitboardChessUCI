@@ -32,13 +32,6 @@ public class NNUE {
     public int[] whiteAccumulator = new int[HIDDEN_LAYER_SIZE];
     public int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
 
-    public static void main(String[] args) {
-        FEN fen = new FEN("2r5/5kp1/7p/1p6/4P3/bP6/4QPPP/2q1R1K1 w - - 0 31");
-        Position position =  new Position(fen);
-        System.out.println(position.nnue.computeOutput(position.activePlayer));
-    }
-
-
     /**
      * Initializes weights and biases from quantised.bin on class load
      */

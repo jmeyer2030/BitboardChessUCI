@@ -33,7 +33,7 @@ public class MoveGenerator {
      * @param position     position to find moves for
      * @param moveBuffer   place to put moves
      * @param firstNonMove location to put the first move
-     * @return Move list
+     * @return new first non move
      */
     public static int generateAllMoves(Position position, int[] moveBuffer, int firstNonMove) {
         MoveGenerator.computePins(position);

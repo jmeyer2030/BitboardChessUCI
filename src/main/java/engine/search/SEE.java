@@ -38,9 +38,7 @@ public class SEE {
     public static final int[] gain = new int[32];
 
     /**
-    *
-    *
-    *
+    * Returns the static exchange evaluation of a move on a position
     */
     public static int see(int move, Position position) {
         int attackPiece = MoveEncoding.getMovedPiece(move);
