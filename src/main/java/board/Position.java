@@ -403,7 +403,6 @@ public class Position {
         boolean isEP = MoveEncoding.getIsEP(move);
         boolean isPromotion = MoveEncoding.getIsPromotion(move);
         boolean isCastle = MoveEncoding.getIsCastle(move);
-        //boolean isCheck = MoveEncoding.getIsCheck(move);
         boolean isDoublePush = MoveEncoding.getIsDoublePush(move);
         boolean isReversible = MoveEncoding.getIsReversible(move);
         int castleSide = MoveEncoding.getCastleSide(move);
@@ -598,7 +597,7 @@ public class Position {
     }
 
     /**
-     * Returns if this position is equal to another
+     * Returns if this position is equal to another. Debug feature.
      *
      * @param position position
      * @return true if they are equal
@@ -638,33 +637,27 @@ public class Position {
         return true;
     }
 
-    /*
-     * Visualization Method:
-     */
-
     /**
-     * Prints a main.java.board in a human-readable format
-     */
-/*
-    +---+---+---+---+---+---+---+---+
-  8 | r | n | b | q | k | b | n | r |
-    +---+---+---+---+---+---+---+---+
-  7 | p | p | p | p | p | p | p | p |
-    +---+---+---+---+---+---+---+---+
-  6 |   |   |   |   |   |   |   |   |
-    +---+---+---+---+---+---+---+---+
-  5 |   |   |   |   |   |   |   |   |
-    +---+---+---+---+---+---+---+---+
-  4 |   |   |   |   |   |   |   |   |
-    +---+---+---+---+---+---+---+---+
-  3 |   |   |   |   |   |   |   |   |
-    +---+---+---+---+---+---+---+---+
-  2 | P | P | P | P | P | P | P | P |
-    +---+---+---+---+---+---+---+---+
-  1 | R | N | B | Q | K | B | N | R |
-    +---+---+---+---+---+---+---+---+
-      A   B   C   D   E   F   G   H
-*/
+     * Prints a position in a human-readable format
+     *      +---+---+---+---+---+---+---+---+
+     *    8 | r | n | b | q | k | b | n | r |
+     *      +---+---+---+---+---+---+---+---+
+     *    7 | p | p | p | p | p | p | p | p |
+     *      +---+---+---+---+---+---+---+---+
+     *    6 |   |   |   |   |   |   |   |   |
+     *      +---+---+---+---+---+---+---+---+
+     *    5 |   |   |   |   |   |   |   |   |
+     *      +---+---+---+---+---+---+---+---+
+     *    4 |   |   |   |   |   |   |   |   |
+     *      +---+---+---+---+---+---+---+---+
+     *    3 |   |   |   |   |   |   |   |   |
+     *      +---+---+---+---+---+---+---+---+
+     *    2 | P | P | P | P | P | P | P | P |
+     *      +---+---+---+---+---+---+---+---+
+     *    1 | R | N | B | Q | K | B | N | R |
+     *      +---+---+---+---+---+---+---+---+
+     *        A   B   C   D   E   F   G   H
+    */
     public String getDisplayBoard() {
         try {
             validPosition();
