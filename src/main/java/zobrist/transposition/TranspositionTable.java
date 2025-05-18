@@ -1,24 +1,6 @@
 package zobrist.transposition;
 
 import engine.search.NodeType;
-/*
-Overwrites are relatively common. This is not an issue with the tt or hashing, just a reality of how hashing works.
-
-Storing and handling Mates:
- - When a mate is found and stored in the tt, the mate should be relative to the position that we are in
-
-Suppose search depth 5, finds mate, stored in tt
-
-if we see it in a later search, even if it is 20 plys away,
-
-ISSUE IS STORING AND RETRIEVING. IF WE RETRIEVE SUPPOSED M5, IT IS INCREMENTED
- - Yes, but correctly since it is a m5 from that position, but maybe 8 from current position
-
-
-# M5
-
-
-*/
 public class TranspositionTable {
     private final long indexMask;
 

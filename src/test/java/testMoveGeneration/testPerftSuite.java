@@ -3,7 +3,7 @@ package testMoveGeneration;
 import board.FEN;
 import board.Position;
 import org.junit.jupiter.api.Test;
-import perft.Perft;
+import userFeatures.perft.Perft;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package perft;
+package userFeatures.perft;
 
 import board.MoveEncoding;
 import board.Position;

@@ -2,7 +2,7 @@ package testMoveGeneration;
 
 import board.*;
 import org.junit.jupiter.api.Test;
-import perft.Perft;
+import userFeatures.perft.Perft;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

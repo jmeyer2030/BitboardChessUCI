@@ -38,6 +38,7 @@ public class CommandHandler {
         initialCommands = new HashMap<String, Command>();
         initialCommands.put("sayhello", new SayHello());
         initialCommands.put("uci", new UCIMode(chessEngine, this));
+        initialCommands.put("perft", new PerftCMD(chessEngine));
 
         currentCommands = initialCommands;
     }
@@ -89,6 +90,6 @@ public class CommandHandler {
     * Modifies the list of acceptable commands to allow UCI
     */
     public void acceptUCICommands() {
-        currentCommands = uciCommands;
+        currentCommands.putAll(uciCommands);
     }
 }
