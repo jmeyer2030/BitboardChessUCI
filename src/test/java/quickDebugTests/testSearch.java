@@ -1,4 +1,4 @@
-package testEngine;
+package quickDebugTests;
 
 import board.Position;
 import board.PositionState;

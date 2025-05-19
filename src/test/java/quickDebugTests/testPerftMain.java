@@ -1,4 +1,4 @@
-package testMoveGeneration;
+package quickDebugTests;
 
 import static testMoveGeneration.quickTestPerft.*;
 
