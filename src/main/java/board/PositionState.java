@@ -24,8 +24,8 @@ public class PositionState {
     public KillerMoves killerMoves;
     public TriangularPVTable pvTable;
 
-    public int[] moveBuffer;
-    public int[] moveScores;
+    public int[] moveBuffer; // All moves in the current search
+    public int[] moveScores; // Corresponding scores
     public int firstNonMove;
 
     public PositionState(int numBits) {

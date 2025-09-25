@@ -24,7 +24,7 @@ This project is the intersection of my interest in programming and chess.
 I first learned about the minimax algorithm in a class I took in 2022, and it inspired me
 to create a chess program for the first time. It was not very strong, and I didn't feel
 satisfied with the result. I revisited the project in late 2024, and decided to do a 
-rewrite with a more performant feature set.
+rewrite with a focus on performance.
 
 # Overview
 
@@ -175,8 +175,10 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
 
 
 # Issues/TODO
-
-- HCE and generate training data for NN 
+- "Evaluator" interface with implementations for HCE and NNUE
+- Get methods for retrieval of private fields in position.
+- Search should only take a position state, not a position as well.
+- Refactor Search to an object, that contains (EnchineCache, formerly PositionState)
 - Aspiration windows?
 - More aggressive pruning options?
 

@@ -394,13 +394,12 @@ public class Search {
                             positionState.killerMoves.killerMoves[0][ply] = move;
                         }
 
-                        int bonus = 300 * depthLeft - 250;
-                        positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft, bonus);
+                        positionState.historyHeuristic.addMove(position.activePlayer, move, position.halfMoveCount);
 
                         // For each other quiet searched, penalize
                         for (int j = firstMove; j < i; j++) {
                             if (!MoveEncoding.getIsCapture(positionState.moveBuffer[j]))
-                                positionState.historyHeuristic.addMove(position.activePlayer, positionState.moveBuffer[j], depthLeft, -bonus);
+                                positionState.historyHeuristic.penalizeMove(position.activePlayer, positionState.moveBuffer[j], position.halfMoveCount);
                         }
                     }
 

@@ -1,14 +1,11 @@
 package nnue;
 
-import board.FEN;
 import board.Position;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Represents an Efficiently Updatable Neural Network
@@ -106,7 +103,7 @@ public class NNUE {
             processAccumulatorChanges();
     }
 
-    public void processAccumulatorChanges() {
+    private void processAccumulatorChanges() {
         for (int i = 0; i < addIndex; i++) {
             int whiteAdd = whiteAccumulatorAddIndices[i];
             int blackAdd = blackAccumulatorAddIndices[i];
