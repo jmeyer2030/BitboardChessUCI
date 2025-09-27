@@ -23,7 +23,6 @@ public class Search {
     public static final int MATED_SCORE = 80_000_000;
 
     public static final int[] futilityMargin = {0, 200, 500, 900};
-    //public static final int[] futilityMargin = {0, 200, 300, 500};
 
     public static final int MAX_SEARCH_DEPTH = 256;
 
@@ -258,7 +257,8 @@ public class Search {
         }
 
         // Reverse Futility Pruning
-        int margin = 150 * depthLeft;
+        //int margin = 150 * depthLeft;
+        int margin = 150 * ply;
         // If not root, eval is so good that it and a margin is better than beta
         // If opponent is getting mated, don't reduce so we can find quicker mates
 
@@ -287,7 +287,7 @@ public class Search {
             }
         }
 
-        // Check if we can use futility pruning (low depth, not pv, not in check, not looking for mate, quiet move unlikely to increase alpha)
+        // Check if we can use futility pruning (low depth, not pv, not in check, not looking for mate, quiet move unlikely to increase alpha, more than one legal move)
         boolean useFutilityPruning = false;
         if (depthLeft <= 3 && !isPV && !position.inCheck && Math.abs(alpha) < MATED_SCORE && eval + futilityMargin[depthLeft] <= alpha) {
             useFutilityPruning = true;
@@ -341,7 +341,7 @@ public class Search {
                 } else {
                     // Else try to disprove that the pv is the best move with a null-window search
                     // Use late move reduction on non-pv moves
-                    int numFullSearches = 4; // non-PV full searches
+                    int numFullSearches = 1; // non-PV full searches
                     int reduction = 1;
                     if (i < firstMove + numFullSearches || // If move is within the first numFullSearches
                             depthLeft <= 3 || // If low depth left

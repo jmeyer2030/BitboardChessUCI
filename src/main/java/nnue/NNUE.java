@@ -22,6 +22,8 @@ public class NNUE {
     private static final int QB = 64;
     private static final int SCALE = 400;
 
+    // Stores added features for lazy updates
+    private static final int ACCUMULATOR_LAZY_SIZE = 1024;
 
     private static final short[][] hiddenLayerWeights = new short[HIDDEN_LAYER_SIZE][INPUT_SIZE];
     private static final short[] hiddenLayerBias = new short[HIDDEN_LAYER_SIZE];
@@ -29,11 +31,13 @@ public class NNUE {
     private static final short[] outputWeights = new short[HIDDEN_LAYER_SIZE * 2];
     private static short outputBias;
 
+    private int evaluation;
+    private boolean evaluationIsCurrent;
+    private int precomputeActivePlayer;
+
     private int[] whiteAccumulator = new int[HIDDEN_LAYER_SIZE];
     private int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
 
-    // Stores added features for lazy updates
-    private static final int ACCUMULATOR_LAZY_SIZE = 1024;
 
     private int addIndex = 0;
     private int[] whiteAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
@@ -76,8 +80,9 @@ public class NNUE {
 
         addIndex++;
 
-        if (addIndex >= ACCUMULATOR_LAZY_SIZE)
-            processAccumulatorChanges();
+        // Extremely unlikely that addIndex would overflow, no need to check
+
+        evaluationIsCurrent = false;
     }
 
     /**
@@ -99,8 +104,9 @@ public class NNUE {
 
         removeIndex++;
 
-        if (removeIndex >= ACCUMULATOR_LAZY_SIZE)
-            processAccumulatorChanges();
+        // Extrememly unlikely that removeIndex would overflow, no need to check
+
+        evaluationIsCurrent = false;
     }
 
     private void processAccumulatorChanges() {
@@ -125,7 +131,6 @@ public class NNUE {
         }
 
         removeIndex = 0;
-
     }
 
     /**
@@ -133,7 +138,7 @@ public class NNUE {
      *
      * @param position to fill accumulators from
      */
-    public void fillAccumulators(Position position) {
+    private void fillAccumulators(Position position) {
         // First add biases
         for (int i = 0; i < 128; i++) {
             whiteAccumulator[i] = hiddenLayerBias[i];
@@ -162,6 +167,10 @@ public class NNUE {
      * Computes the output GIVEN that the accumulator states are already accurate
      */
     public int computeOutput(int activePlayer) {
+        if (evaluationIsCurrent && activePlayer == precomputeActivePlayer) {
+            return evaluation;
+        }
+
         processAccumulatorChanges();
 
         int outputActivation = 0;
@@ -179,7 +188,11 @@ public class NNUE {
 
         outputActivation /= QB * QA;
 
-        return outputActivation;
+        evaluation = outputActivation;
+        evaluationIsCurrent = true;
+        precomputeActivePlayer = activePlayer;
+
+        return evaluation;
     }
 
     /**

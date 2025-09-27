@@ -77,8 +77,8 @@ public class Quiesce {
             try {
                 score = -quiescenceSearch(-beta, -alpha, position, positionState, ply + 1);
             } finally { // "close" the position
-                position.unMakeMove(move);
                 positionState.threeFoldTable.popPosition();
+                position.unMakeMove(move);
             }
 
             bestValue = Math.max(bestValue, score);
