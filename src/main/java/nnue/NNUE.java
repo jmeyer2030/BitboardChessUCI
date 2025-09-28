@@ -11,10 +11,10 @@ import java.nio.ByteOrder;
  * Represents an Efficiently Updatable Neural Network
  * - Trained using Stock Fish training data using Bullet Lib
  *
- * - Contains and loads network weights and sizes
+ * - Contains and loads network weights and sizes statically
  * - Instantiations contain Accumulators, allow incremental updates, and output computation
  */
-public class NNUE {
+public class NNUE implements NNUEInterface {
     private static final int INPUT_SIZE = 768;
     private static final int HIDDEN_LAYER_SIZE = 128;
 
@@ -200,7 +200,7 @@ public class NNUE {
      *
      * @param upperBound maximum value input value can be
      */
-    public int screlu(int upperBound, int value) {
+    private int screlu(int upperBound, int value) {
         int clipped = Math.min(Math.max(value, 0), upperBound);
         return clipped * clipped;
     }
@@ -211,7 +211,6 @@ public class NNUE {
      * @return shortArray of weights and biases of the network
      */
     private static short[] getNetworkBytes() {
-
         byte[] dataAsByteArr;
 
         try {
@@ -249,8 +248,6 @@ public class NNUE {
         // Get feature weights
         for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {
             for (int inputIndex = 0; inputIndex < INPUT_SIZE; inputIndex++) {
-                //int shortIndex = (inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex);
-                //int shortIndex = hiddenLayerIndex * INPUT_SIZE + inputIndex;
                 int shortIndex = inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex;
 
                 hiddenLayerWeights[hiddenLayerIndex][inputIndex] = nnShorts[shortIndex];

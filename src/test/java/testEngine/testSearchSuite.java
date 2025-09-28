@@ -38,7 +38,6 @@ public class testSearchSuite {
                     Search.iterativeDeepeningFixedDepth(position, depth);
                 } catch (Exception e) {
                     throw e;
-                    //throw e;
                 }
             }
         } catch (IOException e) {

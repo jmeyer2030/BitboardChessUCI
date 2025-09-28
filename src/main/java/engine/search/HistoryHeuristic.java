@@ -3,7 +3,7 @@ package engine.search;
 import board.MoveEncoding;
 
 public class HistoryHeuristic {
-    private static final int MAX_HISTORY = 20000;
+    private static final int MAX_HISTORY = 16_384; // TODO: Tune this. Probably is essentially infinite when maybe we want more churn
     private int[][][] history; // history[color][from][to]
 
     public HistoryHeuristic() {
@@ -11,43 +11,38 @@ public class HistoryHeuristic {
     }
 
     /**
-    * When a quiet move causes a beta cutoff, we add value used in ordering
-    */
+     * When a quiet move causes a beta cutoff, we add value used in ordering
+     * - If the cutoff is expected, we care less than if it is not expected
+     * - We use depth(left) because we want to value closer to the root nodes more.
+     *    - We do not use HMC because that does the opposite
+     *
+     * @Param color side making the move
+     * @Param move the move we add
+     * @Param depth depthLeft in the search
+     */
     public void addMove(int color, int move, int depth) {
         int from = MoveEncoding.getStart(move);
         int to = MoveEncoding.getDestination(move);
 
-        int bonus = getBonus(history[color][from][to], depth);
-        history[color][from][to] += bonus;
+        int bonus = depth * depth;
+        int clampedBonus = Math.clamp(bonus, -MAX_HISTORY, MAX_HISTORY);
+        // Reduce by a factor of the previous score
+        int historyGravity = clampedBonus - history[color][from][to] * Math.abs(clampedBonus) / MAX_HISTORY;
+
+        history[color][from][to] += historyGravity;
     }
 
     /**
-    * When we add a move to HH, we penalize other moves using this function
-    */
+     * When we add a move to HH, we penalize other moves using this function
+     */
     public void penalizeMove(int color, int move, int depth) {
         int from = MoveEncoding.getStart(move);
         int to = MoveEncoding.getDestination(move);
 
-        int bonus = getNegativeBonus(depth);
+        // TODO: Try different values
+        int bonus = -Math.clamp(depth * depth, -MAX_HISTORY, MAX_HISTORY);
         history[color][from][to] += bonus;
     }
-
-    /**
-    * History Gravity so make the HH higher if unexpected, and lower if expected
-    */
-    private int getBonus(int prevHH, int depth) {
-        int bonus = depth * depth;
-        int clampedBonus = Math.clamp(bonus, -MAX_HISTORY, MAX_HISTORY);
-
-        // if this is expected, we care less.
-        int historyGravity = clampedBonus - prevHH * Math.abs(clampedBonus) / MAX_HISTORY;
-        return historyGravity;
-    }
-
-    private int getNegativeBonus(int depth) {
-        return Math.clamp(-(depth * depth), -MAX_HISTORY, MAX_HISTORY);
-    }
-
 
     public int getHeuristic(int move, int color) {
         int from = MoveEncoding.getStart(move);

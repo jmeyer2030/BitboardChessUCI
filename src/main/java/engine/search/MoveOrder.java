@@ -22,6 +22,7 @@ public class MoveOrder {
      * @param positionState source of move tables
      * @param firstMove     the start of the move-window in the table
      * @param firstNonMove  the first non-move after the window
+     * @param ply           used for killers
      */
     public static void scoreMoves(Position position, PositionState positionState, int firstMove, int firstNonMove, int ply) {
         // Iterate over moves in the window
@@ -29,6 +30,21 @@ public class MoveOrder {
             positionState.moveScores[i] = scoreMove(position, positionState, positionState.moveBuffer[i], ply);
         }
     }
+
+    /**
+     * Quicker move scoring, that only evaluates captures
+     *
+     * @param positionState source of move tables
+     * @param firstMove     the start of the move-window in the table
+     * @param firstNonMove  the first non-move after the window
+     */
+    public static void scoreLoudMoves(Position position, PositionState positionState, int firstMove, int firstNonMove) {
+        // Iterate over moves in the window
+        for (int i = firstMove; i < firstNonMove; i++) {
+            positionState.moveScores[i] = quickEvaluateExchange(positionState.moveBuffer[i], position);
+        }
+    }
+
 
     /**
      * Performs one iteration of a selection sort by:
@@ -68,9 +84,9 @@ public class MoveOrder {
      * - PV / hash move
      * - Promotions
      * - Captures: If (MVV-LVA > 0 use that, else SEE)
-     *   - Winning captures
-     *   - Neutral captures
-     *   - Losing captures
+     * - Winning captures
+     * - Neutral captures
+     * - Losing captures
      * - KILLER MOVES
      * - Quiet moves (History Heuristic)
      *
@@ -101,7 +117,7 @@ public class MoveOrder {
         }
 
         if (MoveEncoding.getIsCapture(move)) {
-            value += CAPTURE_BONUS + evaluateExchange(move, position);
+            value += CAPTURE_BONUS + quickEvaluateExchange(move, position);
         } else {
             if (move == positionState.killerMoves.killerMoves[0][ply]) {
                 value += FIRST_KILLER_BONUS;
@@ -127,13 +143,13 @@ public class MoveOrder {
 
 
     /**
-    * For winning captures, just return MVVLVA
-    * For losing captures, return SEE
-    *
-    * @param move to score
-    * @param position the move is made on
-    */
-    private static int evaluateExchange(int move, Position position) {
+     * For winning captures, just return MVVLVA
+     * For losing captures, return SEE
+     *
+     * @param move     to score
+     * @param position the move is made on
+     */
+    private static int quickEvaluateExchange(int move, Position position) {
         int mvvlvaScore = mvvlva(move);
 
         if (mvvlvaScore > 0) {

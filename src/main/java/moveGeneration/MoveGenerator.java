@@ -18,8 +18,7 @@ public class MoveGenerator {
 
         for (int i = 0; i < firstNonMove; i++) {
             int move = moveBuffer[i];
-            if (MoveEncoding.getLAN(move).equals(lan))
-                return move;
+            if (MoveEncoding.getLAN(move).equals(lan)) return move;
         }
 
         // Case that no generated move matches the lan description
@@ -36,7 +35,7 @@ public class MoveGenerator {
      * @return new first non move
      */
     public static int generateAllMoves(Position position, int[] moveBuffer, int firstNonMove) {
-        MoveGenerator.computePins(position);
+        computePins(position);
 
         int numCheckers = Long.bitCount(position.checkers);
 
@@ -58,52 +57,53 @@ public class MoveGenerator {
         }
     }
 
-
     private static int generateMovesNoChecks(Position position, int[] moveBuffer, int firstNonMove) {
-        firstNonMove = generatePawnMoves(position, moveBuffer, firstNonMove, ~0L);
-        firstNonMove = generateKnightMoves(position, moveBuffer, firstNonMove, ~0L);
-        firstNonMove = generateBishopMoves(position, moveBuffer, firstNonMove, ~0L);
-        firstNonMove = generateRookMoves(position, moveBuffer, firstNonMove, ~0L);
-        firstNonMove = generateQueenMoves(position, moveBuffer, firstNonMove, ~0L);
-        firstNonMove = generateKingMoves(position, moveBuffer, firstNonMove, false);
+        firstNonMove = generatePawnMoves(position, moveBuffer, firstNonMove, ~0L, false);
+        firstNonMove = generateKnightMoves(position, moveBuffer, firstNonMove, ~0L, false);
+        firstNonMove = generateBishopMoves(position, moveBuffer, firstNonMove, ~0L, false);
+        firstNonMove = generateRookMoves(position, moveBuffer, firstNonMove, ~0L, false);
+        firstNonMove = generateQueenMoves(position, moveBuffer, firstNonMove, ~0L, false);
+        firstNonMove = generateKingMoves(position, moveBuffer, firstNonMove, false, false);
         return firstNonMove;
     }
 
     private static int generateMovesOneCheck(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask) {
-        firstNonMove = generatePawnMoves(position, moveBuffer, firstNonMove, checkHandleMask);
-        firstNonMove = generateKnightMoves(position, moveBuffer, firstNonMove, checkHandleMask);
-        firstNonMove = generateBishopMoves(position, moveBuffer, firstNonMove, checkHandleMask);
-        firstNonMove = generateRookMoves(position, moveBuffer, firstNonMove, checkHandleMask);
-        firstNonMove = generateQueenMoves(position, moveBuffer, firstNonMove, checkHandleMask);
-        firstNonMove = generateKingMoves(position, moveBuffer, firstNonMove, true);
+        firstNonMove = generatePawnMoves(position, moveBuffer, firstNonMove, checkHandleMask, false);
+        firstNonMove = generateKnightMoves(position, moveBuffer, firstNonMove, checkHandleMask, false);
+        firstNonMove = generateBishopMoves(position, moveBuffer, firstNonMove, checkHandleMask, false);
+        firstNonMove = generateRookMoves(position, moveBuffer, firstNonMove, checkHandleMask, false);
+        firstNonMove = generateQueenMoves(position, moveBuffer, firstNonMove, checkHandleMask, false);
+        firstNonMove = generateKingMoves(position, moveBuffer, firstNonMove, true, false);
         return firstNonMove;
     }
 
     private static int generateMovesDoubleCheck(Position position, int[] moveBuffer, int firstNonMove) {
-        return generateKingMoves(position, moveBuffer, firstNonMove, true);
+        return generateKingMoves(position, moveBuffer, firstNonMove, true, false);
     }
 
-
-    public static int generateAllCaptures(Position position, int[] moveBuffer, int firstNonMove) {
-        MoveGenerator.computePins(position);
-
+    /**
+     * Specialized move generation function for Quiescence search
+     * IF in check:
+     * - Generate all moves (we want to consider all evasions)
+     * ELSE:
+     * - Generate only captures
+     * <p>
+     * We can generate
+     */
+    public static int generateQSearchMoves(Position position, int[] moveBuffer, int firstNonMove) {
         int numCheckers = Long.bitCount(position.checkers);
 
         if (numCheckers == 0) {
-            return generateMovesNoChecks(position, moveBuffer, firstNonMove);
-        } else if (numCheckers == 1) {
-            int checkerSquare = Long.numberOfTrailingZeros(position.checkers);
-            int checkerType = position.getPieceType(checkerSquare);
-
-            // Capturing the piece is allowed
-            long validDestinations = 1L << checkerSquare;
-            // If sliding, intercepting the attack is allowed
-            if (checkerType == 2 || checkerType == 3 || checkerType == 4) {
-                validDestinations |= AbsolutePins.inBetween[position.kingLocs[position.activePlayer]][checkerSquare];
-            }
-            return generateMovesOneCheck(position, moveBuffer, firstNonMove, validDestinations);
+            computePins(position);
+            firstNonMove = generatePawnMoves(position, moveBuffer, firstNonMove, ~0L, true);
+            firstNonMove = generateKnightMoves(position, moveBuffer, firstNonMove, ~0L, true);
+            firstNonMove = generateBishopMoves(position, moveBuffer, firstNonMove, ~0L, true);
+            firstNonMove = generateRookMoves(position, moveBuffer, firstNonMove, ~0L, true);
+            firstNonMove = generateQueenMoves(position, moveBuffer, firstNonMove, ~0L, true);
+            firstNonMove = generateKingMoves(position, moveBuffer, firstNonMove, false, true);
+            return firstNonMove;
         } else {
-            return generateMovesDoubleCheck(position, moveBuffer, firstNonMove);
+            return generateAllMoves(position, moveBuffer, firstNonMove);
         }
     }
 
@@ -154,10 +154,7 @@ public class MoveGenerator {
         int destination = MoveEncoding.getDestination(move);
 
         return ((PawnLogic.getAttackBoard(destination, kingColor) & potentialAttackers & position.pieces[0]) != 0) || // Look at king color pawn move FROM the king's loc
-                ((BishopLogic.getAttackBoard(destination, removedKingOccupancy) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) ||
-                ((RookLogic.getAttackBoard(destination, removedKingOccupancy) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) ||
-                ((KnightLogic.getAttackBoard(destination, position) & potentialAttackers & position.pieces[1]) != 0) ||
-                ((KingLogic.getKingAttacks(destination) & potentialAttackers & position.pieces[5]) != 0);
+                ((BishopLogic.getAttackBoard(destination, removedKingOccupancy) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) || ((RookLogic.getAttackBoard(destination, removedKingOccupancy) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) || ((KnightLogic.getAttackBoard(destination, position) & potentialAttackers & position.pieces[1]) != 0) || ((KingLogic.getKingAttacks(destination) & potentialAttackers & position.pieces[5]) != 0);
     }
 
     /**
@@ -174,7 +171,6 @@ public class MoveGenerator {
         moveBuffer[firstNonMove] = move;
         return ++firstNonMove;
     }
-
 
     /**
      * Checks if an EP move puts self in check
@@ -224,7 +220,7 @@ public class MoveGenerator {
      * @param firstNonMove index of moveBuffer to start adding
      * @return firstNonMove updated
      */
-    private static int generatePawnMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask) {
+    private static int generatePawnMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask, boolean onlyCaptures) {
         long pawnList = position.pieces[0] & position.pieceColors[position.activePlayer];
 
         while (pawnList != 0L) {
@@ -260,6 +256,20 @@ public class MoveGenerator {
                 }
             }
 
+            // Handle En Passant
+            long enPassantMoves = PawnLogic.getEnPassant(start, position) & pinMask;
+            while (enPassantMoves != 0) {
+                int destination = Long.numberOfTrailingZeros(enPassantMoves);
+                enPassantMoves &= (enPassantMoves - 1);
+                int move = MoveShortcuts.generatePawnEnPassant(start, destination, position);
+                if (epIsValid(start, destination, position, checkHandleMask)) {
+                    firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
+                }
+            }
+            if (onlyCaptures) {
+                continue;
+            }
+
             // Handle Quiet Moves
             long quietMoves = PawnLogic.getQuietMoves(start, position) & pinMask & checkHandleMask;
             while (quietMoves != 0) {
@@ -284,17 +294,6 @@ public class MoveGenerator {
                     firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
                 }
             }
-
-            // Handle En Passant
-            long enPassantMoves = PawnLogic.getEnPassant(start, position) & pinMask;
-            while (enPassantMoves != 0) {
-                int destination = Long.numberOfTrailingZeros(enPassantMoves);
-                enPassantMoves &= (enPassantMoves - 1);
-                int move = MoveShortcuts.generatePawnEnPassant(start, destination, position);
-                if (epIsValid(start, destination, position, checkHandleMask)) {
-                    firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
-                }
-            }
         }
         return firstNonMove;
     }
@@ -305,13 +304,12 @@ public class MoveGenerator {
      * @param position     to generate moves for
      * @param moveBuffer   to fill moves
      * @param firstNonMove index of moveBuffer to start adding
-     * @return firstNonMove updated
+     * @return updated firstNonMove
      */
-    private static int generateRookMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask) {
+    private static int generateRookMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask, boolean onlyCaptures) {
         long rookList = (position.pieceColors[position.activePlayer]) & position.pieces[3];
         // Iterate over the rook positions using bitwise manipulation
         while (rookList != 0L) {
-
             int start = Long.numberOfTrailingZeros(rookList);
             rookList &= (rookList - 1);
 
@@ -319,7 +317,6 @@ public class MoveGenerator {
             if (position.pinnedPieces[start] != -1) {
                 pinMask = AbsolutePins.inBetween[position.kingLocs[position.activePlayer]][position.pinnedPieces[start]] | (1L << position.pinnedPieces[start]);
             }
-
 
             long moves = RookLogic.getMoveBoard(start, position) & pinMask & checkHandleMask;
 
@@ -331,6 +328,10 @@ public class MoveGenerator {
 
                 int move = MoveShortcuts.generateRookCapture(start, destination, position);
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
+            }
+
+            if (onlyCaptures) {
+                continue;
             }
 
             // Process quiet moves
@@ -352,7 +353,7 @@ public class MoveGenerator {
      * @param position to generate moves for
      * @return Move list
      */
-    private static int generateBishopMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask) {
+    private static int generateBishopMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask, boolean onlyCaptures) {
         long bishopList = position.pieceColors[position.activePlayer] & position.pieces[2];
         // Iterate over bishop positions using bitwise manipulation
         while (bishopList != 0L) {
@@ -364,7 +365,6 @@ public class MoveGenerator {
                 pinMask = AbsolutePins.inBetween[position.kingLocs[position.activePlayer]][position.pinnedPieces[start]] | (1L << position.pinnedPieces[start]);
             }
 
-
             long moves = BishopLogic.getMoveBoard(start, position) & pinMask & checkHandleMask;
 
             // Process capture moves
@@ -375,6 +375,10 @@ public class MoveGenerator {
 
                 int move = MoveShortcuts.generateBishopCapture(start, destination, position);
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
+            }
+
+            if (onlyCaptures) {
+                continue;
             }
 
             // Process quiet moves
@@ -396,7 +400,7 @@ public class MoveGenerator {
      * @param position to generate moves for
      * @return Move list
      */
-    private static int generateKnightMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask) {
+    private static int generateKnightMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask, boolean onlyCaptures) {
         long knightList = position.pieceColors[position.activePlayer] & position.pieces[1];
 
         // Iterate over knight positions using bitwise manipulation
@@ -407,6 +411,10 @@ public class MoveGenerator {
             long pinMask = ~0L;
             if (position.pinnedPieces[start] != -1) {
                 pinMask = AbsolutePins.inBetween[position.kingLocs[position.activePlayer]][position.pinnedPieces[start]] | (1L << position.pinnedPieces[start]);
+            }
+
+            if (onlyCaptures) {
+                continue;
             }
 
             // Process capture moves
@@ -437,7 +445,7 @@ public class MoveGenerator {
      * @param position position to generate moves for
      * @return Move list
      */
-    private static int generateKingMoves(Position position, int[] moveBuffer, int firstNonMove, boolean inCheck) {
+    private static int generateKingMoves(Position position, int[] moveBuffer, int firstNonMove, boolean inCheck, boolean onlyCaptures) {
         long kingList = position.pieceColors[position.activePlayer] & position.pieces[5];
 
         // Iterate over king positions using bitwise manipulation
@@ -457,6 +465,10 @@ public class MoveGenerator {
                     firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
             }
 
+            if (onlyCaptures) {
+                continue;
+            }
+
             // Process quiet moves
             long quietDestinations = KingLogic.getQuietMoves(start, position);
             while (quietDestinations != 0) {
@@ -467,7 +479,6 @@ public class MoveGenerator {
 
                 if (!kingMoveSelfInCheck(move, position, position.activePlayer))
                     firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
-
             }
 
             // Process castling moves
@@ -477,8 +488,7 @@ public class MoveGenerator {
                 castleDestinations &= (castleDestinations - 1);
 
                 // Check if they move through or are in check
-                if (castleSquaresAttacked(position, destination, inCheck))
-                    continue;
+                if (castleSquaresAttacked(position, destination, inCheck)) continue;
 
                 int move;
 
@@ -502,7 +512,7 @@ public class MoveGenerator {
      * @param position to generate moves for
      * @return Move list
      */
-    public static int generateQueenMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask) {
+    public static int generateQueenMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask, boolean onlyCaptures) {
         long queenList = position.pieceColors[position.activePlayer] & position.pieces[4];
 
         // Iterate over queen positions using bitwise manipulation
@@ -525,6 +535,10 @@ public class MoveGenerator {
 
                 int move = MoveShortcuts.generateQueenCapture(start, destination, position);
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
+            }
+
+            if (onlyCaptures) {
+                continue;
             }
 
             // Process quiet moves
@@ -582,11 +596,7 @@ public class MoveGenerator {
      */
     public static boolean squareAttackedBy(Position position, int square, int attackColor) {
         long potentialAttackers = position.pieceColors[attackColor];
-        return ((PawnLogic.getAttackBoard(square, 1 - attackColor) & potentialAttackers & position.pieces[0]) != 0) ||
-                ((BishopLogic.getAttackBoard(square, position) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) ||
-                ((RookLogic.getAttackBoard(square, position) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) ||
-                ((KnightLogic.getAttackBoard(square, position) & potentialAttackers & position.pieces[1]) != 0) ||
-                ((KingLogic.getKingAttacks(square) & potentialAttackers & position.pieces[5]) != 0);
+        return ((PawnLogic.getAttackBoard(square, 1 - attackColor) & potentialAttackers & position.pieces[0]) != 0) || ((BishopLogic.getAttackBoard(square, position) & potentialAttackers & (position.pieces[2] | position.pieces[4])) != 0) || ((RookLogic.getAttackBoard(square, position) & potentialAttackers & (position.pieces[3] | position.pieces[4])) != 0) || ((KnightLogic.getAttackBoard(square, position) & potentialAttackers & position.pieces[1]) != 0) || ((KingLogic.getKingAttacks(square) & potentialAttackers & position.pieces[5]) != 0);
     }
 
     /**
@@ -626,9 +636,7 @@ public class MoveGenerator {
             int rookAttackPiece = Long.numberOfTrailingZeros(pinningPieces);
             pinningPieces &= (pinningPieces - 1);
 
-            int blockerPiece = Long.numberOfTrailingZeros(
-                    AbsolutePins.inBetween[rookAttackPiece][position.kingLocs[position.activePlayer]] &
-                            position.pieceColors[position.activePlayer]);
+            int blockerPiece = Long.numberOfTrailingZeros(AbsolutePins.inBetween[rookAttackPiece][position.kingLocs[position.activePlayer]] & position.pieceColors[position.activePlayer]);
 
             // Case that the attack isn't blocked
             if (blockerPiece == 64) {
@@ -638,7 +646,6 @@ public class MoveGenerator {
             position.pinnedPieces[blockerPiece] = rookAttackPiece;
         }
 
-
         long bishopAttackPieces = (position.pieces[2] | position.pieces[4]) & position.pieceColors[1 - position.activePlayer];
 
         long bishopXRay = BishopLogic.xrayAttacks(position.kingLocs[position.activePlayer], position);
@@ -647,9 +654,7 @@ public class MoveGenerator {
 
         while (pinningPieces != 0) {
             int bishopAttackPiece = Long.numberOfTrailingZeros(pinningPieces);
-            int blockerPiece = Long.numberOfTrailingZeros(
-                    AbsolutePins.inBetween[bishopAttackPiece][position.kingLocs[position.activePlayer]] &
-                            position.pieceColors[position.activePlayer]);
+            int blockerPiece = Long.numberOfTrailingZeros(AbsolutePins.inBetween[bishopAttackPiece][position.kingLocs[position.activePlayer]] & position.pieceColors[position.activePlayer]);
 
             pinningPieces &= (pinningPieces - 1);
             if (blockerPiece == 64) {

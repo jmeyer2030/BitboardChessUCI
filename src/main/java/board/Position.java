@@ -1,8 +1,10 @@
 package board;
 
 import moveGeneration.MoveGenerator;
+import nnue.DummyNNUE;
 import nnue.NNUE;
 import customExceptions.InvalidPositionException;
+import nnue.NNUEInterface;
 import zobrist.Hashing;
 
 import java.util.Arrays;
@@ -48,7 +50,7 @@ public class Position {
     public boolean inCheck;
 
     //NNUE
-    public NNUE nnue;
+    public NNUEInterface nnue;
 
     /*
      * Constructors
@@ -279,6 +281,12 @@ public class Position {
         this.checkers = MoveGenerator.computeCheckers(this);
 
         this.nnue = new NNUE(this);
+    }
+
+    public static Position getPerftPosition(FEN fen) {
+        Position position = new Position(fen);
+        position.nnue = new DummyNNUE();
+        return position;
     }
 
     /*

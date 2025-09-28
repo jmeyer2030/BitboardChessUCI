@@ -115,7 +115,8 @@ public class testMateSearch {
     /**
      * M12 (23 ply)
      */
-    //@Test
+    @Test
+    //Excluded because too long
     public void testMatingPosition7() {
         PositionState positionState = new PositionState(18);
         FEN fen = new FEN("8/8/7k/K7/R7/8/8/8 w - - 0 1");

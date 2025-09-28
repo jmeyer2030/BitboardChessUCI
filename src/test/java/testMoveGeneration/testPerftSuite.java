@@ -34,7 +34,7 @@ public class testPerftSuite {
 
     public static long perftFromFen(String fen, int depth) {
         FEN fenP = new FEN(fen);
-        Position position = new Position(fenP);
+        Position position = Position.getPerftPosition(fenP);
 
         long start = System.currentTimeMillis();
         long result = Perft.perft(depth, position);

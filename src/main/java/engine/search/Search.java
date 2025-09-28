@@ -27,6 +27,7 @@ public class Search {
     public static final int MAX_SEARCH_DEPTH = 256;
 
     public static final int NULL_MOVE_PRUNING_REDUCTION = 3;
+    public static final int NUM_NON_PV_FULL_DEPTH_SEARCHES = 3;
 
     /**
      * Class representing a move and evaluation
@@ -257,10 +258,9 @@ public class Search {
         }
 
         // ===============Reverse Futility Pruning===============
-        //int margin = 150 * depthLeft;
-        int margin = 150 * ply;
-        // If not root, eval is so good that it and a margin is better than beta
-        // If opponent is getting mated, don't reduce so we can find quicker mates
+        //  - If not root, eval is so good that it and a margin is better than beta
+        //  - If opponent is getting mated, don't reduce so we can find quicker mates
+        int margin = 150 * depthLeft;
 
         if (!isRoot && eval >= beta + margin && !position.inCheck && !isPV && beta > -MATED_SCORE) {
             positionState.firstNonMove = firstMove;
@@ -271,7 +271,6 @@ public class Search {
         // ===============Null Move Pruning===============
         //if (!isRoot && depthLeft >= 3 && eval >= beta && !position.inCheck && numMoves >= 7) {
         if (!isRoot && depthLeft >= 3 && eval >= beta && nmpConditionsMet(position)) {
-            // Plys fewer to search
             int reduction = NULL_MOVE_PRUNING_REDUCTION;
             position.makeNullMove();
             int score;
@@ -332,35 +331,33 @@ public class Search {
                 continue;
             }
 
-            // PV search
+            // ===============PV search===============
+            //  - if we are on a PV Node AND the child is theorized to be PV
+            //      - Where "PV Node" is the first child of a PV Node
+            //      - Full window, full depth search
+            //  - else
+            //      - Run a null window search, reducing depending on LMR
             int score;
             try {
                 if (i == firstMove) {
-                    // Full window search for first move
                     score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, true).value;
-                } else {
-                    // Else try to disprove that the pv is the best move with a null-window search
-                    // Use late move reduction on non-pv moves
-                    int numFullSearches = 1; // non-PV full searches
-                    int reduction = 1;
-                    if (i < firstMove + numFullSearches || // If move is within the first numFullSearches
-                            depthLeft <= 3 || // If low depth left
-                            move == positionState.killerMoves.killerMoves[0][ply] || move == positionState.killerMoves.killerMoves[1][ply] || // Move is a killer
-                            position.inCheck || wasInCheck) { // In check or causes a check
-
-                        // Run full search
-                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value;
-                    } else { // Reduce search
+                } else { // Note that we
+                    // ===============Late Move Reduction===============
+                    // Use late move reduction on non-pv moves with log formula
+                    if (i >= firstMove + NUM_NON_PV_FULL_DEPTH_SEARCHES && depthLeft > 3) {
+                        int reduction = (int) Math.round(.99 + (Math.log(depthLeft) * Math.log(i - firstMove)) / 3.14);
                         score = -negamax(-alpha - 1, -alpha, depthLeft - 1 - reduction, position, positionState, false, ply + 1, false).value;
 
                         if (score >= beta) { // If search fails high, research at full depth
                             score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value;
                         }
+                    } else {
+                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value;
                     }
 
-                    // If disproved, then re-search with full window
-                    if (score > alpha && (beta - alpha > 1)) {
-                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value;
+                    // If dispwr
+                    if (score > alpha && (beta - alpha) > 1) {
+                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value; // It is now PV if parent is because it exceeded alpha
                     }
                 }
             } finally {
@@ -394,12 +391,12 @@ public class Search {
                             positionState.killerMoves.killerMoves[0][ply] = move;
                         }
 
-                        positionState.historyHeuristic.addMove(position.activePlayer, move, position.halfMoveCount);
+                        positionState.historyHeuristic.addMove(position.activePlayer, move, depthLeft);
 
                         // For each other quiet searched, penalize
                         for (int j = firstMove; j < i; j++) {
                             if (!MoveEncoding.getIsCapture(positionState.moveBuffer[j]))
-                                positionState.historyHeuristic.penalizeMove(position.activePlayer, positionState.moveBuffer[j], position.halfMoveCount);
+                                positionState.historyHeuristic.penalizeMove(position.activePlayer, positionState.moveBuffer[j], depthLeft);
                         }
                     }
 
