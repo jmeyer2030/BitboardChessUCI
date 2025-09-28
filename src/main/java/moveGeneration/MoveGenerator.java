@@ -58,7 +58,8 @@ public class MoveGenerator {
         }
     }
 
-    public static int generateMovesNoChecks(Position position, int[] moveBuffer, int firstNonMove) {
+
+    private static int generateMovesNoChecks(Position position, int[] moveBuffer, int firstNonMove) {
         firstNonMove = generatePawnMoves(position, moveBuffer, firstNonMove, ~0L);
         firstNonMove = generateKnightMoves(position, moveBuffer, firstNonMove, ~0L);
         firstNonMove = generateBishopMoves(position, moveBuffer, firstNonMove, ~0L);
@@ -68,7 +69,7 @@ public class MoveGenerator {
         return firstNonMove;
     }
 
-    public static int generateMovesOneCheck(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask) {
+    private static int generateMovesOneCheck(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask) {
         firstNonMove = generatePawnMoves(position, moveBuffer, firstNonMove, checkHandleMask);
         firstNonMove = generateKnightMoves(position, moveBuffer, firstNonMove, checkHandleMask);
         firstNonMove = generateBishopMoves(position, moveBuffer, firstNonMove, checkHandleMask);
@@ -78,15 +79,38 @@ public class MoveGenerator {
         return firstNonMove;
     }
 
-    public static int generateMovesDoubleCheck(Position position, int[] moveBuffer, int firstNonMove) {
+    private static int generateMovesDoubleCheck(Position position, int[] moveBuffer, int firstNonMove) {
         return generateKingMoves(position, moveBuffer, firstNonMove, true);
+    }
+
+
+    public static int generateAllCaptures(Position position, int[] moveBuffer, int firstNonMove) {
+        MoveGenerator.computePins(position);
+
+        int numCheckers = Long.bitCount(position.checkers);
+
+        if (numCheckers == 0) {
+            return generateMovesNoChecks(position, moveBuffer, firstNonMove);
+        } else if (numCheckers == 1) {
+            int checkerSquare = Long.numberOfTrailingZeros(position.checkers);
+            int checkerType = position.getPieceType(checkerSquare);
+
+            // Capturing the piece is allowed
+            long validDestinations = 1L << checkerSquare;
+            // If sliding, intercepting the attack is allowed
+            if (checkerType == 2 || checkerType == 3 || checkerType == 4) {
+                validDestinations |= AbsolutePins.inBetween[position.kingLocs[position.activePlayer]][checkerSquare];
+            }
+            return generateMovesOneCheck(position, moveBuffer, firstNonMove, validDestinations);
+        } else {
+            return generateMovesDoubleCheck(position, moveBuffer, firstNonMove);
+        }
     }
 
     /**
      * Generates a bitboard representing the locations of checkers of the active player's king
      */
     public static long computeCheckers(Position position) {
-
         int kingSquare = position.kingLocs[position.activePlayer];
         // Get intersections of attacks from king and enemy pieces of the correct type
         long pawnAttacks = PawnLogic.getAttackBoard(kingSquare, position.activePlayer) & position.pieces[0] & position.pieceColors[1 - position.activePlayer];
@@ -105,7 +129,6 @@ public class MoveGenerator {
      * @return bitboard representing pieces of attackerColor that are attacking square in position
      */
     public static long getSEEAttackers(Position position, int square) {
-
         // Get intersections of attacks from king and enemy pieces of the correct type
         long pawnAttacks = PawnLogic.getAttackBoard(square, 0) & position.pieces[0] & position.pieceColors[1];
         pawnAttacks |= PawnLogic.getAttackBoard(square, 1) & position.pieces[0] & position.pieceColors[0];
@@ -157,7 +180,7 @@ public class MoveGenerator {
      * Checks if an EP move puts self in check
      * Simulates it and sees if self in check by discovery or
      */
-    public static boolean epIsValid(int start, int destination, Position position, long checkHandleMask) {
+    private static boolean epIsValid(int start, int destination, Position position, long checkHandleMask) {
         int epCaptureSquare = position.enPassant - 8 + 16 * position.activePlayer;
         long modifiedOccupancy = position.occupancy ^ (1L << epCaptureSquare) ^ (1L << start) | (1L << destination); // Simulate the move
 
@@ -637,145 +660,3 @@ public class MoveGenerator {
         }
     }
 }
-
-/**
- * Populates this.pinnedPieces[i] with either the square of the pinning piece or -1 where i is the pinned piece location.
- * Does this computation for the active player, e.g. what pieces of the active player are pinned to the active player's king?
- */
- /*
-public static void computePotentialDiscoveries(Position position) {
-    // First reset locations of pinned pieces
-    position.potentialDiscoverersBits = 0;
-
-    // Get potential discovery pieces for rooks
-    long rookAttackPieces = (position.pieces[3] | position.pieces[4]) & position.pieceColors[position.activePlayer];
-    // Get xray attacks
-    long rookXRay = RookLogic.xrayAttacks(position.kingLocs[1 - position.activePlayer], position);
-    // Get intersection of rooks and xray
-    long potentialAttackers = rookAttackPieces & rookXRay;
-    while (potentialAttackers != 0) {
-        int rookAttackPiece = Long.numberOfTrailingZeros(potentialAttackers);
-        int blockerPiece = Long.numberOfTrailingZeros(
-                AbsolutePins.inBetween[rookAttackPiece][position.kingLocs[1 - position.activePlayer]] &
-                        position.pieceColors[position.activePlayer]);
-        potentialAttackers &= (potentialAttackers - 1);
-        if (blockerPiece == 64) { // Case that a rook is found but it is not blocked
-            continue;
-        }
-        position.potentialDiscoverersBits |= (1 << blockerPiece);
-        position.potentialDiscoverers[blockerPiece] = rookAttackPiece;
-    }
-
-
-    long bishopAttackPieces = (position.pieces[2] | position.pieces[4]) & position.pieceColors[position.activePlayer];
-
-    long bishopXRay = BishopLogic.xrayAttacks(position.kingLocs[1 - position.activePlayer], position);
-
-    potentialAttackers = bishopAttackPieces & bishopXRay;
-
-    while (potentialAttackers != 0) {
-        int bishopAttackPiece = Long.numberOfTrailingZeros(potentialAttackers);
-        int blockerPiece = Long.numberOfTrailingZeros(
-                AbsolutePins.inBetween[bishopAttackPiece][position.kingLocs[1 - position.activePlayer]] &
-                        position.pieceColors[position.activePlayer]);
-        potentialAttackers &= (potentialAttackers - 1);
-        if (blockerPiece == 64) { // Case that a bishop is found but it is not blocked
-            continue;
-        }
-        position.potentialDiscoverersBits |= (1 << blockerPiece);
-        position.potentialDiscoverers[blockerPiece] = bishopAttackPiece;
-    }
-}
-*/
-
-/*
-     public static boolean moveIsCheck(int move, Position position) {
-        // Check if movedPiece attacks the opponent (attacks of piece on destination is a check
-        int movedPiece = MoveEncoding.getMovedPiece(move);
-        int destination = MoveEncoding.getDestination(move);
-
-        if ((pieceAttacksFromSquare(movedPiece, destination, position) & (1L << position.kingLocs[1 - position.activePlayer])) != 0)
-            return true;
-
-        // Check if it made a discovery
-        int start = MoveEncoding.getStart(move);
-        if (!(position.potentialDiscoverers[start] == -1)) {
-            long inBetween = AbsolutePins.inBetween[position.kingLocs[1 - position.activePlayer]][position.potentialDiscoverers[start]];
-            if ((inBetween & (1L << destination)) == 0L)
-                return true;
-        }
-
-        // Check special move types
-        boolean isPromotion = MoveEncoding.getIsPromotion(move);
-        boolean isCastle = MoveEncoding.getIsCastle(move);
-        boolean isEP = MoveEncoding.getIsEP(move);
-
-        // Check if promotion piece checks
-        if (isPromotion) {
-            int promotionType = MoveEncoding.getPromotionType(move);
-            if ((pieceAttacksFromSquare(promotionType, destination, position) & (1L << position.kingLocs[1 - position.activePlayer])) != 0)
-                return true;
-        }
-
-        // Check if rook checks
-        if (isCastle) {
-            int castleSide = MoveEncoding.getCastleSide(move);
-
-            if ((pieceAttacksFromSquare(3, position.castleRookDestinations[position.activePlayer][castleSide], position) & (1L << position.kingLocs[1 - position.activePlayer])) != 0)
-                return true;
-        }
-
-        // Check if removal of enemy pawn causes a check
-        if (isEP) {
-            // Diagnonal case where captured pawn is absolutely pinned (if it's pinned it's a check)
-            int epCaptureSquare = position.enPassant - 8 + 16 * position.activePlayer;
-
-            long modifiedOccupancy = position.occupancy ^ (1L << epCaptureSquare) ^ (1L << start) | (1L << destination);
-            long bishopAttacks = BishopLogic.getAttackBoard(position.kingLocs[1 - position.activePlayer], modifiedOccupancy);
-            long attackers = (position.pieces[2] | position.pieces[4]) & position.pieceColors[position.activePlayer];
-            while (attackers != 0) {
-                int possibleChecker = Long.numberOfTrailingZeros(attackers);
-                attackers &= (attackers - 1);
-
-                if ((bishopAttacks & (1L << possibleChecker)) != 0)
-                    return true;
-            }
-
-            // Horizontal case where both pawns are inbetween a queen or rook and the king. (if we remove
-            int row = start / 8;
-
-            // remove moving pawn and capture
-            long rookAttacks = RookLogic.getAttackBoard(position.kingLocs[1 - position.activePlayer], modifiedOccupancy);
-            attackers = (position.pieces[3] | position.pieces[4]) & position.pieceColors[position.activePlayer];
-            while (attackers != 0) {
-                int possibleChecker = Long.numberOfTrailingZeros(attackers);
-                attackers &= (attackers - 1);
-
-                if ((rookAttacks & (1L << possibleChecker)) != 0)
-                    return true;
-            }
-        }
-
-        return false;
-     }
-
-
-
-     public static long pieceAttacksFromSquare(int pieceType, int pieceSquare, Position position) {
-         switch(pieceType) {
-             case 0 :
-                 return PawnLogic.getAttackBoard(pieceSquare, position.activePlayer);
-             case 1 :
-                 return KnightLogic.getAttackBoard(pieceSquare, position);
-             case 2 :
-                 return BishopLogic.getAttackBoard(pieceSquare, position);
-             case 3 :
-                 return RookLogic.getAttackBoard(pieceSquare, position);
-             case 4 :
-                 return RookLogic.getAttackBoard(pieceSquare, position) | BishopLogic.getAttackBoard(pieceSquare, position);
-             case 5 :
-                return KingLogic.getKingAttacks(pieceSquare);
-         }
-         return 0L;
-     }
-     */

@@ -7,7 +7,14 @@ import board.PositionState;
 public class MoveOrder {
 
     // Rough piece values used for MVV-LVA
-    private static final int[] pieceValues = new int[]{100, 300, 330, 500, 900, 1_000};
+    public static final int[] pieceValues = new int[]{100, 300, 330, 500, 900, 1_000};
+    public static final int PV_BONUS = 2_000_000;
+    public static final int TT_BONUS = 1_000_000;
+    public static final int PROMOTION_BONUS = 500_000;
+    public static final int CAPTURE_BONUS = 50_000;
+    public static final int FIRST_KILLER_BONUS = 30_000;
+    public static final int SECOND_KILLER_BONUS = 29_000;
+
 
     /**
      * Assigns scores to moves in the corresponding positionState.moveScores
@@ -81,25 +88,25 @@ public class MoveOrder {
             int pvMove = positionState.pvTable.getPVMove();
 
             if (pvMove == move) {
-                value += 2_000_000;
+                value += PV_BONUS;
             }
         }
 
         if (positionState.tt.checkedGetBestMove(position.zobristHash) == move) {
-            value += 1_000_000;
+            value += TT_BONUS;
         }
 
         if (MoveEncoding.getIsPromotion(move)) {
-            value += 500_000;
+            value += PROMOTION_BONUS;
         }
 
         if (MoveEncoding.getIsCapture(move)) {
-            value += 50_000 + evaluateExchange(move, position);
+            value += CAPTURE_BONUS + evaluateExchange(move, position);
         } else {
             if (move == positionState.killerMoves.killerMoves[0][ply]) {
-                value += 30_000;
+                value += FIRST_KILLER_BONUS;
             } else if (move == positionState.killerMoves.killerMoves[1][ply]) {
-                value += 29_000;
+                value += SECOND_KILLER_BONUS;
             }
 
             value += positionState.historyHeuristic.getHeuristic(move, position.activePlayer);

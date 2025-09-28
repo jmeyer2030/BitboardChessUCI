@@ -20,7 +20,7 @@ import static testMoveGeneration.testPerftSuite.getFEN;
 public class testSearchSuite {
     @Test
     void testSearchOnTestPositions() {
-        int depth = 9;
+        int depth = 11;
         long startTime = System.currentTimeMillis();
         try (Scanner scanner = new Scanner(new File("src/test/resources/perftSuite.txt"))) {
             int lineNumber = 0;

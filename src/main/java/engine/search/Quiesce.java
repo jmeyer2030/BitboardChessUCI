@@ -9,6 +9,8 @@ import static engine.search.Search.NEG_INFINITY;
 
 public class Quiesce {
 
+    private static final int BIG_DELTA = 975;
+
     /**
      * Performs a search of capture moves only to reduce the horizon effect
      *
@@ -27,7 +29,14 @@ public class Quiesce {
         if (standPat >= beta/* && !position.inCheck*/) // And not in check
             return bestValue;
 
-        if (alpha < standPat /*&& !position.inCheck*/) // and not in check, we shouldn't use standpat at all if in check
+
+        // ===============DELTA PRUNING===============
+        // NOTES:
+        if (bestValue < alpha - BIG_DELTA) {
+            return alpha;
+        }
+
+        if (alpha < standPat && !position.inCheck) // and not in check, we shouldn't use standpat at all if in check
             alpha = standPat;
 
 
@@ -42,7 +51,6 @@ public class Quiesce {
             return NEG_INFINITY;
         }
 
-
         // Move order
         MoveOrder.scoreMoves(position, positionState, initialFirstNonMove, newFirstNonMove, ply);
 
@@ -51,22 +59,19 @@ public class Quiesce {
             int move = positionState.moveBuffer[i];
 
 
-            // if not a capture and not in check, skip. In check, we search all evasions
-            if (!MoveEncoding.getIsCapture(move)/* && !position.inCheck*/) {
+            // =============== SKIP NON-CAPTURES ===============
+            // NOTES:
+            //  - Consider evaluating checks as well
+            if (!MoveEncoding.getIsCapture(move) && !position.inCheck) {
                 continue;
             }
 
-            // If SEE evaluation is negative and not in check
-            /*
-            if (!position.inCheck && positionState.moveScores[i] - 50_000 + 200 < 0) {
+            // =============== SKIP LOSING CAPTURES ===============
+            //  - Skip all captures that aren't good
+            //  - Don't skip if in check to avoid skipping forced captures
+            if (!position.inCheck && (positionState.moveScores[i] - MoveOrder.CAPTURE_BONUS) < 0) {
                 continue;
             }
-            */
-            /*
-            if (!position.inCheck && SEE.see(move, position) + 200 < 0) {
-                continue;
-            }
-            */
 
             // "open" the position
             position.makeMove(move);

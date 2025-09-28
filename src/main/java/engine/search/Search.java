@@ -26,6 +26,7 @@ public class Search {
 
     public static final int MAX_SEARCH_DEPTH = 256;
 
+    public static final int NULL_MOVE_PRUNING_REDUCTION = 3;
 
     /**
      * Class representing a move and evaluation
@@ -219,8 +220,7 @@ public class Search {
                 return new MoveValue(0, 0);
             }
         }
-
-        // Check transposition table
+        //=============== Check transposition table===============
         int eval = 0; // If tt, save eval for use in RFP
         boolean foundTTScore = false;
         if (positionState.tt != null && positionState.tt.elementIsUseful(position.zobristHash, depthLeft)) {
@@ -256,7 +256,7 @@ public class Search {
             eval = position.nnue.computeOutput(position.activePlayer);
         }
 
-        // Reverse Futility Pruning
+        // ===============Reverse Futility Pruning===============
         //int margin = 150 * depthLeft;
         int margin = 150 * ply;
         // If not root, eval is so good that it and a margin is better than beta
@@ -268,11 +268,11 @@ public class Search {
         }
 
 
-        // Null Move Pruning
+        // ===============Null Move Pruning===============
         //if (!isRoot && depthLeft >= 3 && eval >= beta && !position.inCheck && numMoves >= 7) {
         if (!isRoot && depthLeft >= 3 && eval >= beta && nmpConditionsMet(position)) {
             // Plys fewer to search
-            int reduction = 3;
+            int reduction = NULL_MOVE_PRUNING_REDUCTION;
             position.makeNullMove();
             int score;
             try {
