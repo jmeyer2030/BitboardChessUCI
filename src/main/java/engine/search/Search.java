@@ -332,18 +332,18 @@ public class Search {
             }
 
             // ===============PV search===============
-            //  - if we are on a PV Node AND the child is theorized to be PV
-            //      - Where "PV Node" is the first child of a PV Node
-            //      - Full window, full depth search
+            //  - If first move:
+            //      - Run full search
+            //      - If non-pv, we have a null window so we don't need special handling.
             //  - else
             //      - Run a null window search, reducing depending on LMR
             int score;
             try {
                 if (i == firstMove) {
-                    score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, true).value;
+                    score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, isPV).value;
                 } else { // Note that we
                     // ===============Late Move Reduction===============
-                    // Use late move reduction on non-pv moves with log formula
+                    //  - Use late move reduction on non-pv moves with log formula
                     if (i >= firstMove + NUM_NON_PV_FULL_DEPTH_SEARCHES && depthLeft > 3) {
                         int reduction = (int) Math.round(.99 + (Math.log(depthLeft) * Math.log(i - firstMove)) / 3.14);
                         score = -negamax(-alpha - 1, -alpha, depthLeft - 1 - reduction, position, positionState, false, ply + 1, false).value;
@@ -357,7 +357,7 @@ public class Search {
 
                     // If dispwr
                     if (score > alpha && (beta - alpha) > 1) {
-                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value; // It is now PV if parent is because it exceeded alpha
+                        score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, isPV).value; // It is now PV if parent is because it exceeded alpha
                     }
                 }
             } finally {
