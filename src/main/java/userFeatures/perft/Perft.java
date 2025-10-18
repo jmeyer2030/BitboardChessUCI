@@ -4,7 +4,6 @@ import board.MoveEncoding;
 import board.Position;
 import customExceptions.InvalidPositionException;
 import moveGeneration.MoveGenerator;
-import nnue.DummyNNUE;
 
 public class Perft {
 

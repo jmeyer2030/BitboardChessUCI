@@ -13,6 +13,7 @@
 - Improve Javadocs
     - They should work and display on hover as intended in the code
 - Improve unit testing
+- Change print statements to log
 
 ## Features:
 

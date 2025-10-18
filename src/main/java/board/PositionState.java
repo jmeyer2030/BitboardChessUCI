@@ -6,15 +6,17 @@ import engine.search.TriangularPVTable;
 import zobrist.ThreeFoldTable;
 import zobrist.transposition.TranspositionTable;
 
-/*
-Represents the internally stored position/state of a chess main.java.engine:
-- Includes things related to the state that we run computations on
-    position
-    tt
-    three-fold
-    moveBuffer
-    killer moves
-*/
+/**
+ * Represents the internally stored position/state of a chess engine. Includes things related to
+ * the state that we run computations on.
+ * <ul>
+ * <li>position</li>
+ * <li>tt</li>
+ * <li>three-fold</li>
+ * <li>moveBuffer</li>
+ * <li>killer moves</li>
+ * </ul>
+ */
 public class PositionState {
     public Position position;
 

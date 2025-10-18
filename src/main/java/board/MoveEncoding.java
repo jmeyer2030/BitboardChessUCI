@@ -29,7 +29,7 @@ package board;
  * <li>29: CastleSide (0 King, 1 Queen)</li>
  * </ul>
  * <p>30-31 unused<p>
- *
+ * <p>
  * Previously included that now are stored in a stack during search:
  * <ul>
  * <li>50 move count</li>
@@ -63,236 +63,153 @@ public final class MoveEncoding {
 // @formatter:on
 
 
-    /*
-        Start
-    */
+    private MoveEncoding() {
+    }
+
+    // Start square
     public static int getStart(int move) {
         return (move & startMask);
     }
 
     public static int setStart(int move, int start) {
-        /*
-        if (start < 0 || start > 63) {
-            throw new IllegalArgumentException();
-        }
-        */
-        move = move & ~startMask; // Clear start bits
+        assert start >= 0;
+        assert start <= 64;
+        move = move & ~startMask;
         return move | start;
     }
 
-    /*
-        Destination
-    */
+    // Destination square
     public static int getDestination(int move) {
         return (move & destinationMask) >> 6;
     }
 
     public static int setDestination(int move, int destination) {
-        /*
-        if (destination < 0 || destination > 63) {
-            throw new IllegalArgumentException();
-        }
-        */
-        move = move & ~destinationMask; // Clear destination bits
+        assert destination >= 0;
+        assert destination <= 64;
+        move = move & ~destinationMask;
         return move | (destination << 6);
     }
 
-    /*
-        Moved Piece (as ordinal of the enum)
-    */
+    // Moved Piece (as ordinal of the enum)
     public static int getMovedPiece(int move) {
         return (move & movedPieceMask) >> 12;
     }
 
     public static int setMovedPiece(int move, int piece) {
-        /*
-        if (piece < 0 || piece > 5) {
-            throw new IllegalArgumentException();
-        }
-        */
-
-        move = move & ~movedPieceMask; // Clear moved piece
+        assert piece >= 0;
+        assert piece <= 5;
+        move = move & ~movedPieceMask;
         return move | (piece << 12);
     }
-/*
-    Captured Piece (as ordinal of the enum)
-*/
 
+    // Captured Piece (as ordinal of the enum)
     public static int getCapturedPiece(int move) {
         return (move & capturedPieceMask) >> 15;
     }
 
     public static int setCapturedPiece(int move, int piece) {
-
-        if (piece < 0 || piece > 4) {
-            System.out.println("Start: " + getStart(move) + " Destination: " + getDestination(move));
-            throw new IllegalArgumentException("Piece: " + piece + " cannot be captured!");
-        }
-
-
+        assert piece >= 0;
+        assert piece <= 5;
         move = move & ~capturedPieceMask;
         return move | (piece << 15);
     }
 
-/*
-    Promotion Type
-*/
-
+    // Promotion Type
     public static int getPromotionType(int move) {
         return ((move & promotionTypeMask) >> 18) + 1;
     }
 
     public static int setPromotionType(int move, int piece) {
-        /*
-        if (piece < 1 || piece > 4) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert piece >= 1;
+        assert piece <= 4;
         move = move & ~promotionTypeMask;
         return move | ((piece - 1) << 18);
     }
 
-    /*
-        Quiet flag
-    */
+    // Quiet flag
     public static boolean getIsQuiet(int move) {
         return (move & isQuietMask) != 0;
     }
 
     public static int setIsQuiet(int move, int isQuiet) {
-        /*
-        if (isQuiet != 0 && isQuiet != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert isQuiet == 0 || isQuiet == 1;
         move = move & ~isQuietMask;
         return move | (isQuiet << 20);
     }
 
-    /*
-        Capture flag
-    */
+    // Capture flag
     public static boolean getIsCapture(int move) {
         return (move & isCaptureMask) != 0;
     }
 
     public static int setIsCapture(int move, int isCapture) {
-        /*
-        if (isCapture != 0 && isCapture != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert isCapture == 0 || isCapture == 1;
         move = move & ~isCaptureMask;
         return move | (isCapture << 21);
     }
 
-    /*
-        EP flag
-    */
+    // Ep Flag
     public static boolean getIsEP(int move) {
         return (move & isEPMask) != 0;
     }
 
     public static int setIsEP(int move, int isEP) {
-        /*
-        if (isEP != 0 && isEP != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert isEP == 0 || isEP == 1;
         move = move & ~isEPMask;
         return move | (isEP << 22);
     }
 
-    /*
-        Promotion flag
-    */
+    // Promotion flag
     public static boolean getIsPromotion(int move) {
         return (move & isPromotionMask) != 0;
     }
 
     public static int setIsPromotion(int move, int isPromotion) {
-        /*
-        if (isPromotion != 0 && isPromotion != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert isPromotion == 0 || isPromotion == 1;
         move = move & ~isPromotionMask;
         return move | (isPromotion << 23);
     }
 
-    /*
-        Castle flag
-    */
+    // Castle flag
     public static boolean getIsCastle(int move) {
         return (move & isCastleMask) != 0;
     }
 
     public static int setIsCastle(int move, int isCastle) {
-        /*
-        if (isCastle != 0 && isCastle != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert isCastle == 0 || isCastle == 1;
         move = move & ~isCastleMask;
         return move | (isCastle << 24);
     }
 
-    /*
-        Check flag
-    */
+    // Check flag
     public static boolean getIsCheck(int move) {
         return (move & isCheckMask) != 0;
     }
 
     public static int setIsCheck(int move, int isCheck) {
-        /*
-        if (isCheck != 0 && isCheck != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert isCheck == 0 || isCheck == 1;
         move = move & ~isCheckMask;
         return move | (isCheck << 25);
     }
 
-    /*
-        Double Push flag
-    */
+    // Double Push flag
     public static boolean getIsDoublePush(int move) {
         return (move & isDoublePushMask) != 0;
     }
 
     public static int setIsDoublePush(int move, int isDoublePush) {
-        /*
-        if (isDoublePush != 0 && isDoublePush != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert isDoublePush == 0 || isDoublePush == 1;
         move = move & ~isDoublePushMask;
         return move | (isDoublePush << 26);
     }
 
-    /*
-        Reversible flag
-    */
+    // Reversible flag
     public static boolean getIsReversible(int move) {
         return (move & isReversibleMask) != 0;
     }
 
     public static int setIsReversible(int move, int isReversible) {
-        /*
-        if (isReversible != 0 && isReversible != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert isReversible == 0 || isReversible == 1;
         move = move & ~isReversibleMask;
         return move | (isReversible << 27);
     }
@@ -305,68 +222,43 @@ public final class MoveEncoding {
     }
 
     public static int setCaptureColor(int move, int captureColor) {
-        /*
-        if (captureColor != 0 && captureColor != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert captureColor == 0 || captureColor == 1;
         move = move & ~captureColorMask;
         return move | (captureColor << 28);
     }
 
-    /*
-        CastleSide (0 King, 1 Queen)
-    */
+    // CastleSide (0 King, 1 Queen)
     public static int getCastleSide(int move) {
         return (move & castleSideMask) >> 29;
     }
 
     public static int setCastleSide(int move, int castleSide) {
-        /*
-        if (castleSide != 0 && castleSide != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
-
+        assert castleSide == 0 || castleSide == 1;
         move = move & ~castleSideMask;
         return move | (castleSide << 29);
     }
 
-    /*
-        WasInCheck (0 false 1 true)
-    */
+    // WasInCheck (0 false 1 true)
     public static boolean getWasInCheck(int move) {
         return (move & wasInCheckMask) != 0;
     }
 
     public static int setWasInCheck(int move, int wasInCheck) {
-        /*
-        if (wasInCheck != 0 && wasInCheck != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
+        assert wasInCheck == 0 || wasInCheck == 1;
         move = move & ~wasInCheckMask;
         return move | (wasInCheck << 30);
     }
 
-    /*
-        ActivePlayer
-    */
+    // ActivePlayer
     public static int getActivePlayer(int move) {
         return (move & activePlayerMask) >> 31 == -1 ? 1 : 0;
     }
 
     public static int setActivePlayer(int move, int activePlayer) {
-        /*
-        if (activePlayer != 0 && activePlayer != 1) {
-            throw new IllegalArgumentException();
-        }
-        */
+        assert activePlayer == 0 || activePlayer == 1;
         move = move & ~wasInCheckMask;
         return move | (activePlayer << 31);
     }
-
 
     /**
      * returns a standard notation string for a square in little endian
@@ -405,7 +297,6 @@ public final class MoveEncoding {
 
         return builder.toString();
     }
-
 
     /**
      * Prints all details of a move to console
