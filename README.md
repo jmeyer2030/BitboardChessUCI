@@ -174,14 +174,6 @@ position startpos moves e2e4 e7e5 g1f3 g8f3 b1c3
 - quit
 
 
-# Issues/TODO
-- "Evaluator" interface with implementations for HCE and NNUE
-- Get methods for retrieval of private fields in position.
-- Search should only take a position state, not a position as well.
-- Refactor Search to an object, that contains (EnchineCache, formerly PositionState)
-- Aspiration windows?
-- More aggressive pruning options?
-
 # Strength
 
 - ~2400 CCRL blitz based on a large number of games played against a 2400 CCRL chess engine
