@@ -1,58 +1,71 @@
 package board;
 
-public final class MoveEncoding {
-/*
- * Core:
- * 0-5: start (6 bits 0-63)
- * 6-11: destination (6 bits 0-63)
- * 12-14: moved piece (3 bits)
- * 15-17: captured piece (3 bits)
- * 18-19: promotionType (2 bits, knight, bishop, rook, queen)
+/**
+ * How we encode moves. Contains get methods to get features of moves, and methods to set them.
  *
- * Flags:
- * 20: isQuiet
- * 21: isCapture
- * 22: isEP
- * 23: isPromotion
- * 24: isCastle
- * 25: isCheck
- * 26: isDoublePush
- * 27: isReversible
+ * <p>Core:</p>
+ * <ul>
+ * <li>0-5: start (6 bits 0-63)</li>
+ * <li>6-11: destination (6 bits 0-63)</li>
+ * <li>12-14: moved piece (3 bits)</li>
+ * <li>15-17: captured piece (3 bits)</li>
+ * <li>18-19: promotionType (2 bits, knight, bishop, rook, queen)</li>
+ * </ul>
  *
- * 28: CaptureColor (0 White, 1 Black)
- * 29: CastleSide (0 King, 1 Queen)
+ * <p>Flags:</p>
+ * <ul>
+ * <li>20: isQuiet</li>
+ * <li>21: isCapture</li>
+ * <li>22: isEP</li>
+ * <li>23: isPromotion</li>
+ * <li>24: isCastle</li>
+ * <li>25: isCheck</li>
+ * <li>26: isDoublePush</li>
+ * <li>27: isReversible</li>
+ * </ul>
+ * <p>helper</p>
+ * <ul>
+ * <li>28: CaptureColor (0 White, 1 Black)</li>
+ * <li>29: CastleSide (0 King, 1 Queen)</li>
+ * </ul>
+ * <p>30-31 unused<p>
  *
- * 30-31 unused
- *
- * Positions Stack (removed functionality from Move class):
- * 50 move count
- * ep square value
- * castle rights
+ * Previously included that now are stored in a stack during search:
+ * <ul>
+ * <li>50 move count</li>
+ * <li>ep square value</li>
+ * <li>castle rights</li>
+ * </ul>
  */
+public final class MoveEncoding {
+
+    // @formatter:off
     // Core:
-    public static final int startMask =         0b00000000_00000000_00000000_00111111;
-    public static final int destinationMask =   0b00000000_00000000_00001111_11000000;
-    public static final int movedPieceMask =    0b00000000_00000000_01110000_00000000;
+    public static final int startMask         = 0b00000000_00000000_00000000_00111111;
+    public static final int destinationMask   = 0b00000000_00000000_00001111_11000000;
+    public static final int movedPieceMask    = 0b00000000_00000000_01110000_00000000;
     public static final int capturedPieceMask = 0b00000000_00000011_10000000_00000000;
     public static final int promotionTypeMask = 0b00000000_00001100_00000000_00000000;
-
     // Flags:
-    public static final int isQuietMask =       0b00000000_00010000_00000000_00000000;
-    public static final int isCaptureMask =     0b00000000_00100000_00000000_00000000;
-    public static final int isEPMask =          0b00000000_01000000_00000000_00000000;
-    public static final int isPromotionMask =   0b00000000_10000000_00000000_00000000;
-    public static final int isCastleMask =      0b00000001_00000000_00000000_00000000;
-    public static final int isCheckMask =       0b00000010_00000000_00000000_00000000;
-    public static final int isDoublePushMask =  0b00000100_00000000_00000000_00000000;
-    public static final int isReversibleMask =  0b00001000_00000000_00000000_00000000;
-    public static final int wasInCheckMask =    0b01000000_00000000_00000000_00000000;
-    public static final int activePlayerMask =  0b10000000_00000000_00000000_00000000;
+    public static final int isQuietMask       = 0b00000000_00010000_00000000_00000000;
+    public static final int isCaptureMask     = 0b00000000_00100000_00000000_00000000;
+    public static final int isEPMask          = 0b00000000_01000000_00000000_00000000;
+    public static final int isPromotionMask   = 0b00000000_10000000_00000000_00000000;
+    public static final int isCastleMask      = 0b00000001_00000000_00000000_00000000;
+    public static final int isCheckMask       = 0b00000010_00000000_00000000_00000000;
+    public static final int isDoublePushMask  = 0b00000100_00000000_00000000_00000000;
+    public static final int isReversibleMask  = 0b00001000_00000000_00000000_00000000;
+    public static final int wasInCheckMask    = 0b01000000_00000000_00000000_00000000;
+    public static final int activePlayerMask  = 0b10000000_00000000_00000000_00000000;
     // Helper
-    public static final int captureColorMask =  0b00010000_00000000_00000000_00000000;
-    public static final int castleSideMask =    0b00100000_00000000_00000000_00000000;
-/*
-    Start
-*/
+    public static final int captureColorMask  = 0b00010000_00000000_00000000_00000000;
+    public static final int castleSideMask    = 0b00100000_00000000_00000000_00000000;
+// @formatter:on
+
+
+    /*
+        Start
+    */
     public static int getStart(int move) {
         return (move & startMask);
     }
@@ -66,9 +79,10 @@ public final class MoveEncoding {
         move = move & ~startMask; // Clear start bits
         return move | start;
     }
-/*
-    Destination
-*/
+
+    /*
+        Destination
+    */
     public static int getDestination(int move) {
         return (move & destinationMask) >> 6;
     }
@@ -82,9 +96,10 @@ public final class MoveEncoding {
         move = move & ~destinationMask; // Clear destination bits
         return move | (destination << 6);
     }
-/*
-    Moved Piece (as ordinal of the enum)
-*/
+
+    /*
+        Moved Piece (as ordinal of the enum)
+    */
     public static int getMovedPiece(int move) {
         return (move & movedPieceMask) >> 12;
     }
@@ -137,9 +152,10 @@ public final class MoveEncoding {
         move = move & ~promotionTypeMask;
         return move | ((piece - 1) << 18);
     }
-/*
-    Quiet flag
-*/
+
+    /*
+        Quiet flag
+    */
     public static boolean getIsQuiet(int move) {
         return (move & isQuietMask) != 0;
     }
@@ -154,9 +170,10 @@ public final class MoveEncoding {
         move = move & ~isQuietMask;
         return move | (isQuiet << 20);
     }
-/*
-    Capture flag
-*/
+
+    /*
+        Capture flag
+    */
     public static boolean getIsCapture(int move) {
         return (move & isCaptureMask) != 0;
     }
@@ -171,9 +188,10 @@ public final class MoveEncoding {
         move = move & ~isCaptureMask;
         return move | (isCapture << 21);
     }
-/*
-    EP flag
-*/
+
+    /*
+        EP flag
+    */
     public static boolean getIsEP(int move) {
         return (move & isEPMask) != 0;
     }
@@ -189,9 +207,9 @@ public final class MoveEncoding {
         return move | (isEP << 22);
     }
 
-/*
-    Promotion flag
-*/
+    /*
+        Promotion flag
+    */
     public static boolean getIsPromotion(int move) {
         return (move & isPromotionMask) != 0;
     }
@@ -207,9 +225,9 @@ public final class MoveEncoding {
         return move | (isPromotion << 23);
     }
 
-/*
-    Castle flag
-*/
+    /*
+        Castle flag
+    */
     public static boolean getIsCastle(int move) {
         return (move & isCastleMask) != 0;
     }
@@ -225,9 +243,9 @@ public final class MoveEncoding {
         return move | (isCastle << 24);
     }
 
-/*
-    Check flag
-*/
+    /*
+        Check flag
+    */
     public static boolean getIsCheck(int move) {
         return (move & isCheckMask) != 0;
     }
@@ -242,9 +260,10 @@ public final class MoveEncoding {
         move = move & ~isCheckMask;
         return move | (isCheck << 25);
     }
-/*
-    Double Push flag
-*/
+
+    /*
+        Double Push flag
+    */
     public static boolean getIsDoublePush(int move) {
         return (move & isDoublePushMask) != 0;
     }
@@ -259,9 +278,10 @@ public final class MoveEncoding {
         move = move & ~isDoublePushMask;
         return move | (isDoublePush << 26);
     }
-/*
-    Reversible flag
-*/
+
+    /*
+        Reversible flag
+    */
     public static boolean getIsReversible(int move) {
         return (move & isReversibleMask) != 0;
     }
@@ -276,9 +296,10 @@ public final class MoveEncoding {
         move = move & ~isReversibleMask;
         return move | (isReversible << 27);
     }
-/*
-    Capture Color (0 White, 1 Black)
-*/
+
+    /*
+        Capture Color (0 White, 1 Black)
+    */
     public static boolean getCaptureColor(int move) {
         return (move & captureColorMask) != 0;
     }
@@ -294,9 +315,9 @@ public final class MoveEncoding {
         return move | (captureColor << 28);
     }
 
-/*
-    CastleSide (0 King, 1 Queen)
-*/
+    /*
+        CastleSide (0 King, 1 Queen)
+    */
     public static int getCastleSide(int move) {
         return (move & castleSideMask) >> 29;
     }
@@ -312,9 +333,9 @@ public final class MoveEncoding {
         return move | (castleSide << 29);
     }
 
-/*
-    WasInCheck (0 false 1 true)
-*/
+    /*
+        WasInCheck (0 false 1 true)
+    */
     public static boolean getWasInCheck(int move) {
         return (move & wasInCheckMask) != 0;
     }
@@ -329,9 +350,9 @@ public final class MoveEncoding {
         return move | (wasInCheck << 30);
     }
 
-/*
-    ActivePlayer
-*/
+    /*
+        ActivePlayer
+    */
     public static int getActivePlayer(int move) {
         return (move & activePlayerMask) >> 31 == -1 ? 1 : 0;
     }
@@ -349,24 +370,25 @@ public final class MoveEncoding {
 
     /**
      * returns a standard notation string for a square in little endian
+     *
      * @param square square
      * @return standard notation square
      */
     public static String squareToAlgebraic(int square) {
-        String[] files = new String[] {"a", "b", "c", "d", "e", "f", "g", "h"};
-        String[] ranks = new String[] {"1", "2", "3", "4", "5", "6", "7", "8"};
+        String[] files = new String[]{"a", "b", "c", "d", "e", "f", "g", "h"};
+        String[] ranks = new String[]{"1", "2", "3", "4", "5", "6", "7", "8"};
         int rank = square / 8;
         int file = square % 8;
-        return files[file] + ranks[rank] ;
+        return files[file] + ranks[rank];
     }
 
     /**
-    * Returns Long Algebraic Notation (LAN) representation of a move
-    * Long Algebraic Notation: <Start><Destination><promotionType>
-    *
-    * @param move move to convert to LAN
-    * @return LAN representation of the move
-    */
+     * Returns Long Algebraic Notation (LAN) representation of a move
+     * Long Algebraic Notation: <Start><Destination><promotionType>
+     *
+     * @param move move to convert to LAN
+     * @return LAN representation of the move
+     */
     public static String getLAN(int move) {
         StringBuilder builder = new StringBuilder();
 
@@ -386,11 +408,11 @@ public final class MoveEncoding {
 
 
     /**
-    * Prints all details of a move to console
-    * Only used for debugging
-    *
-    * @param move to print the details of
-    */
+     * Prints all details of a move to console
+     * Only used for debugging
+     *
+     * @param move to print the details of
+     */
     public static void getDetails(int move) {
         System.out.println("start :" + getStart(move));
         System.out.println("destination :" + getDestination(move));
@@ -411,4 +433,3 @@ public final class MoveEncoding {
         System.out.println("activePlayer: " + getActivePlayer(move));
     }
 }
-

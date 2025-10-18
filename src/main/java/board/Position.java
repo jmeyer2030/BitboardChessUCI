@@ -647,6 +647,8 @@ public class Position {
 
     /**
      * Prints a position in a human-readable format
+     *
+     * <pre>
      *      +---+---+---+---+---+---+---+---+
      *    8 | r | n | b | q | k | b | n | r |
      *      +---+---+---+---+---+---+---+---+
@@ -665,7 +667,8 @@ public class Position {
      *    1 | R | N | B | Q | K | B | N | R |
      *      +---+---+---+---+---+---+---+---+
      *        A   B   C   D   E   F   G   H
-    */
+     * </pre>
+     */
     public String getDisplayBoard() {
         try {
             validPosition();
@@ -688,7 +691,7 @@ public class Position {
             }
         }
 
-        // Shift case of the main.java.board array
+        // Shift case of the board array
         long shiftCase = pieceColors[0];
         while (shiftCase != 0L) {
             int loc = Long.numberOfTrailingZeros(shiftCase);

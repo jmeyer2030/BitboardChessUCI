@@ -50,23 +50,3 @@ public class HistoryHeuristic {
         return history[color][from][to];
     }
 }
-
-/*
-Used to help order non-capture moves
-
-If a quiet move causes a beta cutoff -- increment arr[color][from][to] by depth * depth (to show favor to plys away from leaf nodes)
-
-
-Store max
-Or a more sophisticated approach
-if (score >= beta) {
-
-}
-
-
-create int[2][64][64] for indexing arr[color][from][to]
-
-
-
-
-*/
