@@ -355,7 +355,7 @@ public class Search {
                         score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, positionState, false, ply + 1, false).value;
                     }
 
-                    // If dispwr
+                    // If disproven, and not already null window, run full search
                     if (score > alpha && (beta - alpha) > 1) {
                         score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, isPV).value; // It is now PV if parent is because it exceeded alpha
                     }
@@ -442,6 +442,17 @@ public class Search {
      */
     public static boolean gameOver(int moveListSize, Position position, ThreeFoldTable threeFoldTable) {
         if (moveListSize == 0 || position.halfMoveCount >= 50 || threeFoldTable.positionRepeated(position.zobristHash)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean moveBasedGameOver(int moveListSize) {
+        return moveListSize == 0;
+    }
+
+    public static boolean stateBasedGameOver(Position position, ThreeFoldTable threeFoldTable) {
+        if (position.halfMoveCount >= 50 || threeFoldTable.positionRepeated(position.zobristHash)) {
             return true;
         }
         return false;
