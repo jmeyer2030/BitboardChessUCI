@@ -203,24 +203,33 @@ public class Search {
         }
         positionState.pvTable.setPVLength(ply);
 
-        // Store alpha at the start of the search (so that we can see if search increased it)
-        int alphaOrig = alpha;
+        int alphaOrig = alpha; // Store alpha at the start of the search (so that we can see if search increased it)
 
-        // Generate moves and store buffer indices
+        //=============== Look for draw with 50-move or repetition ===============
+        if (!isRoot) {
+            if (positionState.threeFoldTable.positionRepeated(position.zobristHash)) {
+                return new MoveValue(0, 0);
+            } else if (position.halfMoveCount >= 50) {
+                return new MoveValue(0, 0);
+            }
+        }
+
+        //=============== Move Gen ===============
         int firstMove = positionState.firstNonMove;
         int firstNonMove = MoveGenerator.generateAllMoves(position, positionState.moveBuffer, positionState.firstNonMove);
         positionState.firstNonMove = firstNonMove;
 
-        // Test if game has ended
+        //=============== No move game end (mate or stalemate) ===============
         int numMoves = firstNonMove - firstMove;
-        if (!isRoot && gameOver(numMoves, position, positionState.threeFoldTable)) { // if root, we shouldn't check for game end
+        if (!isRoot && numMoves == 0) { // if root, we shouldn't check for game end
             positionState.firstNonMove = firstMove;
-            if (position.inCheck && numMoves == 0) { // Checkmate IF in check AND no moves (otherwise could be repetition)
+            if (position.inCheck) { // Checkmate IF in check AND no moves (otherwise could be repetition)
                 return new MoveValue(-(MATED_VALUE - ply), 0);
             } else {
                 return new MoveValue(0, 0);
             }
         }
+
         //=============== Check transposition table===============
         int eval = 0; // If tt, save eval for use in RFP
         boolean foundTTScore = false;
@@ -247,12 +256,15 @@ public class Search {
             }
         }
 
+        //=============== Return based on search depth ===============
         // Check if search depth reached (consider check extensions?)
-        if (depthLeft == 0) {
+        if (depthLeft <= 0) {
             positionState.firstNonMove = firstMove;
             return new MoveValue(Quiesce.quiescenceSearch(alpha, beta, position, positionState, ply + 1), 0);
         }
 
+        //=============== Compute Eval ===============
+        // Should be done before uses of eval in case TT didn't find
         if (!foundTTScore) {
             eval = position.nnue.computeOutput(position.activePlayer);
         }
@@ -266,7 +278,6 @@ public class Search {
             positionState.firstNonMove = firstMove;
             return new MoveValue(eval, 0);
         }
-
 
         // ===============Null Move Pruning===============
         //if (!isRoot && depthLeft >= 3 && eval >= beta && !position.inCheck && numMoves >= 7) {
@@ -291,7 +302,6 @@ public class Search {
         if (depthLeft <= 3 && !isPV && !position.inCheck && Math.abs(alpha) < MATED_SCORE && eval + futilityMargin[depthLeft] <= alpha) {
             useFutilityPruning = true;
         }
-
 
         // Move order
         MoveOrder.scoreMoves(position, positionState, firstMove, firstNonMove, ply);
@@ -341,7 +351,7 @@ public class Search {
             try {
                 if (i == firstMove) {
                     score = -negamax(-beta, -alpha, depthLeft - 1, position, positionState, false, ply + 1, isPV).value;
-                } else { // Note that we
+                } else {
                     // ===============Late Move Reduction===============
                     //  - Use late move reduction on non-pv moves with log formula
                     if (i >= firstMove + NUM_NON_PV_FULL_DEPTH_SEARCHES && depthLeft > 3) {
@@ -428,7 +438,6 @@ public class Search {
         return bestMoveValue;
     }
 
-
     /**
      * Returns true if the game has ended.
      * NOTE: This does not indicate HOW it ended. This is left to the search
@@ -441,7 +450,7 @@ public class Search {
      * @return if the game has ended
      */
     public static boolean gameOver(int moveListSize, Position position, ThreeFoldTable threeFoldTable) {
-        if (moveListSize == 0 || position.halfMoveCount >= 50 || threeFoldTable.positionRepeated(position.zobristHash)) {
+        if (moveListSize == 0 || position.halfMoveCount >= 50 || threeFoldTable.positionDrawn(position.zobristHash)) {
             return true;
         }
         return false;
@@ -451,8 +460,8 @@ public class Search {
         return moveListSize == 0;
     }
 
-    public static boolean stateBasedGameOver(Position position, ThreeFoldTable threeFoldTable) {
-        if (position.halfMoveCount >= 50 || threeFoldTable.positionRepeated(position.zobristHash)) {
+    public static boolean stateBasedDraw(Position position, ThreeFoldTable threeFoldTable) {
+        if (position.halfMoveCount >= 50 || threeFoldTable.positionDrawn(position.zobristHash)) {
             return true;
         }
         return false;

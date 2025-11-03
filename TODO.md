@@ -4,23 +4,18 @@
 
 ## Code Quality:
 
-- Remove code fragments at the bottom of files.
-- Interface / impl pattern.
-    - Convert classnames to "classnameImpl", and create interfaces named "classname"
-    - Substitute implementations with their interfaces
-    - Javadocs should be on the interface, not the impl
-- "Evaluator" interface for NNUE
-- Improve Javadocs
-    - They should work and display on hover as intended in the code
 - Improve unit testing
+- Remove code fragments at the bottom of files.
+- "Evaluator" interface for NNUE
 - Change print statements to log
+- Add logger options
+ - Investigate performance costs
 
 ## Features:
 
-- Add HCE with option
 - Improve PV Tree
 - Remove "moveValue" class, prefer pv tree? or something else? Investigate this.
-- Aspiration windows?
+- Add HCE with option
 
 ## Meta/Other:
 

@@ -284,7 +284,12 @@ public final class Position {
     }
 
     public static Position getPerftPosition(FEN fen) {
-        Position position = new Position(fen);
+        Position position;
+        if (fen == null) {
+            position = new Position();
+        } else {
+            position = new Position(fen);
+        }
         position.nnue = new DummyNNUE();
         return position;
     }

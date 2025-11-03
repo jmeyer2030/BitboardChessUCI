@@ -3,6 +3,8 @@ package moveGeneration;
 import board.*;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MoveGenerator {
 
@@ -23,6 +25,20 @@ public class MoveGenerator {
 
         // Case that no generated move matches the lan description
         throw new IllegalArgumentException();
+    }
+
+    public static List<String> debugGenerateMoveList(Position position) {
+        int[] moveBuffer = new int[256];
+
+        List<String> moves = new LinkedList<>();
+
+        int firstNonMove = generateAllMoves(position, moveBuffer, 0);
+
+        for (int i = 0; i < firstNonMove; i++) {
+            moves.add(MoveEncoding.getLAN(moveBuffer[i]));
+        }
+
+        return moves;
     }
 
     /**

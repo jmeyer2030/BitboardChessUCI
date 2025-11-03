@@ -48,7 +48,7 @@ public class quickTestPerft {
 
 
     public static long perftStartingPosition(int depth) {
-        Position position = new Position();
+        Position position = Position.getPerftPosition(null);
         long start = System.currentTimeMillis();
         long result = Perft.perft(depth, position);
         long end = System.currentTimeMillis();
@@ -59,7 +59,7 @@ public class quickTestPerft {
 
     public static long perftFromFen(String fen, int depth) {
         FEN fenP = new FEN(fen);
-        Position position = new Position(fenP);
+        Position position = Position.getPerftPosition(fenP);
 
         long start = System.currentTimeMillis();
         long result = Perft.perft(depth, position);
