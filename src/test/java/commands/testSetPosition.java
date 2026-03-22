@@ -10,7 +10,6 @@ import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 import userFeatures.commands.uci.SetPosition;
 import userFeatures.commands.uci.UCINewGame;
-import zobrist.ThreeFoldTable;
 
 import java.util.List;
 

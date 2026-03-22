@@ -25,11 +25,11 @@ public class NNUE implements NNUEInterface {
     // Stores added features for lazy updates
     private static final int ACCUMULATOR_LAZY_SIZE = 1024;
 
-    private static final short[][] hiddenLayerWeights = new short[HIDDEN_LAYER_SIZE][INPUT_SIZE];
-    private static final short[] hiddenLayerBias = new short[HIDDEN_LAYER_SIZE];
+    private static final short[][] HIDDEN_LAYER_WEIGHTS;
+    private static final short[] HIDDEN_LAYER_BIAS;
 
-    private static final short[] outputWeights = new short[HIDDEN_LAYER_SIZE * 2];
-    private static short outputBias;
+    private static final short[] OUTPUT_WEIGHTS;
+    private static final short OUTPUT_BIAS;
 
     private int evaluation;
     private boolean evaluationIsCurrent;
@@ -51,8 +51,13 @@ public class NNUE implements NNUEInterface {
      * Initializes weights and biases from quantised.bin on class load
      */
     static {
-        loadNetworkFromBinary();
+        NetworkData networkData = getNetworkData();
+        HIDDEN_LAYER_WEIGHTS = networkData.hiddenWeights;
+        HIDDEN_LAYER_BIAS = networkData.hiddenBias;
+        OUTPUT_WEIGHTS =networkData.outputWeights;
+        OUTPUT_BIAS = networkData.outputBias;
     }
+
 
     /**
      * Creates the nn and fills it's accumulators
@@ -114,8 +119,8 @@ public class NNUE implements NNUEInterface {
             int whiteAdd = whiteAccumulatorAddIndices[i];
             int blackAdd = blackAccumulatorAddIndices[i];
             for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
-                whiteAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][whiteAdd];
-                blackAccumulator[weightIndex] += hiddenLayerWeights[weightIndex][blackAdd];
+                whiteAccumulator[weightIndex] += HIDDEN_LAYER_WEIGHTS[weightIndex][whiteAdd];
+                blackAccumulator[weightIndex] += HIDDEN_LAYER_WEIGHTS[weightIndex][blackAdd];
             }
         }
 
@@ -125,8 +130,8 @@ public class NNUE implements NNUEInterface {
             int whiteRemove = whiteAccumulatorRemoveIndices[i];
             int blackRemove = blackAccumulatorRemoveIndices[i];
             for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
-                whiteAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][whiteRemove];
-                blackAccumulator[weightIndex] -= hiddenLayerWeights[weightIndex][blackRemove];
+                whiteAccumulator[weightIndex] -= HIDDEN_LAYER_WEIGHTS[weightIndex][whiteRemove];
+                blackAccumulator[weightIndex] -= HIDDEN_LAYER_WEIGHTS[weightIndex][blackRemove];
             }
         }
 
@@ -141,8 +146,8 @@ public class NNUE implements NNUEInterface {
     private void fillAccumulators(Position position) {
         // First add biases
         for (int i = 0; i < 128; i++) {
-            whiteAccumulator[i] = hiddenLayerBias[i];
-            blackAccumulator[i] = hiddenLayerBias[i];
+            whiteAccumulator[i] = HIDDEN_LAYER_BIAS[i];
+            blackAccumulator[i] = HIDDEN_LAYER_BIAS[i];
         }
 
         // Add features to the accumulators
@@ -176,13 +181,13 @@ public class NNUE implements NNUEInterface {
         int outputActivation = 0;
 
         for (int hiddenIndex = 0; hiddenIndex < HIDDEN_LAYER_SIZE; hiddenIndex++) {
-            outputActivation += screlu(QA, whiteAccumulator[hiddenIndex]) * (int) outputWeights[(activePlayer == 0 ? 0 : HIDDEN_LAYER_SIZE) + hiddenIndex];
-            outputActivation += screlu(QA, blackAccumulator[hiddenIndex]) * (int) outputWeights[(activePlayer == 0 ? HIDDEN_LAYER_SIZE : 0) + hiddenIndex];
+            outputActivation += screlu(QA, whiteAccumulator[hiddenIndex]) * (int) OUTPUT_WEIGHTS[(activePlayer == 0 ? 0 : HIDDEN_LAYER_SIZE) + hiddenIndex];
+            outputActivation += screlu(QA, blackAccumulator[hiddenIndex]) * (int) OUTPUT_WEIGHTS[(activePlayer == 0 ? HIDDEN_LAYER_SIZE : 0) + hiddenIndex];
         }
 
         outputActivation /= QA;
 
-        outputActivation += outputBias;
+        outputActivation += OUTPUT_BIAS;
 
         outputActivation *= SCALE;
 
@@ -238,19 +243,23 @@ public class NNUE implements NNUEInterface {
 
     /**
      * Initializes network weights and biases
-     * <p>
      * Expected Data format:
      * input weights -> input Biases -> hidden weights -> hidden biases -> Output bias -> padding
      */
-    private static void loadNetworkFromBinary() {
+    private static NetworkData getNetworkData() {
         short[] nnShorts = getNetworkBytes();
+
+        short[][] hiddenWeights = new short[HIDDEN_LAYER_SIZE][INPUT_SIZE];
+        short[] hiddenBias = new short[HIDDEN_LAYER_SIZE];
+        short[] outputWeights = new short[HIDDEN_LAYER_SIZE * 2];
+        short outputBias;
 
         // Get feature weights
         for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {
             for (int inputIndex = 0; inputIndex < INPUT_SIZE; inputIndex++) {
                 int shortIndex = inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex;
 
-                hiddenLayerWeights[hiddenLayerIndex][inputIndex] = nnShorts[shortIndex];
+                hiddenWeights[hiddenLayerIndex][inputIndex] = nnShorts[shortIndex];
             }
         }
 
@@ -258,7 +267,7 @@ public class NNUE implements NNUEInterface {
         int startShort = 128 * 768;
         for (int hlNeuron = 0; hlNeuron < 128; hlNeuron++) {
             int byteIndex = startShort + hlNeuron;
-            hiddenLayerBias[hlNeuron] = nnShorts[byteIndex];
+            hiddenBias[hlNeuron] = nnShorts[byteIndex];
         }
 
         // Get output weights
@@ -271,5 +280,14 @@ public class NNUE implements NNUEInterface {
         // Get output bias
         startShort += 256;
         outputBias = nnShorts[startShort];
+
+        return new NetworkData(hiddenWeights, hiddenBias, outputWeights, outputBias);
     }
+
+    private record NetworkData(
+        short[][] hiddenWeights,
+        short[] hiddenBias,
+        short[] outputWeights,
+        short outputBias
+    ) {}
 }

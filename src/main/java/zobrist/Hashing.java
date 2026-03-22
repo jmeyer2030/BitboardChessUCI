@@ -12,7 +12,7 @@ package zobrist;
 * the Zobrist hash code for a position is the xor of all random numbers linked
 *    to a given feature
 *
-* Since xor is it's own inverse, incremental update can be done quickly in make/unmake
+* Since xor is its own inverse, incremental update can be done quickly in make/unmake
 *
 * It is standard to use 64 bit pseudorandom numbers
 *
@@ -24,47 +24,49 @@ import board.Position;
 import java.util.Random;
 
 public class Hashing {
-    public static long seed = 24;
+    public static final long RANDOM_SEED = 24;
 
-    public static final long pieceSquare[][][] = new long[64][][]; // use with: pieceSquare[square][color.ordinal][piece.ordinal]
-    public static final long[] castleRights = new long[16];
-    public static final long[] enPassant = new long[8];
-    public static final long[] sideToMove = new long[2];
+    // Characteristic encoding longs
+    public static final long PIECE_SQUARE[][][] = new long[64][][]; // use with: pieceSquare[square][color.ordinal][piece.ordinal]
+    public static final long[] CASTLE_RIGHTS = new long[16];
+    public static final long[] EN_PASSANT = new long[8];
+    public static final long[] SIDE_TO_MOVE = new long[2];
 
     static {
         initializeRandomNumbers();
     }
+
     /**
     * Generates the pseudorandom numbers for main.java.zobrist hashing and initializes
     * the arrays of randoms
     */
     private static void initializeRandomNumbers() {
-        Random random = new Random(seed);
+        Random random = new Random(RANDOM_SEED);
 
         // Init piece color square randoms
         for (int i = 0; i < 64; i++) {
-            pieceSquare[i] = new long[2][]; // Init each color (for that square)
+            PIECE_SQUARE[i] = new long[2][]; // Init each color (for that square)
             for (int j = 0; j < 2; j++) {
-                pieceSquare[i][j] = new long[6]; // Init each piece (for that square and color)
+                PIECE_SQUARE[i][j] = new long[6]; // Init each piece (for that square and color)
                 for (int k = 0; k < 6; k++) {
-                    pieceSquare[i][j][k] = random.nextLong();
+                    PIECE_SQUARE[i][j][k] = random.nextLong();
                 }
             }
         }
 
         // Init castleRights randoms
         for (int i = 0; i < 16; i++) {
-            castleRights[i] = random.nextLong();
+            CASTLE_RIGHTS[i] = random.nextLong();
         }
 
         // Init enPassant
         for (int i = 0; i < 8; i++) {
-            enPassant[i] = random.nextLong();
+            EN_PASSANT[i] = random.nextLong();
         }
 
         // Init sideToMove
-        sideToMove[0] = 0L;
-        sideToMove[1] = random.nextLong();
+        SIDE_TO_MOVE[0] = 0L;
+        SIDE_TO_MOVE[1] = random.nextLong();
     }
 
     /**
@@ -73,7 +75,7 @@ public class Hashing {
     * @return long main.java.zobrist hash
     */
     public static long computeZobrist(Position position) {
-        assert pieceSquare != null;
+        assert PIECE_SQUARE != null;
 
         long zobrist = 0;
 
@@ -85,21 +87,21 @@ public class Hashing {
                     int square = Long.numberOfTrailingZeros(pieceColor);
                     pieceColor &= (pieceColor - 1);
 
-                    zobrist ^= pieceSquare[square][color][piece];
+                    zobrist ^= PIECE_SQUARE[square][color][piece];
                 }
             }
         }
 
-        zobrist ^= castleRights[position.castleRights];
+        zobrist ^= CASTLE_RIGHTS[position.castleRights];
 
         // Enpassant
         if (position.enPassant != 0) {
             int file = position.enPassant % 8;
-            zobrist ^= enPassant[file]; // file of the enPassant square
+            zobrist ^= EN_PASSANT[file]; // file of the enPassant square
         }
 
         // SideToMove
-        zobrist ^= sideToMove[position.activePlayer];
+        zobrist ^= SIDE_TO_MOVE[position.activePlayer];
 
         return zobrist;
     }

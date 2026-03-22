@@ -12,20 +12,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-/*
- * Represents a position with Bitboards
+/**
+ * Represents a game state with Bitboards
  */
 public final class Position {
+    // Castling related locations and masks
+    private static final int[][] CASTLE_ROOK_STARTS = new int[][]{{7, 0}, {63, 56}}; // [activePlayer][castleSide] [0][0] is white king
+    private static final int[][] CASTLE_ROOK_DESTINATIONS = new int[][]{{5, 3}, {61, 59}}; // [activePlayer][castleSide] [0][0] is white king
+    private static final byte[] CASTLE_RIGHTS_MASK = new byte[]{0b0000_0011, 0b0000_1100}; //[activePlayer] is mask to remove rights of active player
+
 
     // Stores information that could be lost when making a move so that it can be recovered in unmake
     public Stack<Integer> hmcStack;
     public Stack<Integer> epStack;
     public Stack<Byte> castleRightsStack;
-
-    // Castling related locations and masks
-    private static final int[][] castleRookStarts = new int[][]{{7, 0}, {63, 56}}; // [activePlayer][castleSide] [0][0] is white king
-    private static final int[][] castleRookDestinations = new int[][]{{5, 3}, {61, 59}}; // [activePlayer][castleSide] [0][0] is white king
-    private static final byte[] castleRightsMask = new byte[]{0b0000_0011, 0b0000_1100}; //[activePlayer] is mask to remove rights of active player
 
     public long zobristHash;
 
@@ -283,6 +283,9 @@ public final class Position {
         this.nnue = new NNUE(this);
     }
 
+    /**
+    * Creates a fen position with a no-op NNUE
+    */
     public static Position getPerftPosition(FEN fen) {
         Position position;
         if (fen == null) {
@@ -300,7 +303,7 @@ public final class Position {
 
     /**
      * Removes a piece Updating:
-     * - main.java.zobrist has
+     * - Zobrist Hash
      * - occupancy, piece colors, pieceCounts, and pieces
      * - NNUE feature
      *
@@ -309,13 +312,13 @@ public final class Position {
      * @param color     of the removed piece
      */
     private void removePiece(int square, int pieceType, int color) {
-        this.zobristHash ^= Hashing.pieceSquare[square][color][pieceType];
+        this.zobristHash ^= Hashing.PIECE_SQUARE[square][color][pieceType];
         this.occupancy &= ~(1L << square);
         this.pieceColors[color] &= ~(1L << square);
         this.pieces[pieceType] &= ~(1L << square);
         this.pieceCounts[color][pieceType]--;
 
-        nnue.removeFeature(pieceType, color, square);
+        this.nnue.removeFeature(pieceType, color, square);
     }
 
     /**
@@ -329,7 +332,7 @@ public final class Position {
      * @param color     of the piece
      */
     private void addPiece(int square, int pieceType, int color) {
-        this.zobristHash ^= Hashing.pieceSquare[square][color][pieceType];
+        this.zobristHash ^= Hashing.PIECE_SQUARE[square][color][pieceType];
         this.occupancy |= (1L << square);
         this.pieceColors[color] |= (1L << square);
         this.pieces[pieceType] |= (1L << square);
@@ -349,7 +352,7 @@ public final class Position {
 
         // Undo ep hash
         if (enPassant != 0) {
-            zobristHash ^= Hashing.enPassant[enPassant % 8];
+            zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
 
         // Increment HMC
@@ -365,8 +368,8 @@ public final class Position {
         this.activePlayer = 1 - activePlayer;
 
         // Switch active player hash
-        this.zobristHash ^= Hashing.sideToMove[0];
-        this.zobristHash ^= Hashing.sideToMove[1];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[0];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[1];
     }
 
     /**
@@ -387,12 +390,12 @@ public final class Position {
         this.fullMoveCount -= activePlayer;
 
         // Switch active player hash
-        this.zobristHash ^= Hashing.sideToMove[0];
-        this.zobristHash ^= Hashing.sideToMove[1];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[0];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[1];
         //zobristHash ^= Hashing.castleRights[castleRights];
 
         if (enPassant != 0) { // Move before was double push
-            zobristHash ^= Hashing.enPassant[enPassant % 8];
+            zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
     }
 
@@ -420,14 +423,15 @@ public final class Position {
         boolean isReversible = MoveEncoding.getIsReversible(move);
         int castleSide = MoveEncoding.getCastleSide(move);
 
+        // Store state information
         hmcStack.push(this.halfMoveCount);
         epStack.push(this.enPassant);
         castleRightsStack.push(this.castleRights);
 
-        zobristHash ^= Hashing.castleRights[castleRights];
+        zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
 
         if (enPassant != 0) {
-            zobristHash ^= Hashing.enPassant[enPassant % 8];
+            zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
 
         // Increment hmc
@@ -461,8 +465,8 @@ public final class Position {
 
         if (isCastle) {
             // Move the rook
-            int rookStart = castleRookStarts[activePlayer][castleSide];
-            int rookDestination = castleRookDestinations[activePlayer][castleSide];
+            int rookStart = CASTLE_ROOK_STARTS[activePlayer][castleSide];
+            int rookDestination = CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
             removePiece(rookStart, 3, activePlayer);
             addPiece(rookDestination, 3, activePlayer);
         }
@@ -470,7 +474,7 @@ public final class Position {
         if (movedPiece == 5) {
             kingLocs[activePlayer] = destination;
             // Change castle rights
-            castleRights &= castleRightsMask[activePlayer];
+            castleRights &= CASTLE_RIGHTS_MASK[activePlayer];
         }
 
         if (movedPiece == 3) {
@@ -489,7 +493,7 @@ public final class Position {
         if (isDoublePush) {
             // Set EP square
             enPassant = destination - 8 + 16 * activePlayer;
-            zobristHash ^= Hashing.enPassant[enPassant % 8];
+            zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         } else {
             enPassant = 0;
         }
@@ -500,9 +504,9 @@ public final class Position {
         // Switch active player
         activePlayer = 1 - activePlayer;
 
-        this.zobristHash ^= Hashing.sideToMove[1 - activePlayer];
-        this.zobristHash ^= Hashing.sideToMove[activePlayer];
-        this.zobristHash ^= Hashing.castleRights[castleRights];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[1 - activePlayer];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[activePlayer];
+        this.zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
 
         this.checkers = MoveGenerator.computeCheckers(this);
         this.inCheck = Long.numberOfTrailingZeros(checkers) == 64 ? false : true;
@@ -532,9 +536,9 @@ public final class Position {
         // Change active player
         this.activePlayer = 1 - activePlayer;
 
-        zobristHash ^= Hashing.castleRights[castleRights];
+        zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
         if (enPassant != 0) {
-            zobristHash ^= Hashing.enPassant[enPassant % 8];
+            zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
 
         if (isPromotion) {
@@ -555,8 +559,8 @@ public final class Position {
         }
 
         if (isCastle) {
-            int rookStart = castleRookStarts[activePlayer][castleSide];
-            int rookDestination = castleRookDestinations[activePlayer][castleSide];
+            int rookStart = CASTLE_ROOK_STARTS[activePlayer][castleSide];
+            int rookDestination = CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
             removePiece(rookDestination, 3, activePlayer);
             addPiece(rookStart, 3, activePlayer);
         }
@@ -575,12 +579,12 @@ public final class Position {
         this.checkers = MoveGenerator.computeCheckers(this);
         this.inCheck = Long.numberOfTrailingZeros(checkers) == 64 ? false : true;
 
-        this.zobristHash ^= Hashing.sideToMove[1 - activePlayer];
-        this.zobristHash ^= Hashing.sideToMove[activePlayer];
-        this.zobristHash ^= Hashing.castleRights[castleRights];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[1 - activePlayer];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[activePlayer];
+        this.zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
 
         if (enPassant != 0) {
-            zobristHash ^= Hashing.enPassant[enPassant % 8];
+            zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
     }
 
