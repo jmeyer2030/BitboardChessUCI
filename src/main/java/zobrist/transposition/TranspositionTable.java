@@ -10,7 +10,6 @@ public class TranspositionTable {
     private final int[] score;
     private final int[] nodeType;
 
-
     /**
     * Initializes a new Transposition table
     * @param numBits number of bits used to index positions. Size is 2 ^ numBits * 24 Bytes

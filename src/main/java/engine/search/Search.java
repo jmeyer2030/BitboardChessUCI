@@ -168,12 +168,8 @@ public class Search {
 
                 String moveLAN = MoveEncoding.getLAN(result.bestMove);
                 System.out.println("Depth: " + i + " | Move: " + moveLAN + " | Value: " + result.value);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (InvalidPositionException e) {
-                throw new RuntimeException(e);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Unexpected exception from search");
             }
         }
 

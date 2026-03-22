@@ -1,11 +1,14 @@
 package board;
 
+import customExceptions.InvalidUsageException;
 import moveGeneration.MoveGenerator;
 import nnue.DummyNNUE;
 import nnue.NNUE;
 import customExceptions.InvalidPositionException;
 import nnue.NNUEInterface;
 import zobrist.Hashing;
+import board.Piece;
+import board.Color;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -368,8 +371,8 @@ public final class Position {
         this.activePlayer = 1 - activePlayer;
 
         // Switch active player hash
-        this.zobristHash ^= Hashing.SIDE_TO_MOVE[0];
-        this.zobristHash ^= Hashing.SIDE_TO_MOVE[1];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[Color.WHITE];
+        this.zobristHash ^= Hashing.SIDE_TO_MOVE[Color.BLACK];
     }
 
     /**
@@ -454,7 +457,7 @@ public final class Position {
         if (isEP) {
             // Remove pawn captured en Passant
             int enPassantCaptureSquare = enPassant - 8 + 16 * activePlayer; // if white - 8, else + 8
-            removePiece(enPassantCaptureSquare, 0, 1 - activePlayer);
+            removePiece(enPassantCaptureSquare, Piece.PAWN, 1 - activePlayer);
         }
 
         if (isPromotion) {
@@ -467,17 +470,17 @@ public final class Position {
             // Move the rook
             int rookStart = CASTLE_ROOK_STARTS[activePlayer][castleSide];
             int rookDestination = CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
-            removePiece(rookStart, 3, activePlayer);
-            addPiece(rookDestination, 3, activePlayer);
+            removePiece(rookStart, Piece.ROOK, activePlayer);
+            addPiece(rookDestination, Piece.ROOK, activePlayer);
         }
 
-        if (movedPiece == 5) {
+        if (movedPiece == Piece.KING) {
             kingLocs[activePlayer] = destination;
             // Change castle rights
             castleRights &= CASTLE_RIGHTS_MASK[activePlayer];
         }
 
-        if (movedPiece == 3) {
+        if (movedPiece == Piece.ROOK) {
             // Change castle rights
             if (start == 0) {
                 castleRights &= 0b0000_0111;
@@ -555,17 +558,17 @@ public final class Position {
 
         if (isEP) {
             int enPassantCaptureSquare = destination - 8 + 16 * activePlayer;
-            addPiece(enPassantCaptureSquare, 0, 1 - activePlayer);
+            addPiece(enPassantCaptureSquare, Piece.PAWN, 1 - activePlayer);
         }
 
         if (isCastle) {
             int rookStart = CASTLE_ROOK_STARTS[activePlayer][castleSide];
             int rookDestination = CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
-            removePiece(rookDestination, 3, activePlayer);
-            addPiece(rookStart, 3, activePlayer);
+            removePiece(rookDestination, Piece.ROOK, activePlayer);
+            addPiece(rookStart, Piece.ROOK, activePlayer);
         }
 
-        if (movedPiece == 5) {
+        if (movedPiece == Piece.KING) {
             kingLocs[activePlayer] = start;
         }
 
@@ -597,20 +600,21 @@ public final class Position {
      */
     public int getPieceType(int square) {
         long squareMask = (1L << square);
-        if ((this.pieces[0] & squareMask) != 0) {
-            return 0;
-        } else if ((this.pieces[3] & squareMask) != 0) {
-            return 3;
-        } else if ((this.pieces[1] & squareMask) != 0) {
-            return 1;
-        } else if ((this.pieces[2] & squareMask) != 0) {
-            return 2;
-        } else if ((this.pieces[4] & squareMask) != 0) {
-            return 4;
-        } else if ((this.pieces[5] & squareMask) != 0) {
-            return 5;
+        if ((this.pieces[Piece.PAWN] & squareMask) != 0) {
+            return Piece.PAWN;
+        } else if ((this.pieces[Piece.ROOK] & squareMask) != 0) {
+            return Piece.ROOK;
+        } else if ((this.pieces[Piece.KNIGHT] & squareMask) != 0) {
+            return Piece.KNIGHT;
+        } else if ((this.pieces[Piece.BISHOP] & squareMask) != 0) {
+            return Piece.BISHOP;
+        } else if ((this.pieces[Piece.QUEEN] & squareMask) != 0) {
+            return Piece.QUEEN;
+        } else if ((this.pieces[Piece.KING] & squareMask) != 0) {
+            return Piece.KING;
         }
-        return 6;
+
+        throw new InvalidUsageException("A piece was expected to exist on square: " + square + ", but did not.");
     }
 
     /**
@@ -622,14 +626,14 @@ public final class Position {
     public boolean equals(Position position) {
         boolean equal = true;
         equal &= compareValues(this.occupancy, position.occupancy, "Occupancy");
-        equal &= compareValues(this.pieces[0], position.pieces[0], "Pawns");
-        equal &= compareValues(this.pieces[1], position.pieces[1], "Knight");
-        equal &= compareValues(this.pieces[2], position.pieces[2], "Bishop");
-        equal &= compareValues(this.pieces[3], position.pieces[3], "Rook");
-        equal &= compareValues(this.pieces[4], position.pieces[4], "Queen");
-        equal &= compareValues(this.pieces[5], position.pieces[5], "King");
-        equal &= compareValues(this.pieceColors[0], position.pieceColors[0], "White Pieces");
-        equal &= compareValues(this.pieceColors[1], position.pieceColors[1], "Black Pieces");
+        equal &= compareValues(this.pieces[Piece.PAWN], position.pieces[Piece.PAWN], "Pawns");
+        equal &= compareValues(this.pieces[Piece.KNIGHT], position.pieces[Piece.KNIGHT], "Knight");
+        equal &= compareValues(this.pieces[Piece.BISHOP], position.pieces[Piece.BISHOP], "Bishop");
+        equal &= compareValues(this.pieces[Piece.ROOK], position.pieces[Piece.ROOK], "Rook");
+        equal &= compareValues(this.pieces[Piece.QUEEN], position.pieces[Piece.QUEEN], "Queen");
+        equal &= compareValues(this.pieces[Piece.KING], position.pieces[Piece.KING], "King");
+        equal &= compareValues(this.pieceColors[Color.WHITE], position.pieceColors[Color.WHITE], "White Pieces");
+        equal &= compareValues(this.pieceColors[Color.BLACK], position.pieceColors[Color.BLACK], "Black Pieces");
         equal &= compareValues(this.castleRights, position.castleRights, "Castle Rights");
         equal &= compareValues(this.halfMoveCount, position.halfMoveCount, "Rule 50");
         equal &= compareValues(this.enPassant, position.enPassant, "En Passant");
@@ -768,22 +772,22 @@ public final class Position {
      */
     public void validPosition() {
         // Test pieceColors no overlap
-        long pieceColorsAND = pieceColors[0] & pieceColors[1];
+        long pieceColorsAND = pieceColors[Color.WHITE] & pieceColors[Color.BLACK];
         if (pieceColorsAND != 0)
             throw new InvalidPositionException("Piece colors overlap");
 
         // Test pieces no overlap
-        long piecesAND = pieces[0] & pieces[1] & pieces[2] & pieces[3] & pieces[4] & pieces[5];
+        long piecesAND = pieces[Piece.PAWN] & pieces[Piece.KNIGHT] & pieces[Piece.BISHOP] & pieces[Piece.ROOK] & pieces[Piece.QUEEN] & pieces[Piece.KING];
         if (piecesAND != 0)
             throw new InvalidPositionException("Piece types overlap");
 
         // Test pieceColors OR == occupancy
-        long pieceColorsOR = pieceColors[0] | pieceColors[1];
+        long pieceColorsOR = pieceColors[Color.WHITE] | pieceColors[Color.BLACK];
         if (occupancy != pieceColorsOR)
             throw new InvalidPositionException("Piece colors aren't consistent with occupancy");
 
         // Test pieces OR == occupancy
-        long piecesOR = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[5];
+        long piecesOR = pieces[Piece.PAWN] | pieces[Piece.KNIGHT] | pieces[Piece.BISHOP] | pieces[Piece.ROOK] | pieces[Piece.QUEEN] | pieces[Piece.KING];
         if (occupancy != piecesOR)
             throw new InvalidPositionException("Piece types aren't consistent with occupancy");
     }

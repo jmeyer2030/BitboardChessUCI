@@ -24,3 +24,6 @@
 ## Misc/Questionable:
 
 - Refactor Search to an object, that contains (EnchineCache, formerly PositionState)
+
+
+Add openings db?
