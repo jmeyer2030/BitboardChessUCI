@@ -1,6 +1,7 @@
 package engine.search;
 
 import board.MoveEncoding;
+import userFeatures.configuration.GlobalConstants;
 
 import static engine.search.Search.MAX_SEARCH_DEPTH;
 
@@ -15,33 +16,20 @@ import static engine.search.Search.MAX_SEARCH_DEPTH;
 *
 *
 * if search depth is n, triangularPV[n] stores nothing
-*
-*
-*
 */
 public class TriangularPVTable {
-
-    public static final int TABLE_SIZE = 256;
-/*
-    static {
-        TABLE_SIZE = computeTableSize();
-    }
-    */
-
-    //private int[] triangularPV;
     private int[][] triangularPV;
     private int[] pvLength;
 
 
     public TriangularPVTable() {
-        this.triangularPV = new int[TABLE_SIZE][TABLE_SIZE];
+        this.triangularPV = new int[GlobalConstants.MAX_PLY][GlobalConstants.MAX_PLY];
 
         pvLength = new int[MAX_SEARCH_DEPTH];
     }
 
     public void storePV(int move, int depth) {
        triangularPV[depth][0] = move;
-
     }
 
     public void setPVLength(int ply) {

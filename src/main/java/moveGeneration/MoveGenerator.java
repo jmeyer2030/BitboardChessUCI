@@ -27,6 +27,10 @@ public class MoveGenerator {
         throw new IllegalArgumentException();
     }
 
+    /**
+    * Generates and returns a list of moves for a position. This must ONLY be used by tests,
+    * because it allocates its own move buffer.
+    */
     public static List<String> debugGenerateMoveList(Position position) {
         int[] moveBuffer = new int[256];
 

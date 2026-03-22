@@ -187,6 +187,7 @@ public class Search {
      * @param isRoot        if this call is the root
      * @param ply           the current ply we are on. The initial call to search is ply 0, then if we look at their children that would be ply 1.
      * @param isPV          if the current node is the principle variation
+     *
      * @return moveValue the best move and it's associated score
      */
     public static MoveValue negamax(int alpha, int beta, int depthLeft, Position position, PositionState positionState, boolean isRoot, int ply, boolean isPV)

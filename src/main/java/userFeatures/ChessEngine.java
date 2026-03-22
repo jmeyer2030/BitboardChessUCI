@@ -6,7 +6,7 @@ import system.Logging;
 import java.util.logging.Logger;
 
 /**
-* Main class for the chess main.java.engine
+* Main class for the chess engine.
 * Configures options, and starts accepting commands
 */
 public class ChessEngine {

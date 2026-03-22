@@ -1,20 +1,19 @@
-package commands;
+package userFeatures;
 
 import board.MoveEncoding;
 import board.Position;
 import board.PositionState;
 import engine.search.Search;
 import moveGeneration.MoveGenerator;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import userFeatures.ChessEngine;
 import userFeatures.commands.Command;
 import userFeatures.commands.uci.SetPosition;
 import userFeatures.commands.uci.UCINewGame;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class testSetPosition {
 
@@ -38,25 +37,24 @@ public class testSetPosition {
 
 
     @Test
+    @DisplayName("Test that both repetitions, and draw by repetitions are detected")
     public void testExecute_WhenNot50MoveRule2_DoesNotDraw() {
+        // Arrange
         ChessEngine chessEngine = new ChessEngine();
-
         Command newGameCommand = new UCINewGame(chessEngine);
         Command positionCommand = new SetPosition(chessEngine);
-
         String cmd = "startpos moves d2d4 d7d5 e2e3 c8f5 c2c4 e7e6 b1c3 g8f6 g1f3 f8b4 f3h4 f5g4 d1a4 b8c6 h2h3 f6e4 h3g4 e4c3 a4c2 c3a2 c1d2 b4d2 c2d2 a2b4 h4f3 a7a5 g4g5 d8e7 c4d5 e6d5 f1b5 e8c8 a1c1 c8b8 b5c6 b4c6 c1c6 b7c6 e1g1 e7b4 d2b4 a5b4 f3e5 c6c5 e5f7 c5c4 f2f4 c7c5 g1f2 c5d4 e3d4 b8c7 f7d8 c7d8 f4f5 h7h5 f2f3 h8f8 g2g4 d8d7 f1a1 h5g4 f3g4 d7c6 a1a6 c6b5 a6a7 c4c3 b2c3 b4c3 a7c7 b5b4 g5g6 f8g8 g4f3 b4b3 f3e2 b3c2 c7e7 g8f8 e7e5 c2b2 e5d5 c3c2 d5b5 b2c1 b5c5 f8h8 f5f6 g7f6 g6g7 h8b8 d4d5 c1b1 e2d2 b8b2 d2e3 b2b8 e3d2 b8b2";
         String[] cmdArgs = cmd.split(" ");
-
         newGameCommand.execute(null);
-        positionCommand.execute(cmdArgs);
 
-        int hmc = chessEngine.positionState.position.halfMoveCount;
+        // Act
+        positionCommand.execute(cmdArgs);
         boolean isDraw  = chessEngine.positionState.threeFoldTable.positionDrawn(chessEngine.positionState.position.zobristHash);
         boolean isRepeated  = chessEngine.positionState.threeFoldTable.positionRepeated(chessEngine.positionState.position.zobristHash);
 
-        System.out.println(hmc);
-        System.out.println(isDraw);
-        System.out.println(isRepeated);
+        // Assert
+        assertFalse(isDraw);
+        assertTrue(isRepeated);
     }
 
     @Test
@@ -66,7 +64,6 @@ public class testSetPosition {
         Command positionCommand = new SetPosition(chessEngine);
 
         newGameCommand.execute(null);
-
         String cmd = "startpos moves d2d4 g8f6 c2c4 c7c5 d4d5 e7e6 b1c3 e6d5 c4d5 d7d6 e2e4 a7a6 a2a4 g7g6 g1f3 f8g7 f1e2 e8g8 f3d2 f8e8 e1g1 b8d7 h2h3 b7b6 f2f4 c5c4 e2c4 d7c5 d1f3 c8d7 f1e1 f6h5 d2b3 d8h4 c1d2 c5b3 c4b3 g7d4 g1h1 g6g5 c3e2 g5g4 f3d3 d4f2 e1g1 a8c8 d2e1 g4g3 e1f2 g3f2 g1f1 d7g4 e2d4 h5f4 d3e3 g4h3 g2h3 e8e4 e3f3 e4d4 f1f2 h4h3 f3h3 f4h3 f2f6 d4b4 a1a3 c8d8 b3d1 h3g5 a3g3 g8g7 f6f1 f7f6 g3c3 g7g6 d1c2 g5e4 c3g3 g6f7 g3f3 f7g7 c2e4 b4e4 f3f6 e4a4 f6f7 g7g8 f7b7 a4h4 h1g1 h4g4 g1h2 b6b5 f1f7 h7h5 f7f6 b5b4 h2h3 a6a5 f6h6 d8f8 h6d6 f8f3 h3h2 a5a4 d6a6 f3f7 b7b8 f7f8 b8b7 f8f2 h2h3 b4b3 d5d6 f2f3 h3h2 f3f8 h2h3 g4d4 a6a7 d4g4 h3h2 f8e8 h2h3 e8e3 h3h2 e3e2 h2h3 e2e3"; // e2e3 illegal at the end
         String[] cmdArgs = cmd.split(" ");
         positionCommand.execute(cmdArgs);
@@ -74,8 +71,8 @@ public class testSetPosition {
         PositionState positionState = chessEngine.positionState;
         Position position = chessEngine.positionState.position;
 
+        // Assert
 
-        // Test that the move in this position is being generated correctly
         List<String> moveList = MoveGenerator.debugGenerateMoveList(position);
         assertEquals(1, moveList.size());
         assertTrue(moveList.get(0).equals("h3h2"));
@@ -149,13 +146,6 @@ public class testSetPosition {
         System.out.println(lanBestMove);
         System.out.println(position.halfMoveCount);
         //assertTrue("h2h3".equals(lanBestMove) || "h2h1".equals(lanBestMove));
-
     }
-
-    /*
-    * The issue is that naturally (because the next move hasn't been played), the "moveAtPostion" is 0. Then, in search, we see that the position is repeated and just return that.
-    *
-    *
-    */
 
 }

@@ -10,7 +10,6 @@ import java.nio.ByteOrder;
 /**
  * Represents an Efficiently Updatable Neural Network
  * - Trained using Stock Fish training data using Bullet Lib
- *
  * - Contains and loads network weights and sizes statically
  * - Instantiations contain Accumulators, allow incremental updates, and output computation
  */
@@ -35,21 +34,20 @@ public class NNUE implements NNUEInterface {
     private boolean evaluationIsCurrent;
     private int precomputeActivePlayer;
 
-    private int[] whiteAccumulator = new int[HIDDEN_LAYER_SIZE];
-    private int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
+    private final int[] whiteAccumulator = new int[HIDDEN_LAYER_SIZE];
+    private final int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
 
 
     private int addIndex = 0;
-    private int[] whiteAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
-    private int[] blackAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
+    private final int[] whiteAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
+    private final int[] blackAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
 
     private int removeIndex = 0;
-    private int[] whiteAccumulatorRemoveIndices = new int[ACCUMULATOR_LAZY_SIZE];
-    private int[] blackAccumulatorRemoveIndices = new int[ACCUMULATOR_LAZY_SIZE];
+    private final int[] whiteAccumulatorRemoveIndices = new int[ACCUMULATOR_LAZY_SIZE];
+    private final int[] blackAccumulatorRemoveIndices = new int[ACCUMULATOR_LAZY_SIZE];
 
-    /**
-     * Initializes weights and biases from quantised.bin on class load
-     */
+
+    /* Initializes weights and biases from quantised.bin on class load */
     static {
         NetworkData networkData = getNetworkData();
         HIDDEN_LAYER_WEIGHTS = networkData.hiddenWeights;
@@ -109,7 +107,7 @@ public class NNUE implements NNUEInterface {
 
         removeIndex++;
 
-        // Extrememly unlikely that removeIndex would overflow, no need to check
+        // Very unlikely that removeIndex would overflow, no need to check
 
         evaluationIsCurrent = false;
     }
@@ -181,8 +179,8 @@ public class NNUE implements NNUEInterface {
         int outputActivation = 0;
 
         for (int hiddenIndex = 0; hiddenIndex < HIDDEN_LAYER_SIZE; hiddenIndex++) {
-            outputActivation += screlu(QA, whiteAccumulator[hiddenIndex]) * (int) OUTPUT_WEIGHTS[(activePlayer == 0 ? 0 : HIDDEN_LAYER_SIZE) + hiddenIndex];
-            outputActivation += screlu(QA, blackAccumulator[hiddenIndex]) * (int) OUTPUT_WEIGHTS[(activePlayer == 0 ? HIDDEN_LAYER_SIZE : 0) + hiddenIndex];
+            outputActivation += screlu(whiteAccumulator[hiddenIndex]) * (int) OUTPUT_WEIGHTS[(activePlayer == 0 ? 0 : HIDDEN_LAYER_SIZE) + hiddenIndex];
+            outputActivation += screlu(blackAccumulator[hiddenIndex]) * (int) OUTPUT_WEIGHTS[(activePlayer == 0 ? HIDDEN_LAYER_SIZE : 0) + hiddenIndex];
         }
 
         outputActivation /= QA;
@@ -203,10 +201,10 @@ public class NNUE implements NNUEInterface {
     /**
      * squared clipped relu, binds a value between upper and lower bounds and squares it
      *
-     * @param upperBound maximum value input value can be
+     * @param value input value
      */
-    private int screlu(int upperBound, int value) {
-        int clipped = Math.min(Math.max(value, 0), upperBound);
+    private int screlu(int value) {
+        int clipped = Math.min(Math.max(value, 0), QA);
         return clipped * clipped;
     }
 
@@ -218,9 +216,7 @@ public class NNUE implements NNUEInterface {
     private static short[] getNetworkBytes() {
         byte[] dataAsByteArr;
 
-        try {
-            InputStream inputStream = NNUE.class.getResourceAsStream("/quantised.bin");
-
+        try (InputStream inputStream = NNUE.class.getResourceAsStream("/quantised.bin")) {
             if (inputStream == null) {
                 throw new RuntimeException("Resource quanised.bin not found");
             }
