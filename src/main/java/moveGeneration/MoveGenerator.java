@@ -241,17 +241,18 @@ public class MoveGenerator {
      * @return firstNonMove updated
      */
     private static int generatePawnMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask, boolean onlyCaptures) {
-        long pawnList = position.pieces[0] & position.pieceColors[position.activePlayer];
+        long pawnList = position.pieces[Piece.PAWN] & position.pieceColors[position.activePlayer];
 
         while (pawnList != 0L) {
+            // Get location of the first pawn on the pawn bitboard, and remove it.
             int start = Long.numberOfTrailingZeros(pawnList);
+            pawnList &= (pawnList - 1);
 
+            // Pin mask is a bitboard that represents the moves that are legal given the piece's pinned status.
             long pinMask = ~0L;
-            if (position.pinnedPieces[start] != -1) {
+            if (position.pinnedPieces[start] != Piece.NOT_PINNED) {
                 pinMask = AbsolutePins.inBetween[position.kingLocs[position.activePlayer]][position.pinnedPieces[start]] | (1L << position.pinnedPieces[start]);
             }
-
-            pawnList &= (pawnList - 1);
 
             // Handle captures
             long destinations = PawnLogic.getCaptures(start, position) & pinMask & checkHandleMask;

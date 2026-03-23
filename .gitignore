@@ -9,3 +9,4 @@ out/
 # Intellij specific
 .idea/
 *.iml
+AGENTS.md

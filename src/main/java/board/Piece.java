@@ -1,6 +1,7 @@
 package board;
 
 public class Piece {
+    public static final int NOT_PINNED = -1;
     public static final int PAWN   = 0;
     public static final int KNIGHT = 1;
     public static final int BISHOP = 2;

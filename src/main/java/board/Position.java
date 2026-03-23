@@ -7,8 +7,6 @@ import nnue.NNUE;
 import customExceptions.InvalidPositionException;
 import nnue.NNUEInterface;
 import zobrist.Hashing;
-import board.Piece;
-import board.Color;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -45,6 +43,7 @@ public final class Position {
     public int halfMoveCount;
     public int fullMoveCount;
 
+    // Each value either contains the square of the pinning piece, or -1 if the piece at that index is not pinned.
     public int[] pinnedPieces;
 
     public int[][] pieceCounts; // Indexed as: pieceCounts[color][piece], for use in NMP and draw eval
@@ -247,10 +246,10 @@ public final class Position {
 
         // Parse castling rights
         byte castleRights = 0;
-        if (fen.castlingAvailible.contains("K")) castleRights |= 0b0100;
-        if (fen.castlingAvailible.contains("Q")) castleRights |= 0b1000;
-        if (fen.castlingAvailible.contains("k")) castleRights |= 0b0001;
-        if (fen.castlingAvailible.contains("q")) castleRights |= 0b0010;
+        if (fen.castlingAvailable.contains("K")) castleRights |= 0b0100;
+        if (fen.castlingAvailable.contains("Q")) castleRights |= 0b1000;
+        if (fen.castlingAvailable.contains("k")) castleRights |= 0b0001;
+        if (fen.castlingAvailable.contains("q")) castleRights |= 0b0010;
 
         // Parse en passant square
         int enPassant = 0;

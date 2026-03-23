@@ -317,10 +317,8 @@ public class Search {
 
             int move = positionState.moveBuffer[i];
 
-
             // Store if we were in check to see if we can reduce later
             boolean wasInCheck = position.inCheck;
-
 
             // "open" the position
             position.makeMove(move);
@@ -385,7 +383,6 @@ public class Search {
                 alpha = score;
 
                 positionState.pvTable.writePVMove(move, ply);
-
 
                 // Prune when alpha >= beta because the opponent wouldn't make a move that gets here
                 if (alpha >= beta) {
