@@ -42,7 +42,7 @@ public class MoveOrder {
     public static void scoreLoudMoves(Position position, SearchContext searchContext, int firstMove, int firstNonMove) {
         // Iterate over moves in the window
         for (int i = firstMove; i < firstNonMove; i++) {
-            searchContext.moveScores[i] = quickEvaluateExchange(searchContext.moveBuffer[i], position);
+            searchContext.moveScores[i] = quickEvaluateExchange(searchContext.moveBuffer[i], position, searchContext.see);
         }
     }
 
@@ -119,7 +119,7 @@ public class MoveOrder {
         }
 
         if (MoveEncoding.getIsCapture(move)) {
-            value += CAPTURE_BONUS + quickEvaluateExchange(move, position);
+            value += CAPTURE_BONUS + quickEvaluateExchange(move, position, searchContext.see);
         } else {
             if (move == searchContext.killerMoves.killerMoves[0][ply]) {
                 value += FIRST_KILLER_BONUS;
@@ -150,16 +150,17 @@ public class MoveOrder {
      *
      * @param move     to score
      * @param position the move is made on
+     * @param see      SEE instance for exchange evaluation
      */
-    private static int quickEvaluateExchange(int move, Position position) {
-        return SEE.see(move, position);
+    private static int quickEvaluateExchange(int move, Position position, SEE see) {
+        return see.see(move, position);
         /*
         int mvvlvaScore = mvvlva(move);
 
         if (mvvlvaScore > 0) {
             return mvvlvaScore;
         } else {
-            return SEE.see(move, position);
+            return see.see(move, position);
         }
         */
     }

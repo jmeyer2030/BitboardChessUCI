@@ -22,6 +22,7 @@ public class SearchContext {
     public final KillerMoves killerMoves;
     public final HistoryHeuristic historyHeuristic;
     public final TriangularPVTable pvTable;
+    public final SEE see;
 
     public SearchContext() {
         this.moveBuffer = new int[2048];
@@ -31,6 +32,7 @@ public class SearchContext {
         this.killerMoves = new KillerMoves();
         this.historyHeuristic = new HistoryHeuristic();
         this.pvTable = new TriangularPVTable();
+        this.see = new SEE();
     }
 }
 

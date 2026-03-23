@@ -1,6 +1,5 @@
 package com.jmeyer2030.driftwood.search;
 
-import com.jmeyer2030.driftwood.board.FEN;
 import com.jmeyer2030.driftwood.board.MoveEncoding;
 import com.jmeyer2030.driftwood.board.Position;
 import com.jmeyer2030.driftwood.movegeneration.BishopLogic;
@@ -9,39 +8,27 @@ import com.jmeyer2030.driftwood.movegeneration.RookLogic;
 
 /**
 * Static Exchange Evaluation:
-* Evaluates the material change after a sequence of captures on a given square
+* Evaluates the material change after a sequence of captures on a given square.
+*
+* <p>Instance-based so that the mutable scratch arrays ({@code gain}, {@code lvpBitboard},
+* {@code lvpPieceType}) are not shared across threads. One instance lives in
+* {@link SearchContext}.</p>
 */
 public class SEE {
-    // Static test
-    public static void main(String[] args) {
-        //FEN fen = new FEN("1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - - 0 1");
-        //FEN fen = new FEN("44k3/8/8/4Q3/8/3n2B1/6K1/8 b - - 0 1"); // nxQ, Bxn
-        //FEN fen = new FEN("4k3/8/8/4Q3/8/3n4/6K1/8 b - - 0 1"); // nxQ
-        FEN fen = new FEN("1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - - 0 1");
-        //FEN fen = new FEN("4k3/8/8/4Q3/5K2/3n4/8/8 b - - 0 1"); // nxQ, Kxn
-        Position position = new Position(fen);
-
-        int[] moveBuffer = new int[256];
-
-        int move = MoveGenerator.getMoveFromLAN("d3e5", position, moveBuffer);
-        int result = see(move, position);
-        System.out.println(result);
-    }
-
 
     public static final int[] value = {100, 325, 325, 500, 1000, Integer.MAX_VALUE - 100_000};
 
     // Pre-initialized gain array (perhaps saves some time allocating memory)
-    public static final int[] gain = new int[32];
+    private final int[] gain = new int[32];
 
     // Reusable return values for getLeastValuablePiece (avoids allocation)
-    private static long lvpBitboard;
-    private static int lvpPieceType;
+    private long lvpBitboard;
+    private int lvpPieceType;
 
     /**
     * Returns the static exchange evaluation of a move on a position
     */
-    public static int see(int move, Position position) {
+    public int see(int move, Position position) {
         int attackPiece = MoveEncoding.getMovedPiece(move);
         int capturedPiece = MoveEncoding.getCapturedPiece(move);
         int start = MoveEncoding.getStart(move);
@@ -103,7 +90,7 @@ public class SEE {
     * Sets lvpBitboard and lvpPieceType to the least valuable attacker/defender.
     * lvpBitboard is 0 when no piece is found.
     */
-    public static void getLeastValuablePiece(long attacksAndDefends, int activePlayer, Position position) {
+    private void getLeastValuablePiece(long attacksAndDefends, int activePlayer, Position position) {
         long colorAndAttacksAndDefends = position.pieceColors[activePlayer] & attacksAndDefends;
 
         // For each pieceType (pawn -> knight -> bishop -> rook -> queen -> king)
