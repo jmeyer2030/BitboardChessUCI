@@ -1,0 +1,57 @@
+package com.jmeyer2030.driftwood.board;
+
+import com.jmeyer2030.driftwood.search.HistoryHeuristic;
+import com.jmeyer2030.driftwood.search.KillerMoves;
+import com.jmeyer2030.driftwood.search.TriangularPVTable;
+import com.jmeyer2030.driftwood.config.GlobalConstants;
+import com.jmeyer2030.driftwood.search.TranspositionTable;
+
+/**
+ * Represents the internally stored position/state of a chess engine. Includes things related to
+ * the state that we run computations on.
+ * <ul>
+ * <li>position</li>
+ * <li>tt</li>
+ * <li>three-fold</li>
+ * <li>moveBuffer</li>
+ * <li>killer moves</li>
+ * </ul>
+ */
+public class PositionState {
+    public Position position;
+
+    public final TranspositionTable tt;
+    public ThreeFoldTable threeFoldTable;
+    public HistoryHeuristic historyHeuristic;
+    public KillerMoves killerMoves;
+    public TriangularPVTable pvTable;
+
+    public int[] moveBuffer; // All moves in the current search
+    public int[] moveScores; // Corresponding scores
+    public int firstNonMove;
+    public int[] bestMoves; // Best move found at each ply during search
+
+    public PositionState(int numBits) {
+        if (numBits == 0) {
+            this.tt = null;
+        } else {
+            this.tt = new TranspositionTable(numBits);
+        }
+
+        this.pvTable = new TriangularPVTable();
+        this.historyHeuristic = new HistoryHeuristic();
+        this.position = new Position();
+        this.threeFoldTable = new ThreeFoldTable();
+        this.firstNonMove = 0;
+        this.moveBuffer = new int[2048];
+        this.moveScores = new int[2048];
+        this.bestMoves = new int[GlobalConstants.MAX_PLY];
+        this.killerMoves = new KillerMoves();
+    }
+
+    public void applyMove(int move) {
+        position.makeMove(move);
+        threeFoldTable.addPosition(position.zobristHash, move);
+    }
+
+}

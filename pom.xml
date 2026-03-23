@@ -20,7 +20,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>userFeatures.ChessEngine</mainClass>
+                            <mainClass>com.jmeyer2030.driftwood.userfeatures.ChessEngine</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
