@@ -2,8 +2,9 @@ package com.jmeyer2030.driftwood.userfeatures;
 
 import com.jmeyer2030.driftwood.board.MoveEncoding;
 import com.jmeyer2030.driftwood.board.Position;
-import com.jmeyer2030.driftwood.board.PositionState;
+import com.jmeyer2030.driftwood.board.SharedTables;
 import com.jmeyer2030.driftwood.search.Search;
+import com.jmeyer2030.driftwood.search.SearchContext;
 import com.jmeyer2030.driftwood.movegeneration.MoveGenerator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ public class testSetPosition {
         newGameCommand.execute(null);
         positionCommand.execute(cmdArgs);
 
-        int hmc = chessEngine.positionState.position.halfMoveCount;
+        int hmc = chessEngine.position.halfMoveCount;
 
         System.out.println(hmc);
     }
@@ -49,8 +50,8 @@ public class testSetPosition {
 
         // Act
         positionCommand.execute(cmdArgs);
-        boolean isDraw  = chessEngine.positionState.threeFoldTable.positionDrawn(chessEngine.positionState.position.zobristHash);
-        boolean isRepeated  = chessEngine.positionState.threeFoldTable.positionRepeated(chessEngine.positionState.position.zobristHash);
+        boolean isDraw  = chessEngine.sharedTables.threeFoldTable.positionDrawn(chessEngine.position.zobristHash);
+        boolean isRepeated  = chessEngine.sharedTables.threeFoldTable.positionRepeated(chessEngine.position.zobristHash);
 
         // Assert
         assertFalse(isDraw);
@@ -68,8 +69,9 @@ public class testSetPosition {
         String[] cmdArgs = cmd.split(" ");
         positionCommand.execute(cmdArgs);
 
-        PositionState positionState = chessEngine.positionState;
-        Position position = chessEngine.positionState.position;
+        SearchContext searchContext = chessEngine.searchContext;
+        SharedTables sharedTables = chessEngine.sharedTables;
+        Position position = chessEngine.position;
 
         // Assert
 
@@ -78,7 +80,7 @@ public class testSetPosition {
         assertTrue(moveList.get(0).equals("h3h2"));
 
         // Test that iterative deepening gets the only move
-        Search.MoveValue result = Search.iterativeDeepening(position, 10_000, positionState);
+        Search.MoveValue result = Search.iterativeDeepening(position, 10_000, searchContext, sharedTables);
         String lanBestMove = MoveEncoding.getLAN(result.bestMove);
         assertEquals("h3h2", lanBestMove);
     }
@@ -96,8 +98,9 @@ public class testSetPosition {
         String[] cmdArgs = cmd.split(" ");
         positionCommand.execute(cmdArgs);
 
-        PositionState positionState = chessEngine.positionState;
-        Position position = chessEngine.positionState.position;
+        SearchContext searchContext = chessEngine.searchContext;
+        SharedTables sharedTables = chessEngine.sharedTables;
+        Position position = chessEngine.position;
 
 
         // Test that the move in this position is being generated correctly
@@ -106,7 +109,7 @@ public class testSetPosition {
         //assertTrue(moveList.get(0).equals("h3h2"));
 
         // Test that iterative deepening gets the only move
-        Search.MoveValue result = Search.iterativeDeepening(position, 1_000, positionState);
+        Search.MoveValue result = Search.iterativeDeepening(position, 1_000, searchContext, sharedTables);
         String lanBestMove = MoveEncoding.getLAN(result.bestMove);
         assertTrue("h2h3".equals(lanBestMove) || "h2h1".equals(lanBestMove));
     }
@@ -123,29 +126,19 @@ public class testSetPosition {
         String[] cmdArgs = cmd.split(" ");
         positionCommand.execute(cmdArgs);
 
-        PositionState positionState = chessEngine.positionState;
-        Position position = chessEngine.positionState.position;
-
-        //List<ThreeFoldTable.ThreeFoldElement> list = positionState.threeFoldTable.searchedPositions;
-        /*
-        for (int i = 0; i < list.size(); i++) {
-            ThreeFoldTable.ThreeFoldElement item = list.get(i);
-            //System.out.println(i + " | zobrist: " + item.zobristHash + " | move : " + MoveEncoding.getLAN(item.moveAtPosition));
-        }
-        */
+        SearchContext searchContext = chessEngine.searchContext;
+        SharedTables sharedTables = chessEngine.sharedTables;
+        Position position = chessEngine.position;
 
         // Test that the move in this position is being generated correctly
         List<String> moveList = MoveGenerator.debugGenerateMoveList(position);
         moveList.stream().forEach(item -> System.out.println(item));
-        //assertEquals(2, moveList.size());
-        //assertTrue(moveList.get(0).equals("h3h2"));
 
         // Test that iterative deepening gets the only move
-        Search.MoveValue result = Search.iterativeDeepening(position, 1_000, positionState);
+        Search.MoveValue result = Search.iterativeDeepening(position, 1_000, searchContext, sharedTables);
         String lanBestMove = MoveEncoding.getLAN(result.bestMove);
         System.out.println(lanBestMove);
         System.out.println(position.halfMoveCount);
-        //assertTrue("h2h3".equals(lanBestMove) || "h2h1".equals(lanBestMove));
     }
 
 }

@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 * Configures options, and starts accepting commands
 */
 public class ChessEngine {
-    public Logger logger;
+    public Logger logger = Logger.getLogger("ChessEngine");
 
     // Engine Information:
     public final String ENGINE_NAME = "DriftWood 5.0";

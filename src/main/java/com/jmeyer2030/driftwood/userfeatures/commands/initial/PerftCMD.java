@@ -31,10 +31,10 @@ public class PerftCMD implements Command {
             return;
         }
 
-        if (chessEngine.positionState == null) {
+        if (chessEngine.position == null) {
             Perft.perft(depth, new Position());
         } else {
-            Perft.perft(depth, chessEngine.positionState.position);
+            Perft.perft(depth, chessEngine.position);
         }
 
     }
