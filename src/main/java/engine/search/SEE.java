@@ -10,10 +10,9 @@ import moveGeneration.RookLogic;
 /**
 * Static Exchange Evaluation:
 * Evaluates the material change after a sequence of captures on a given square
-*
 */
 public class SEE {
-
+    // Static test
     public static void main(String[] args) {
         //FEN fen = new FEN("1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - - 0 1");
         //FEN fen = new FEN("44k3/8/8/4Q3/8/3n2B1/6K1/8 b - - 0 1"); // nxQ, Bxn
@@ -30,12 +29,14 @@ public class SEE {
     }
 
 
-    public record pieceTypeAndBitboard(long bitboard, int pieceType) {};
-
     public static final int[] value = {100, 325, 325, 500, 1000, Integer.MAX_VALUE - 100_000};
 
     // Pre-initialized gain array (perhaps saves some time allocating memory)
     public static final int[] gain = new int[32];
+
+    // Reusable return values for getLeastValuablePiece (avoids allocation)
+    private static long lvpBitboard;
+    private static int lvpPieceType;
 
     /**
     * Returns the static exchange evaluation of a move on a position
@@ -47,7 +48,7 @@ public class SEE {
         int destination = MoveEncoding.getDestination(move);
 
         // attacker to evaluate bitboard
-        long fromSet = 1 << start;
+        long fromSet = 1L << start;
 
         int depth = 0;
 
@@ -71,10 +72,10 @@ public class SEE {
                 attacksAndDefends |= considerXRays(occupancy, destination, position);
             }
 
-            // Get least valuable bitboard mask and pieceType
-            pieceTypeAndBitboard leastValuable = getLeastValuablePiece(attacksAndDefends, (position.activePlayer + depth) % 2, position);
-            fromSet = leastValuable.bitboard;
-            attackPiece = leastValuable.pieceType;
+            // Get least valuable bitboard mask and pieceType (results stored in static fields)
+            getLeastValuablePiece(attacksAndDefends, (position.activePlayer + depth) % 2, position);
+            fromSet = lvpBitboard;
+            attackPiece = lvpPieceType;
 
         } while (fromSet != 0);
 
@@ -99,22 +100,25 @@ public class SEE {
     }
 
     /**
-    * Returns a record containing a bitmask for the least valuable piece, and it's index in the value array
-    *
+    * Sets lvpBitboard and lvpPieceType to the least valuable attacker/defender.
+    * lvpBitboard is 0 when no piece is found.
     */
-    public static pieceTypeAndBitboard getLeastValuablePiece(long attacksAndDefends, int activePlayer, Position position) {
+    public static void getLeastValuablePiece(long attacksAndDefends, int activePlayer, Position position) {
         long colorAndAttacksAndDefends = position.pieceColors[activePlayer] & attacksAndDefends;
 
         // For each pieceType (pawn -> knight -> bishop -> rook -> queen -> king)
         for (int i = 0; i < 6; i++) {
             long attacksOfPiece = colorAndAttacksAndDefends & position.pieces[i];
             if (attacksOfPiece != 0) {
-                // Returns the least significant bit
-                return new pieceTypeAndBitboard(attacksOfPiece & -attacksOfPiece, i);
+                // Isolate the least significant bit
+                lvpBitboard = attacksOfPiece & -attacksOfPiece;
+                lvpPieceType = i;
+                return;
             }
         }
 
-        return new pieceTypeAndBitboard(0, 0);
+        lvpBitboard = 0;
+        lvpPieceType = 0;
     }
 
 }

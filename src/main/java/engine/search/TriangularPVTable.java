@@ -9,12 +9,8 @@ import static engine.search.Search.MAX_SEARCH_DEPTH;
 * Represents a triangular PV table:
 * for a search of depth N, for a leaf node we would store 0 PV moves (since there are no following moves)
 * at the root node, we would store a PV of length N, since there are N moves made until a leaf node.
-*
 * Thus, to represent this triangular array in 1-D, it's size should be 256 + 255 + 254 + ... + 1
-*
 * This is known as the triangular number of N, computed as N(N+1)/2
-*
-*
 * if search depth is n, triangularPV[n] stores nothing
 */
 public class TriangularPVTable {

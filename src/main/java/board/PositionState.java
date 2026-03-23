@@ -3,6 +3,7 @@ package board;
 import engine.search.HistoryHeuristic;
 import engine.search.KillerMoves;
 import engine.search.TriangularPVTable;
+import userFeatures.configuration.GlobalConstants;
 import zobrist.ThreeFoldTable;
 import zobrist.transposition.TranspositionTable;
 
@@ -29,6 +30,7 @@ public class PositionState {
     public int[] moveBuffer; // All moves in the current search
     public int[] moveScores; // Corresponding scores
     public int firstNonMove;
+    public int[] bestMoves; // Best move found at each ply during search
 
     public PositionState(int numBits) {
         if (numBits == 0) {
@@ -44,6 +46,7 @@ public class PositionState {
         this.firstNonMove = 0;
         this.moveBuffer = new int[2048];
         this.moveScores = new int[2048];
+        this.bestMoves = new int[GlobalConstants.MAX_PLY];
         this.killerMoves = new KillerMoves();
     }
 

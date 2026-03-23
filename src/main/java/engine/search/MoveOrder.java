@@ -7,7 +7,7 @@ import board.PositionState;
 public class MoveOrder {
 
     // Rough piece values used for MVV-LVA
-    public static final int[] pieceValues = new int[]{100, 300, 330, 500, 900, 1_000};
+    public static final int[] PIECE_VALUES = new int[]{100, 300, 330, 500, 900, 1_000};
     public static final int PV_BONUS = 2_000_000;
     public static final int TT_BONUS = 1_000_000;
     public static final int PROMOTION_BONUS = 500_000;
@@ -138,7 +138,7 @@ public class MoveOrder {
      * @return exchange evaluation
      */
     private static int mvvlva(int move) {
-        return pieceValues[MoveEncoding.getCapturedPiece(move)] - pieceValues[MoveEncoding.getMovedPiece(move)];
+        return PIECE_VALUES[MoveEncoding.getCapturedPiece(move)] - PIECE_VALUES[MoveEncoding.getMovedPiece(move)];
     }
 
 
@@ -150,6 +150,8 @@ public class MoveOrder {
      * @param position the move is made on
      */
     private static int quickEvaluateExchange(int move, Position position) {
+        return SEE.see(move, position);
+        /*
         int mvvlvaScore = mvvlva(move);
 
         if (mvvlvaScore > 0) {
@@ -157,6 +159,7 @@ public class MoveOrder {
         } else {
             return SEE.see(move, position);
         }
+        */
     }
 
 }
