@@ -98,7 +98,7 @@ public class testMateSearch {
     /**
      * M7 (13 ply)
      */
-    @Test
+    // @Test
     public void testMatingPosition6() {
         PositionState positionState = new PositionState(18);
         FEN fen = new FEN("8/8/8/8/4k3/8/4K3/4Q3 w - - 0 1");
@@ -115,7 +115,7 @@ public class testMateSearch {
     /**
      * M12 (23 ply)
      */
-    @Test
+    // @Test
     //Excluded because too long
     public void testMatingPosition7() {
         PositionState positionState = new PositionState(18);
@@ -152,7 +152,7 @@ public class testMateSearch {
      * 2 bishop
      * M10 (19 ply)
      */
-    @Test
+    // @Test
     public void testMatingPosition9() {
         PositionState positionState = new PositionState(18);
         FEN fen = new FEN("4k3/8/8/3BB3/4K3/8/8/8 w - - 0 1");

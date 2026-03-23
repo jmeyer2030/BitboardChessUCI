@@ -11,7 +11,7 @@ import zobrist.Hashing;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
+
 
 /**
  * Represents a game state with Bitboards
@@ -24,9 +24,9 @@ public final class Position {
 
 
     // Stores information that could be lost when making a move so that it can be recovered in unmake
-    public Stack<Integer> hmcStack;
-    public Stack<Integer> epStack;
-    public Stack<Byte> castleRightsStack;
+    public FixedSizeIntStack hmcStack;
+    public FixedSizeIntStack epStack;
+    public FixedSizeIntStack castleRightsStack;
 
     public long zobristHash;
 
@@ -65,9 +65,9 @@ public final class Position {
         pinnedPieces = new int[64];
         Arrays.fill(pinnedPieces, -1);
 
-        hmcStack = new Stack<Integer>();
-        epStack = new Stack<Integer>();
-        castleRightsStack = new Stack<Byte>();
+        hmcStack = new FixedSizeIntStack();
+        epStack = new FixedSizeIntStack();
+        castleRightsStack = new FixedSizeIntStack();
 
 
         //Piece Locations:
@@ -108,9 +108,9 @@ public final class Position {
      * Copy a position
      */
     public Position(Position position) {
-        hmcStack = (Stack<Integer>) position.hmcStack.clone();
-        epStack = (Stack<Integer>) position.epStack.clone();
-        castleRightsStack = (Stack<Byte>) position.castleRightsStack.clone();
+        hmcStack = position.hmcStack.copy();
+        epStack = position.epStack.copy();
+        castleRightsStack = position.castleRightsStack.copy();
 
         this.occupancy = position.occupancy;
         this.pieceColors = Arrays.copyOf(position.pieceColors, 2);
@@ -141,9 +141,9 @@ public final class Position {
         pinnedPieces = new int[64];
         Arrays.fill(pinnedPieces, -1);
 
-        hmcStack = new Stack<>();
-        epStack = new Stack<>();
-        castleRightsStack = new Stack<Byte>();
+        hmcStack = new FixedSizeIntStack();
+        epStack = new FixedSizeIntStack();
+        castleRightsStack = new FixedSizeIntStack();
 
         // Initialize bitboards for occupancy and individual pieces
         long occupancy = 0L;
@@ -386,7 +386,7 @@ public final class Position {
         // Pop stored things
         halfMoveCount = hmcStack.pop();
         enPassant = epStack.pop();
-        castleRights = castleRightsStack.pop();
+        castleRights = (byte) castleRightsStack.pop();
 
         // If black moving, increment FMC
         this.fullMoveCount -= activePlayer;
@@ -571,7 +571,7 @@ public final class Position {
             kingLocs[activePlayer] = start;
         }
 
-        this.castleRights = castleRightsStack.pop();
+        this.castleRights = (byte) castleRightsStack.pop();
         this.halfMoveCount = hmcStack.pop();
         this.enPassant = epStack.pop();
 
