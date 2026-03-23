@@ -79,7 +79,7 @@ public class SEE {
     * considers a removed piece, checks if there was something x-raying it, and returns a bitboard representing the location of that piece
     *
     */
-    public static long considerXRays(long occupancy, int square, Position position) {
+    private long considerXRays(long occupancy, int square, Position position) {
         long rookMatches = RookLogic.getAttackBoard(square, occupancy) & (position.pieces[3] | position.pieces[4]);
         long bishopMatches = BishopLogic.getAttackBoard(square, occupancy) & (position.pieces[2] | position.pieces[4]);
 

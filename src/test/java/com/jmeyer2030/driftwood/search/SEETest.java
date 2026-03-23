@@ -109,21 +109,4 @@ class SEETest {
         assertTrue(SEE.value[3] < SEE.value[4], "Rook < Queen");
         assertTrue(SEE.value[4] < SEE.value[5], "Queen < King");
     }
-
-    @Test
-    @DisplayName("SEE: considerXRays returns x-ray attackers through removed piece")
-    void considerXRaysFindsRookBehindRook() {
-        // Arrange — two white rooks on the same file with a target square
-        FEN fen = new FEN("4k3/8/8/4p3/8/8/4R3/4RK2 w - - 0 1");
-        Position position = new Position(fen);
-        long occupancy = position.occupancy;
-        int targetSquare = 36; // e5
-
-        // Act — remove e2 rook (square 12) from occupancy and look for x-rays
-        long occupancyWithout = occupancy ^ (1L << 12);
-        long xRays = SEE.considerXRays(occupancyWithout, targetSquare, position);
-
-        // Assert — should discover the e1 rook (square 4)
-        assertTrue((xRays & (1L << 4)) != 0, "Should find x-ray rook on e1");
-    }
 }
