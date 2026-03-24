@@ -292,7 +292,7 @@ public class Search {
             try {
                 score = -negamax(-beta, -beta + 1, depthLeft - reduction, position, searchContext, sharedTables, false, ply + 1, false);
             } finally {
-                position.unmakeNullMove();
+                position.unMakeNullMove();
             }
             // If a null move failed high over beta, then certainly the best move would as well, so we prune
             if (score >= beta) {

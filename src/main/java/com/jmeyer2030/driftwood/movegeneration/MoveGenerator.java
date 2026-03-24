@@ -436,10 +436,6 @@ public class MoveGenerator {
                 pinMask = AbsolutePins.inBetween[position.kingLocs[position.activePlayer]][position.pinnedPieces[start]] | (1L << position.pinnedPieces[start]);
             }
 
-            if (onlyCaptures) {
-                continue;
-            }
-
             // Process capture moves
             long captureDestinations = KnightLogic.getCaptures(start, position) & pinMask & checkHandleMask;
             while (captureDestinations != 0) {
@@ -447,6 +443,10 @@ public class MoveGenerator {
                 captureDestinations &= (captureDestinations - 1);
                 int move = MoveShortcuts.generateKnightCapture(start, destination, position);
                 firstNonMove = addAndValidateMove(move, moveBuffer, firstNonMove, position);
+            }
+
+            if (onlyCaptures) {
+                continue;
             }
 
             // Process quiet moves

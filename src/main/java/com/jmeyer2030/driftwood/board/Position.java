@@ -24,6 +24,7 @@ public final class Position {
     public FixedSizeIntStack hmcStack;
     public FixedSizeIntStack epStack;
     public FixedSizeIntStack castleRightsStack;
+    public FixedSizeLongStack checkersStack;
 
     public long zobristHash;
 
@@ -65,11 +66,10 @@ public final class Position {
         hmcStack = new FixedSizeIntStack();
         epStack = new FixedSizeIntStack();
         castleRightsStack = new FixedSizeIntStack();
+        checkersStack = new FixedSizeLongStack();
 
-
-        //Piece Locations:
+        // Piece Locations:
         occupancy = 0b11111111_11111111_00000000_00000000_00000000_00000000_11111111_11111111L;
-
         pieceColors = new long[2];
         pieceColors[0] = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_11111111L; // White
         pieceColors[1] = 0b11111111_11111111_00000000_00000000_00000000_00000000_00000000_00000000L; // Black
@@ -108,6 +108,7 @@ public final class Position {
         hmcStack = position.hmcStack.copy();
         epStack = position.epStack.copy();
         castleRightsStack = position.castleRightsStack.copy();
+        checkersStack = position.checkersStack.copy();
 
         this.occupancy = position.occupancy;
         this.pieceColors = Arrays.copyOf(position.pieceColors, 2);
@@ -141,8 +142,7 @@ public final class Position {
         hmcStack = new FixedSizeIntStack();
         epStack = new FixedSizeIntStack();
         castleRightsStack = new FixedSizeIntStack();
-
-        // Initialize bitboards for occupancy and individual pieces
+        checkersStack = new FixedSizeLongStack();
         long occupancy = 0L;
         long whitePieces = 0L;
         long blackPieces = 0L;
@@ -374,7 +374,7 @@ public final class Position {
     /**
      * Unmakes a passing move and updates related fields
      */
-    public void unmakeNullMove() {
+    public void unMakeNullMove() {
         // Switch active player
         this.activePlayer = 1 - activePlayer;
 
@@ -426,6 +426,7 @@ public final class Position {
         hmcStack.push(this.halfMoveCount);
         epStack.push(this.enPassant);
         castleRightsStack.push(this.castleRights);
+        checkersStack.push(this.checkers);
 
         zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
 
@@ -516,7 +517,7 @@ public final class Position {
      */
     public void unMakeMove(int move) {
         if (move == 0) {
-            unmakeNullMove();
+            unMakeNullMove();
             return;
         }
         // Get Encoded data
@@ -571,12 +572,11 @@ public final class Position {
         this.castleRights = (byte) castleRightsStack.pop();
         this.halfMoveCount = hmcStack.pop();
         this.enPassant = epStack.pop();
+        this.checkers = checkersStack.pop();
+        this.inCheck = checkers != 0;
 
         fullMoveCount -= activePlayer; // if black moved, decrement
 
-        //this.inCheck = wasInCheck;
-        this.checkers = MoveGenerator.computeCheckers(this);
-        this.inCheck = Long.numberOfTrailingZeros(checkers) == 64 ? false : true;
 
         this.zobristHash ^= Hashing.SIDE_TO_MOVE[1 - activePlayer];
         this.zobristHash ^= Hashing.SIDE_TO_MOVE[activePlayer];

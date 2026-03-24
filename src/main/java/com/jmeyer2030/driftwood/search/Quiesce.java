@@ -27,21 +27,25 @@ public class Quiesce {
 
         int bestValue = standPat;
 
-        // TODO: Consider not in check
-        if (standPat >= beta)
-            return bestValue;
+        // Stand-pat cutoffs only apply when NOT in check.
+        //        // When in check, standPat is unreliable and we must search all evasions.
+        if (!position.inCheck) {
+            if (standPat >= beta)
+                return bestValue;
 
-        // TODO: Consider not in check
-        if (alpha < standPat)
-            alpha = standPat;
+            if (alpha < standPat)
+                alpha = standPat;
+        } else {
+            bestValue = NEG_INFINITY;
+        }
 
         // TODO: Consider Delta Pruning here
 
         // ===============Generate moves===============
         //  - We generate only captures if not in check
-        // TODO: Consider using QSearch move generator: "int newFirstNonMove = MoveGenerator.generateQSearchMoves(position, searchContext.moveBuffer, searchContext.firstNonMove);"
+        //  - If in check, all moves are generated so we can detect mate
         int initialFirstNonMove = searchContext.firstNonMove;
-        int newFirstNonMove = MoveGenerator.generateAllMoves(position, searchContext.moveBuffer, searchContext.firstNonMove);
+        int newFirstNonMove = MoveGenerator.generateQSearchMoves(position, searchContext.moveBuffer, searchContext.firstNonMove);
         searchContext.firstNonMove = newFirstNonMove;
 
         // ===============See if Mated===============
@@ -53,7 +57,6 @@ public class Quiesce {
 
         // ===============Move order===============
         // TODO: Consider QSearch move generator e.g:
-
         /*
          *if (position.inCheck) {
          *    MoveOrder.scoreMoves(position, searchContext, sharedTables, initialFirstNonMove, newFirstNonMove, ply);
@@ -61,15 +64,16 @@ public class Quiesce {
          *    MoveOrder.scoreLoudMoves(position, searchContext, initialFirstNonMove, newFirstNonMove);
          * }
          */
+
         MoveOrder.scoreMoves(position, searchContext, sharedTables, initialFirstNonMove, newFirstNonMove, ply);
 
 
         for (int i = initialFirstNonMove; i < newFirstNonMove; i++) {
             MoveOrder.bestMoveFirst(searchContext, i, newFirstNonMove);
             int move = searchContext.moveBuffer[i];
-            // Skip non-captures
-            // TODO: Consider non-checks
-            if (!MoveEncoding.getIsCapture(move)) {
+            // Skip non-captures when not in check (only captures were generated anyway).
+            // When in check, all moves were generated and quiet evasions must be searched.
+            if (!position.inCheck && !MoveEncoding.getIsCapture(move)) {
                 continue;
             }
 
@@ -77,7 +81,7 @@ public class Quiesce {
             //  - Skip all captures that aren't good
             //  - Don't skip if in check to avoid skipping forced captures
             /*
-            if (!position.inCheck && searchContext.moveScores[i] - MoveOrder.CAPTURE_BONUS + 200 < 0) {
+            if (!position.inCheck && searchContext.see.see(move, position) < 0) {
                 continue;
             }
             */
