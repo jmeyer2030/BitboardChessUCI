@@ -101,13 +101,13 @@ public class TranspositionTable {
         return this.zobristHash[index] == zobristHash;
     }
 
-    public void addElement(long zobristHash, int bestMove, int depth, int score, NodeType nodeType) {
+    public void addElement(long zobristHash, int bestMove, int depth, int score, int nodeType) {
         int index = getIndex(zobristHash);
 
         this.zobristHash[index] = zobristHash;
         this.bestMove[index] = bestMove;
         this.depth[index] = depth;
         this.score[index] = score;
-        this.nodeType[index] = nodeType.ordinal();
+        this.nodeType[index] = nodeType;
     }
 }

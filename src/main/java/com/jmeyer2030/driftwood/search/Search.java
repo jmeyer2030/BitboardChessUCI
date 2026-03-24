@@ -421,7 +421,7 @@ public class Search {
         searchContext.firstNonMove = firstMove;
 
         if (sharedTables.tt != null && searchContext.bestMoves[ply] != 0) {
-            NodeType nodeType;
+            int nodeType;
 
             // Adjust for whatever ply we're on (if mate)
             int ttValue = scoreToTT(bestScore, ply);
