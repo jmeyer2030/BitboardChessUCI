@@ -28,8 +28,7 @@ public class Quiesce {
 
         int bestValue = standPat;
 
-        // Stand-pat cutoffs only apply when NOT in check.
-        //        // When in check, standPat is unreliable and we must search all evasions.
+        // Stand-pat cutoffs only apply when NOT in check because when in check, we can't, "stand pat", we have to get out of check.
         if (!position.inCheck) {
             if (standPat >= beta)
                 return bestValue;
@@ -39,8 +38,6 @@ public class Quiesce {
         } else {
             bestValue = NEG_INFINITY;
         }
-
-        // TODO: Consider Delta Pruning here
 
         // ===============Generate moves===============
         //  - We generate only captures if not in check
@@ -58,15 +55,7 @@ public class Quiesce {
         }
 
         // ===============Move order===============
-        // TODO: Consider QSearch move generator e.g:
-        /*
-         *if (position.inCheck) {
-         *    MoveOrder.scoreMoves(position, searchContext, sharedTables, initialFirstNonMove, newFirstNonMove, ply);
-         *} else {
-         *    MoveOrder.scoreLoudMoves(position, searchContext, initialFirstNonMove, newFirstNonMove);
-         * }
-         */
-
+        // TODO: Consider different move orderings if in check vs not in chceck
         MoveOrder.scoreMoves(position, searchContext, sharedTables, initialFirstNonMove, newFirstNonMove, ply);
 
 
