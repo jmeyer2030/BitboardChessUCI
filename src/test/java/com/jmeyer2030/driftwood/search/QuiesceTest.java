@@ -33,7 +33,7 @@ class QuiesceTest {
         int score = Quiesce.quiescenceSearch(Search.NEG_INFINITY, Search.POS_INFINITY, position, sc, st, 0);
 
         // Assert
-        assertEquals(Search.NEG_INFINITY, score);
+        assertEquals(-1_900_000, score);
     }
 
     @Test

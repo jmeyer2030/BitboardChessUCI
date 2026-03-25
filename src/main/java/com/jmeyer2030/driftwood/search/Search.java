@@ -15,12 +15,13 @@ import java.util.List;
 
 public class Search {
 
-    // Values representing very high scores minimizing risk of over/underflow
-    public static final int POS_INFINITY = 100_000_000;
-    public static final int NEG_INFINITY = -100_000_000;
+    // Values representing very high scores minimizing risk of over/underflow.
+    // Kept within 22-bit signed range (±2_097_151) so they pack into the TT.
+    public static final int POS_INFINITY = 2_000_000;
+    public static final int NEG_INFINITY = -2_000_000;
 
-    public static final int MATED_VALUE = 90_000_000;
-    public static final int MATED_SCORE = 80_000_000;
+    public static final int MATED_VALUE = 1_900_000;
+    public static final int MATED_SCORE = 1_800_000;
 
     public static final int[] futilityMargin = {0, 200, 500, 900};
 
@@ -235,19 +236,20 @@ public class Search {
         //=============== Check transposition table===============
         int eval = 0;
         boolean foundTTScore = false;
-        if (sharedTables.tt != null && sharedTables.tt.elementIsUseful(position.zobristHash, depthLeft)) {
+        long ttPacked = (sharedTables.tt != null) ? sharedTables.tt.probe(position.zobristHash, depthLeft) : 0;
+        if (ttPacked != 0) {
             foundTTScore = true;
-            eval = sharedTables.tt.getScore(position.zobristHash);
-            int nodeType = sharedTables.tt.getNodeType(position.zobristHash);
-            int bestMove = sharedTables.tt.getBestMove(position.zobristHash);
+            eval = TranspositionTable.unpackScore(ttPacked);
+            int nodeType = TranspositionTable.unpackNodeType(ttPacked);
+            int bestMove = TranspositionTable.unpackBestMove(ttPacked);
 
             eval = scoreFromTT(eval, ply);
 
-            if (nodeType == 0) { // Exact
+            if (nodeType == NodeType.EXACT) {
                 searchContext.firstNonMove = firstMove;
                 searchContext.bestMoves[ply] = bestMove;
                 return eval;
-            } else if (nodeType == 1) { // Lower bound
+            } else if (nodeType == NodeType.LOWER_BOUND) {
                 alpha = Math.max(alpha, eval);
             } else { // Upper bound
                 beta = Math.min(beta, eval);

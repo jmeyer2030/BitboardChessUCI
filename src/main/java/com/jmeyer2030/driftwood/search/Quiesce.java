@@ -6,6 +6,7 @@ import com.jmeyer2030.driftwood.board.SharedTables;
 import com.jmeyer2030.driftwood.movegeneration.MoveGenerator;
 
 import static com.jmeyer2030.driftwood.search.Search.NEG_INFINITY;
+import static com.jmeyer2030.driftwood.search.Search.MATED_VALUE;
 
 public class Quiesce {
 
@@ -52,7 +53,8 @@ public class Quiesce {
         //  - probably don't care about stalemates because these should be seen by main search.
         int numMoves = newFirstNonMove - initialFirstNonMove;
         if (numMoves == 0 && position.inCheck) {
-            return NEG_INFINITY;
+            searchContext.firstNonMove = initialFirstNonMove;
+            return -(MATED_VALUE - ply);
         }
 
         // ===============Move order===============

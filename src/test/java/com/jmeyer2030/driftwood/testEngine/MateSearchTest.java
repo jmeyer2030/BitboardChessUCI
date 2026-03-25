@@ -26,7 +26,7 @@ public class MateSearchTest {
 
         System.out.println(score);
 
-        assertEquals(89_999_999, score);
+        assertEquals(1_899_999, score);
     }
 
     /**
@@ -43,7 +43,7 @@ public class MateSearchTest {
 
         System.out.println(score);
 
-        assertEquals(89_999_997, score);
+        assertEquals(1_899_997, score);
     }
 
     /**
@@ -61,7 +61,7 @@ public class MateSearchTest {
         System.out.println(mv.value);
         System.out.println(MoveEncoding.getLAN(mv.bestMove));
 
-        assertEquals(89_999_995, mv.value);
+        assertEquals(1_899_995, mv.value);
     }
 
     /**
@@ -79,7 +79,7 @@ public class MateSearchTest {
         System.out.println(mv.value);
         System.out.println(MoveEncoding.getLAN(mv.bestMove));
 
-        assertEquals(89_999_993, mv.value);
+        assertEquals(1_899_993, mv.value);
     }
 
     /**
@@ -97,7 +97,7 @@ public class MateSearchTest {
         System.out.println(mv.value);
         System.out.println(MoveEncoding.getLAN(mv.bestMove));
 
-        assertEquals(89_999_991, mv.value);
+        assertEquals(1_899_991, mv.value);
     }
 
 
@@ -116,7 +116,7 @@ public class MateSearchTest {
         System.out.println(mv.value);
         System.out.println(MoveEncoding.getLAN(mv.bestMove));
 
-        assertEquals(89_999_987, mv.value);
+        assertEquals(1_899_987, mv.value);
     }
 
     /**
@@ -135,7 +135,7 @@ public class MateSearchTest {
         System.out.println(mv.value);
         System.out.println(MoveEncoding.getLAN(mv.bestMove));
 
-        assertEquals(89_999_977, mv.value);
+        assertEquals(1_899_977, mv.value);
     }
 
     /**
@@ -154,7 +154,7 @@ public class MateSearchTest {
         System.out.println(mv.value);
         System.out.println(MoveEncoding.getLAN(mv.bestMove));
 
-        assertEquals(89_999_985, mv.value);
+        assertEquals(1_899_985, mv.value);
     }
 
     /**
@@ -173,6 +173,6 @@ public class MateSearchTest {
         System.out.println(mv.value);
         System.out.println(MoveEncoding.getLAN(mv.bestMove));
 
-        assertEquals(89_999_981, mv.value);
+        assertEquals(1_899_981, mv.value);
     }
 }
