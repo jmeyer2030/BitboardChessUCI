@@ -42,25 +42,25 @@ public final class MoveEncoding {
 
     // @formatter:off
     // Core:
-    public static final int startMask         = 0b00000000_00000000_00000000_00111111;
-    public static final int destinationMask   = 0b00000000_00000000_00001111_11000000;
-    public static final int movedPieceMask    = 0b00000000_00000000_01110000_00000000;
-    public static final int capturedPieceMask = 0b00000000_00000011_10000000_00000000;
-    public static final int promotionTypeMask = 0b00000000_00001100_00000000_00000000;
+    public static final int START_MASK          = 0b00000000_00000000_00000000_00111111;
+    public static final int DESTINATION_MASK    = 0b00000000_00000000_00001111_11000000;
+    public static final int MOVED_PIECE_MASK    = 0b00000000_00000000_01110000_00000000;
+    public static final int CAPTURED_PIECE_MASK = 0b00000000_00000011_10000000_00000000;
+    public static final int PROMOTION_TYPE_MASK = 0b00000000_00001100_00000000_00000000;
     // Flags:
-    public static final int isQuietMask       = 0b00000000_00010000_00000000_00000000;
-    public static final int isCaptureMask     = 0b00000000_00100000_00000000_00000000;
-    public static final int isEPMask          = 0b00000000_01000000_00000000_00000000;
-    public static final int isPromotionMask   = 0b00000000_10000000_00000000_00000000;
-    public static final int isCastleMask      = 0b00000001_00000000_00000000_00000000;
-    public static final int isCheckMask       = 0b00000010_00000000_00000000_00000000;
-    public static final int isDoublePushMask  = 0b00000100_00000000_00000000_00000000;
-    public static final int isReversibleMask  = 0b00001000_00000000_00000000_00000000;
-    public static final int wasInCheckMask    = 0b01000000_00000000_00000000_00000000;
-    public static final int activePlayerMask  = 0b10000000_00000000_00000000_00000000;
+    public static final int IS_QUIET_MASK       = 0b00000000_00010000_00000000_00000000;
+    public static final int IS_CAPTURE_MASK     = 0b00000000_00100000_00000000_00000000;
+    public static final int IS_EP_MASK          = 0b00000000_01000000_00000000_00000000;
+    public static final int IS_PROMOTION_MASK   = 0b00000000_10000000_00000000_00000000;
+    public static final int IS_CASTLE_MASK      = 0b00000001_00000000_00000000_00000000;
+    public static final int IS_CHECK_MASK       = 0b00000010_00000000_00000000_00000000;
+    public static final int IS_DOUBLE_PUSH_MASK = 0b00000100_00000000_00000000_00000000;
+    public static final int IS_REVERSIBLE_MASK  = 0b00001000_00000000_00000000_00000000;
+    public static final int WAS_IN_CHECK_MASK   = 0b01000000_00000000_00000000_00000000;
+    public static final int ACTIVE_PLAYER_MASK  = 0b10000000_00000000_00000000_00000000;
     // Helper
-    public static final int captureColorMask  = 0b00010000_00000000_00000000_00000000;
-    public static final int castleSideMask    = 0b00100000_00000000_00000000_00000000;
+    public static final int CAPTURE_COLOR_MASK  = 0b00010000_00000000_00000000_00000000;
+    public static final int CASTLE_SIDE_MASK    = 0b00100000_00000000_00000000_00000000;
     // @formatter:on
 
 
@@ -69,149 +69,149 @@ public final class MoveEncoding {
 
     // Start square
     public static int getStart(int move) {
-        return (move & startMask);
+        return (move & START_MASK);
     }
 
     public static int setStart(int move, int start) {
         assert start >= 0;
         assert start <= 64;
-        move = move & ~startMask;
+        move = move & ~START_MASK;
         return move | start;
     }
 
     // Destination square
     public static int getDestination(int move) {
-        return (move & destinationMask) >> 6;
+        return (move & DESTINATION_MASK) >> 6;
     }
 
     public static int setDestination(int move, int destination) {
         assert destination >= 0;
         assert destination <= 64;
-        move = move & ~destinationMask;
+        move = move & ~DESTINATION_MASK;
         return move | (destination << 6);
     }
 
     // Moved Piece (as ordinal of the enum)
     public static int getMovedPiece(int move) {
-        return (move & movedPieceMask) >> 12;
+        return (move & MOVED_PIECE_MASK) >> 12;
     }
 
     public static int setMovedPiece(int move, int piece) {
         assert piece >= 0;
         assert piece <= 5;
-        move = move & ~movedPieceMask;
+        move = move & ~MOVED_PIECE_MASK;
         return move | (piece << 12);
     }
 
     // Captured Piece (as ordinal of the enum)
     public static int getCapturedPiece(int move) {
-        return (move & capturedPieceMask) >> 15;
+        return (move & CAPTURED_PIECE_MASK) >> 15;
     }
 
     public static int setCapturedPiece(int move, int piece) {
         assert piece >= 0;
         assert piece <= 5;
-        move = move & ~capturedPieceMask;
+        move = move & ~CAPTURED_PIECE_MASK;
         return move | (piece << 15);
     }
 
     // Promotion Type
     public static int getPromotionType(int move) {
-        return ((move & promotionTypeMask) >> 18) + 1;
+        return ((move & PROMOTION_TYPE_MASK) >> 18) + 1;
     }
 
     public static int setPromotionType(int move, int piece) {
         assert piece >= 1;
         assert piece <= 4;
-        move = move & ~promotionTypeMask;
+        move = move & ~PROMOTION_TYPE_MASK;
         return move | ((piece - 1) << 18);
     }
 
     // Quiet flag
     public static boolean getIsQuiet(int move) {
-        return (move & isQuietMask) != 0;
+        return (move & IS_QUIET_MASK) != 0;
     }
 
     public static int setIsQuiet(int move, int isQuiet) {
         assert isQuiet == 0 || isQuiet == 1;
-        move = move & ~isQuietMask;
+        move = move & ~IS_QUIET_MASK;
         return move | (isQuiet << 20);
     }
 
     // Capture flag
     public static boolean getIsCapture(int move) {
-        return (move & isCaptureMask) != 0;
+        return (move & IS_CAPTURE_MASK) != 0;
     }
 
     public static int setIsCapture(int move, int isCapture) {
         assert isCapture == 0 || isCapture == 1;
-        move = move & ~isCaptureMask;
+        move = move & ~IS_CAPTURE_MASK;
         return move | (isCapture << 21);
     }
 
     // Ep Flag
     public static boolean getIsEP(int move) {
-        return (move & isEPMask) != 0;
+        return (move & IS_EP_MASK) != 0;
     }
 
     public static int setIsEP(int move, int isEP) {
         assert isEP == 0 || isEP == 1;
-        move = move & ~isEPMask;
+        move = move & ~IS_EP_MASK;
         return move | (isEP << 22);
     }
 
     // Promotion flag
     public static boolean getIsPromotion(int move) {
-        return (move & isPromotionMask) != 0;
+        return (move & IS_PROMOTION_MASK) != 0;
     }
 
     public static int setIsPromotion(int move, int isPromotion) {
         assert isPromotion == 0 || isPromotion == 1;
-        move = move & ~isPromotionMask;
+        move = move & ~IS_PROMOTION_MASK;
         return move | (isPromotion << 23);
     }
 
     // Castle flag
     public static boolean getIsCastle(int move) {
-        return (move & isCastleMask) != 0;
+        return (move & IS_CASTLE_MASK) != 0;
     }
 
     public static int setIsCastle(int move, int isCastle) {
         assert isCastle == 0 || isCastle == 1;
-        move = move & ~isCastleMask;
+        move = move & ~IS_CASTLE_MASK;
         return move | (isCastle << 24);
     }
 
     // Check flag
     public static boolean getIsCheck(int move) {
-        return (move & isCheckMask) != 0;
+        return (move & IS_CHECK_MASK) != 0;
     }
 
     public static int setIsCheck(int move, int isCheck) {
         assert isCheck == 0 || isCheck == 1;
-        move = move & ~isCheckMask;
+        move = move & ~IS_CHECK_MASK;
         return move | (isCheck << 25);
     }
 
     // Double Push flag
     public static boolean getIsDoublePush(int move) {
-        return (move & isDoublePushMask) != 0;
+        return (move & IS_DOUBLE_PUSH_MASK) != 0;
     }
 
     public static int setIsDoublePush(int move, int isDoublePush) {
         assert isDoublePush == 0 || isDoublePush == 1;
-        move = move & ~isDoublePushMask;
+        move = move & ~IS_DOUBLE_PUSH_MASK;
         return move | (isDoublePush << 26);
     }
 
     // Reversible flag
     public static boolean getIsReversible(int move) {
-        return (move & isReversibleMask) != 0;
+        return (move & IS_REVERSIBLE_MASK) != 0;
     }
 
     public static int setIsReversible(int move, int isReversible) {
         assert isReversible == 0 || isReversible == 1;
-        move = move & ~isReversibleMask;
+        move = move & ~IS_REVERSIBLE_MASK;
         return move | (isReversible << 27);
     }
 
@@ -219,45 +219,45 @@ public final class MoveEncoding {
         Capture Color (0 White, 1 Black)
     */
     public static boolean getCaptureColor(int move) {
-        return (move & captureColorMask) != 0;
+        return (move & CAPTURE_COLOR_MASK) != 0;
     }
 
     public static int setCaptureColor(int move, int captureColor) {
         assert captureColor == 0 || captureColor == 1;
-        move = move & ~captureColorMask;
+        move = move & ~CAPTURE_COLOR_MASK;
         return move | (captureColor << 28);
     }
 
     // CastleSide (0 King, 1 Queen)
     public static int getCastleSide(int move) {
-        return (move & castleSideMask) >> 29;
+        return (move & CASTLE_SIDE_MASK) >> 29;
     }
 
     public static int setCastleSide(int move, int castleSide) {
         assert castleSide == 0 || castleSide == 1;
-        move = move & ~castleSideMask;
+        move = move & ~CASTLE_SIDE_MASK;
         return move | (castleSide << 29);
     }
 
     // WasInCheck (0 false 1 true)
     public static boolean getWasInCheck(int move) {
-        return (move & wasInCheckMask) != 0;
+        return (move & WAS_IN_CHECK_MASK) != 0;
     }
 
     public static int setWasInCheck(int move, int wasInCheck) {
         assert wasInCheck == 0 || wasInCheck == 1;
-        move = move & ~wasInCheckMask;
+        move = move & ~WAS_IN_CHECK_MASK;
         return move | (wasInCheck << 30);
     }
 
     // ActivePlayer
     public static int getActivePlayer(int move) {
-        return (move & activePlayerMask) >> 31 == -1 ? 1 : 0;
+        return (move & ACTIVE_PLAYER_MASK) >> 31 == -1 ? 1 : 0;
     }
 
     public static int setActivePlayer(int move, int activePlayer) {
         assert activePlayer == 0 || activePlayer == 1;
-        move = move & ~wasInCheckMask;
+        move = move & ~WAS_IN_CHECK_MASK;
         return move | (activePlayer << 31);
     }
 

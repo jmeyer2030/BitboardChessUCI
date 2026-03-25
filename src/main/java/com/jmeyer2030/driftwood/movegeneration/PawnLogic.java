@@ -1,6 +1,7 @@
 package com.jmeyer2030.driftwood.movegeneration;
 
 import com.jmeyer2030.driftwood.board.Position;
+import com.jmeyer2030.driftwood.config.GlobalConstants;
 
 public class PawnLogic {
     private static final long[] whitePawnPushes = new long[64];
@@ -24,8 +25,6 @@ public class PawnLogic {
         generateBlackPawnPushes();
         generateBlackPawnAttacks();
         generateBlackPawnEnPassants();
-        generateWhitePawnPushes();
-        generateBlackPawnPushes();
     }
 
     public static long getAttackBoard(int square, int color) {
@@ -50,7 +49,7 @@ public class PawnLogic {
     }
 
     public static long getEnPassant(int square, Position position) {
-        if (position.enPassant == 0 ||
+        if (position.enPassant == GlobalConstants.NO_EP ||
                 (((1L << position.enPassant) & (position.activePlayer == 0 ? whitePawnAttacks[square] :
                         blackPawnAttacks[square])) == 0))// ||//If square doesn't attack the enPassant square//(position.enPassant + 1 != square && position.enPassant - 1 != square) ||
             //(square / 8 != 3 || square / 8 != 4)) // enpassant doesn't exist or isn't next to the piece

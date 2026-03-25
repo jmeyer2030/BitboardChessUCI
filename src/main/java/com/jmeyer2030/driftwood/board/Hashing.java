@@ -21,6 +21,8 @@ package com.jmeyer2030.driftwood.board;
 
 import java.util.Random;
 
+import com.jmeyer2030.driftwood.config.GlobalConstants;
+
 public class Hashing {
     public static final long RANDOM_SEED = 24;
 
@@ -93,7 +95,7 @@ public class Hashing {
         zobrist ^= CASTLE_RIGHTS[position.castleRights];
 
         // Enpassant
-        if (position.enPassant != 0) {
+        if (position.enPassant != GlobalConstants.NO_EP) {
             int file = position.enPassant % 8;
             zobrist ^= EN_PASSANT[file]; // file of the enPassant square
         }

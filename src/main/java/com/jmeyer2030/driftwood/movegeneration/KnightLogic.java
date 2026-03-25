@@ -15,7 +15,7 @@ public class KnightLogic {
 	}
 	
 	public static long getCaptures(int square, Position position) {
-		long enemyPieces = position.activePlayer == 0 ? position.pieceColors[1] : position.pieceColors[0];
+		long enemyPieces = position.pieceColors[1 - position.activePlayer];
 		return knightMoves[square] & enemyPieces;
 	}
 	

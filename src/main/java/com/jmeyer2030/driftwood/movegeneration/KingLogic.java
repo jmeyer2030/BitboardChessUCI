@@ -1,6 +1,9 @@
 package com.jmeyer2030.driftwood.movegeneration;
 
+import com.jmeyer2030.driftwood.board.Color;
+import com.jmeyer2030.driftwood.board.Piece;
 import com.jmeyer2030.driftwood.board.Position;
+import com.jmeyer2030.driftwood.board.PositionConstants;
 
 public class KingLogic {
 
@@ -24,47 +27,47 @@ public class KingLogic {
     }
 
     public static long generateCastles(int square, Position position) {
-        return position.activePlayer == 0 ? generateWhiteCastles(position) : generateBlackCastles(position);
+        return position.activePlayer == Color.WHITE ? generateWhiteCastles(position) : generateBlackCastles(position);
     }
 
     //Private Helper Methods
     private static long generateWhiteCastles(Position position) {
         long result = 0L;
-        //queen side
-        if (((position.castleRights & (1 << 3)) != 0) &&
-                (((position.pieces[3] & position.pieceColors[0]) & (1L << 0)) != 0L) &&
-                ((position.occupancy & (1L << 1)) == 0L) &&
-                ((position.occupancy & (1L << 2)) == 0L) &&
-                ((position.occupancy & (1L << 3)) == 0L) &&
-                ((position.pieceColors[0] & (1L << 0)) != 0L))
-            result |= (1L << 2);
-        //king side
-        if (((position.castleRights & (1 << 2)) != 0) &&
-                (((position.pieces[3] & position.pieceColors[0]) & (1L << 7)) != 0L) &&
-                ((position.occupancy & (1L << 5)) == 0L) &&
-                ((position.occupancy & (1L << 6)) == 0L) &&
-                ((position.pieceColors[0] & (1L << 7)) != 0L))
-            result |= (1L << 6);
+        // queen side
+        if (((position.castleRights & PositionConstants.CASTLE_RIGHT_WQ) != 0) &&
+                (((position.pieces[Piece.ROOK] & position.pieceColors[Color.WHITE]) & (1L << PositionConstants.ROOK_START_WQ)) != 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_QS_ROOK_CROSS_W)) == 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_DEST_WQ)) == 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_PASSTHROUGH_WQ)) == 0L) &&
+                ((position.pieceColors[Color.WHITE] & (1L << PositionConstants.ROOK_START_WQ)) != 0L))
+            result |= (1L << PositionConstants.CASTLE_DEST_WQ);
+        // king side
+        if (((position.castleRights & PositionConstants.CASTLE_RIGHT_WK) != 0) &&
+                (((position.pieces[Piece.ROOK] & position.pieceColors[Color.WHITE]) & (1L << PositionConstants.ROOK_START_WK)) != 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_PASSTHROUGH_WK)) == 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_DEST_WK)) == 0L) &&
+                ((position.pieceColors[Color.WHITE] & (1L << PositionConstants.ROOK_START_WK)) != 0L))
+            result |= (1L << PositionConstants.CASTLE_DEST_WK);
         return result;
     }
 
     private static long generateBlackCastles(Position position) {
         long result = 0L;
-        //queenside
-        if (((position.castleRights & (1 << 1)) != 0) &&
-                (((position.pieces[3] & position.pieceColors[1]) & (1L << 56)) != 0L) &&
-                ((position.occupancy & (1L << 57)) == 0L) &&
-                ((position.occupancy & (1L << 58)) == 0L) &&
-                ((position.occupancy & (1L << 59)) == 0L) &&
-                ((position.pieceColors[1] & (1L << 56)) != 0L))
-            result |= (1L << 58);
-        //kingside
-        if (((position.castleRights & (1 << 0)) != 0) &&
-                (((position.pieces[3] & position.pieceColors[1]) & (1L << 63)) != 0L) &&
-                ((position.occupancy & (1L << 61)) == 0L) &&
-                ((position.occupancy & (1L << 62)) == 0L) &&
-                ((position.pieceColors[1] & (1L << 63)) != 0L))
-            result |= (1L << 62);
+        // queen side
+        if (((position.castleRights & PositionConstants.CASTLE_RIGHT_BQ) != 0) &&
+                (((position.pieces[Piece.ROOK] & position.pieceColors[Color.BLACK]) & (1L << PositionConstants.ROOK_START_BQ)) != 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_QS_ROOK_CROSS_B)) == 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_DEST_BQ)) == 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_PASSTHROUGH_BQ)) == 0L) &&
+                ((position.pieceColors[Color.BLACK] & (1L << PositionConstants.ROOK_START_BQ)) != 0L))
+            result |= (1L << PositionConstants.CASTLE_DEST_BQ);
+        // king side
+        if (((position.castleRights & PositionConstants.CASTLE_RIGHT_BK) != 0) &&
+                (((position.pieces[Piece.ROOK] & position.pieceColors[Color.BLACK]) & (1L << PositionConstants.ROOK_START_BK)) != 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_PASSTHROUGH_BK)) == 0L) &&
+                ((position.occupancy & (1L << PositionConstants.CASTLE_DEST_BK)) == 0L) &&
+                ((position.pieceColors[Color.BLACK] & (1L << PositionConstants.ROOK_START_BK)) != 0L))
+            result |= (1L << PositionConstants.CASTLE_DEST_BK);
         return result;
     }
 

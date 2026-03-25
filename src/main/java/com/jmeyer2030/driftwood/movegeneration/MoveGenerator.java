@@ -1,6 +1,7 @@
 package com.jmeyer2030.driftwood.movegeneration;
 
 import com.jmeyer2030.driftwood.board.Position;
+import com.jmeyer2030.driftwood.board.PositionConstants;
 import com.jmeyer2030.driftwood.board.MoveEncoding;
 import com.jmeyer2030.driftwood.board.Piece;
 
@@ -515,7 +516,7 @@ public class MoveGenerator {
 
                 int move;
 
-                if (destination % 8 == 2) { // Queen side castle
+                if (destination == PositionConstants.CASTLE_DEST_WQ || destination == PositionConstants.CASTLE_DEST_BQ) { // Queen side castle
                     move = MoveShortcuts.generateKingQueenSideCastle(start, destination, position);
                 } else { // King side castle
                     move = MoveShortcuts.generateKingKingSideCastle(start, destination, position);
@@ -535,7 +536,7 @@ public class MoveGenerator {
      * @param position to generate moves for
      * @return Move list
      */
-    public static int generateQueenMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask, boolean onlyCaptures) {
+    private static int generateQueenMoves(Position position, int[] moveBuffer, int firstNonMove, long checkHandleMask, boolean onlyCaptures) {
         long queenList = position.pieceColors[position.activePlayer] & position.pieces[4];
 
         // Iterate over queen positions using bitwise manipulation
@@ -592,18 +593,18 @@ public class MoveGenerator {
         if (inCheck) {
             return true;
         }
-        if (destination == 2) {
-            squareAttacked |= squareAttackedBy(position, 3, 1);
-            squareAttacked |= squareAttackedBy(position, 2, 1);
-        } else if (destination == 6) {
-            squareAttacked |= squareAttackedBy(position, 5, 1);
-            squareAttacked |= squareAttackedBy(position, 6, 1);
-        } else if (destination == 58) {
-            squareAttacked |= squareAttackedBy(position, 59, 0);
-            squareAttacked |= squareAttackedBy(position, 58, 0);
-        } else if (destination == 62) {
-            squareAttacked |= squareAttackedBy(position, 61, 0);
-            squareAttacked |= squareAttackedBy(position, 62, 0);
+        if (destination == PositionConstants.CASTLE_DEST_WQ) {
+            squareAttacked |= squareAttackedBy(position, PositionConstants.CASTLE_PASSTHROUGH_WQ, 1);
+            squareAttacked |= squareAttackedBy(position, PositionConstants.CASTLE_DEST_WQ, 1);
+        } else if (destination == PositionConstants.CASTLE_DEST_WK) {
+            squareAttacked |= squareAttackedBy(position, PositionConstants.CASTLE_PASSTHROUGH_WK, 1);
+            squareAttacked |= squareAttackedBy(position, PositionConstants.CASTLE_DEST_WK, 1);
+        } else if (destination == PositionConstants.CASTLE_DEST_BQ) {
+            squareAttacked |= squareAttackedBy(position, PositionConstants.CASTLE_PASSTHROUGH_BQ, 0);
+            squareAttacked |= squareAttackedBy(position, PositionConstants.CASTLE_DEST_BQ, 0);
+        } else if (destination == PositionConstants.CASTLE_DEST_BK) {
+            squareAttacked |= squareAttackedBy(position, PositionConstants.CASTLE_PASSTHROUGH_BK, 0);
+            squareAttacked |= squareAttackedBy(position, PositionConstants.CASTLE_DEST_BK, 0);
         }
         return squareAttacked;
     }

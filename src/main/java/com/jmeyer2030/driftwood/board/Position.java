@@ -1,6 +1,7 @@
 package com.jmeyer2030.driftwood.board;
 
 import com.jmeyer2030.driftwood.movegeneration.MoveGenerator;
+import com.jmeyer2030.driftwood.config.GlobalConstants;
 import com.jmeyer2030.driftwood.staticevaluation.DummyNNUE;
 import com.jmeyer2030.driftwood.staticevaluation.NNUE;
 import com.jmeyer2030.driftwood.staticevaluation.Evaluator;
@@ -14,10 +15,6 @@ import java.util.List;
  * Represents a game state with Bitboards
  */
 public final class Position {
-    // Castling related locations and masks
-    private static final int[][] CASTLE_ROOK_STARTS = new int[][]{{7, 0}, {63, 56}}; // [activePlayer][castleSide] [0][0] is white king
-    private static final int[][] CASTLE_ROOK_DESTINATIONS = new int[][]{{5, 3}, {61, 59}}; // [activePlayer][castleSide] [0][0] is white king
-    private static final byte[] CASTLE_RIGHTS_MASK = new byte[]{0b0000_0011, 0b0000_1100}; //[activePlayer] is mask to remove rights of active player
 
 
     // Stores information that could be lost when making a move so that it can be recovered in unmake
@@ -87,8 +84,8 @@ public final class Position {
 
         //State:
         activePlayer = 0;
-        castleRights = 0b00001111;
-        enPassant = 0;
+        castleRights = PositionConstants.ALL_CASTLE_RIGHTS;
+        enPassant = GlobalConstants.NO_EP;
         halfMoveCount = 0;
         fullMoveCount = 1;
         inCheck = false;
@@ -243,13 +240,13 @@ public final class Position {
 
         // Parse castling rights
         byte castleRights = 0;
-        if (fen.castlingAvailable.contains("K")) castleRights |= 0b0100;
-        if (fen.castlingAvailable.contains("Q")) castleRights |= 0b1000;
-        if (fen.castlingAvailable.contains("k")) castleRights |= 0b0001;
-        if (fen.castlingAvailable.contains("q")) castleRights |= 0b0010;
+        if (fen.castlingAvailable.contains("K")) castleRights |= PositionConstants.CASTLE_RIGHT_WK;
+        if (fen.castlingAvailable.contains("Q")) castleRights |= PositionConstants.CASTLE_RIGHT_WQ;
+        if (fen.castlingAvailable.contains("k")) castleRights |= PositionConstants.CASTLE_RIGHT_BK;
+        if (fen.castlingAvailable.contains("q")) castleRights |= PositionConstants.CASTLE_RIGHT_BQ;
 
         // Parse en passant square
-        int enPassant = 0;
+        int enPassant = GlobalConstants.NO_EP;
         if (!fen.enPassant.equals("-")) {
             char fileChar = fen.enPassant.charAt(0);
             char rankChar = fen.enPassant.charAt(1);
@@ -350,15 +347,15 @@ public final class Position {
         castleRightsStack.push(this.castleRights);
 
         // Undo ep hash
-        if (enPassant != 0) {
+        if (enPassant != GlobalConstants.NO_EP) {
             zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
 
         // Increment HMC
         this.halfMoveCount++;
 
-        // Set ep to 0
-        this.enPassant = 0;
+        // Set ep to none
+        this.enPassant = GlobalConstants.NO_EP;
 
         // If black moving, increment FMC
         this.fullMoveCount += activePlayer;
@@ -393,7 +390,7 @@ public final class Position {
         this.zobristHash ^= Hashing.SIDE_TO_MOVE[1];
         //zobristHash ^= Hashing.castleRights[castleRights];
 
-        if (enPassant != 0) { // Move before was double push
+        if (enPassant != GlobalConstants.NO_EP) { // Move before was double push
             zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
     }
@@ -430,7 +427,7 @@ public final class Position {
 
         zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
 
-        if (enPassant != 0) {
+        if (enPassant != GlobalConstants.NO_EP) {
             zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
 
@@ -465,8 +462,8 @@ public final class Position {
 
         if (isCastle) {
             // Move the rook
-            int rookStart = CASTLE_ROOK_STARTS[activePlayer][castleSide];
-            int rookDestination = CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
+            int rookStart = PositionConstants.CASTLE_ROOK_STARTS[activePlayer][castleSide];
+            int rookDestination = PositionConstants.CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
             removePiece(rookStart, Piece.ROOK, activePlayer);
             addPiece(rookDestination, Piece.ROOK, activePlayer);
         }
@@ -474,19 +471,19 @@ public final class Position {
         if (movedPiece == Piece.KING) {
             kingLocs[activePlayer] = destination;
             // Change castle rights
-            castleRights &= CASTLE_RIGHTS_MASK[activePlayer];
+            castleRights &= PositionConstants.CASTLE_RIGHTS_MASK[activePlayer];
         }
 
         if (movedPiece == Piece.ROOK) {
             // Change castle rights
-            if (start == 0) {
-                castleRights &= 0b0000_0111;
-            } else if (start == 7) {
-                castleRights &= 0b0000_1011;
-            } else if (start == 56) {
-                castleRights &= 0b0000_1101;
-            } else if (start == 63) {
-                castleRights &= 0b0000_1110;
+            if (start == PositionConstants.ROOK_START_WQ) {
+                castleRights &= PositionConstants.REVOKE_WQ;
+            } else if (start == PositionConstants.ROOK_START_WK) {
+                castleRights &= PositionConstants.REVOKE_WK;
+            } else if (start == PositionConstants.ROOK_START_BQ) {
+                castleRights &= PositionConstants.REVOKE_BQ;
+            } else if (start == PositionConstants.ROOK_START_BK) {
+                castleRights &= PositionConstants.REVOKE_BK;
             }
         }
 
@@ -495,7 +492,7 @@ public final class Position {
             enPassant = destination - 8 + 16 * activePlayer;
             zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         } else {
-            enPassant = 0;
+            enPassant = GlobalConstants.NO_EP;
         }
 
         //increment moveCounter if black moved
@@ -531,13 +528,12 @@ public final class Position {
         boolean isPromotion = MoveEncoding.getIsPromotion(move);
         boolean isCastle = MoveEncoding.getIsCastle(move);
         int castleSide = MoveEncoding.getCastleSide(move);
-        //boolean wasInCheck = MoveEncoding.getWasInCheck(move);
 
         // Change active player
         this.activePlayer = 1 - activePlayer;
 
         zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
-        if (enPassant != 0) {
+        if (enPassant != GlobalConstants.NO_EP) {
             zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
 
@@ -559,8 +555,8 @@ public final class Position {
         }
 
         if (isCastle) {
-            int rookStart = CASTLE_ROOK_STARTS[activePlayer][castleSide];
-            int rookDestination = CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
+            int rookStart = PositionConstants.CASTLE_ROOK_STARTS[activePlayer][castleSide];
+            int rookDestination = PositionConstants.CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
             removePiece(rookDestination, Piece.ROOK, activePlayer);
             addPiece(rookStart, Piece.ROOK, activePlayer);
         }
@@ -582,7 +578,7 @@ public final class Position {
         this.zobristHash ^= Hashing.SIDE_TO_MOVE[activePlayer];
         this.zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
 
-        if (enPassant != 0) {
+        if (enPassant != GlobalConstants.NO_EP) {
             zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
     }

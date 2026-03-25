@@ -125,8 +125,8 @@ public class RookLogic {
 
         long attacksWithoutBlockers = getAttackBoard(square, occupancyWithoutFriendlyBlockers);
 
-        // Return attacks if the friendly blocker wasn't there
-        return (attacksWithoutBlockers ^ attacks) | (attacks & attacksWithoutBlockers);
+        // Equivalent to (attacksWithoutBlockers ^ attacks) | (attacks & attacksWithoutBlockers)
+        return attacksWithoutBlockers;
     }
 
     /**
