@@ -28,13 +28,13 @@ public final class Position {
 
     public long zobristHash;
 
-    //Piece Locations
+    // Piece Locations
     public long occupancy;
     public long[] pieceColors;
     public long[] pieces;
     public int[] kingLocs;
 
-    //State:
+    // State:
     public int activePlayer; // 0 is white, 1 is black
     public byte castleRights; //Castle Rights: 0b0000(whiteQueen)(whiteKing)(blackQueen)(blackKing)
     public int enPassant; //Same as fen, is the location where the pawn would be if it advanced one square.
@@ -71,16 +71,16 @@ public final class Position {
         // Piece Locations:
         occupancy = 0b11111111_11111111_00000000_00000000_00000000_00000000_11111111_11111111L;
         pieceColors = new long[2];
-        pieceColors[0] = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_11111111L; // White
-        pieceColors[1] = 0b11111111_11111111_00000000_00000000_00000000_00000000_00000000_00000000L; // Black
+        pieceColors[0] = 0b00000000_00000000_00000000_00000000_00000000_00000000_11111111_11111111L;
+        pieceColors[1] = 0b11111111_11111111_00000000_00000000_00000000_00000000_00000000_00000000L;
 
         pieces = new long[6];
-        pieces[0] = 0b00000000_11111111_00000000_00000000_00000000_00000000_11111111_00000000L; // Pawns
-        pieces[1] = 0b01000010_00000000_00000000_00000000_00000000_00000000_00000000_01000010L; // Knights
-        pieces[2] = 0b00100100_00000000_00000000_00000000_00000000_00000000_00000000_00100100L; // Bishops
-        pieces[3] = 0b10000001_00000000_00000000_00000000_00000000_00000000_00000000_10000001L; // Rooks
-        pieces[4] = 0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L; // Queens
-        pieces[5] = 0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L; // Kings
+        pieces[Piece.PAWN] = 0b00000000_11111111_00000000_00000000_00000000_00000000_11111111_00000000L;
+        pieces[Piece.KNIGHT] = 0b01000010_00000000_00000000_00000000_00000000_00000000_00000000_01000010L;
+        pieces[Piece.BISHOP] = 0b00100100_00000000_00000000_00000000_00000000_00000000_00000000_00100100L;
+        pieces[Piece.ROOK] = 0b10000001_00000000_00000000_00000000_00000000_00000000_00000000_10000001L;
+        pieces[Piece.QUEEN] = 0b00001000_00000000_00000000_00000000_00000000_00000000_00000000_00001000L;
+        pieces[Piece.KING] = 0b00010000_00000000_00000000_00000000_00000000_00000000_00000000_00010000L;
 
         kingLocs = new int[]{Long.numberOfTrailingZeros(pieces[5] & pieceColors[0]), Long.numberOfTrailingZeros(pieces[5] & pieceColors[1])};
 

@@ -9,10 +9,10 @@ package com.jmeyer2030.driftwood.search;
  * keys[i] = zobristHash ^ data[i]          (XOR verification trick)
  *
  * data[i] bit layout (64 bits):
- *   0–31  bestMove   (32 bits, full move encoding)
- *  32–39  depth      ( 8 bits, 0-255)
- *  40–41  nodeType   ( 2 bits, 0=EXACT, 1=LOWER, 2=UPPER)
- *  42–63  score      (22 bits, signed via arithmetic shift)
+ *   0-31  bestMove   (32 bits, full move encoding)
+ *  32-39  depth      ( 8 bits, 0-255)
+ *  40-41  nodeType   ( 2 bits, 0=EXACT, 1=LOWER, 2=UPPER)
+ *  42-63  score      (22 bits, signed via arithmetic shift)
  * </pre>
  *
  * <p>Total: 16 bytes per entry (down from 24), 2 array accesses per probe
@@ -24,23 +24,27 @@ public class TranspositionTable {
     private final long[] keys;
     private final long[] data;
 
-    // ── Bit layout constants ──
-    private static final long BEST_MOVE_MASK = 0xFFFF_FFFFL;
-    private static final int  DEPTH_SHIFT     = 32;
-    private static final long DEPTH_MASK      = 0xFFL << DEPTH_SHIFT;
-    private static final int  NODE_TYPE_SHIFT = 40;
-    private static final long NODE_TYPE_MASK  = 0x3L  << NODE_TYPE_SHIFT;
-    private static final int  SCORE_SHIFT     = 42;
-    // Upper 22 bits — no explicit mask needed, arithmetic right-shift handles sign.
+    // -- Bit layout constants --
+    private static final long BEST_MOVE_MASK       = 0xFFFF_FFFFL;
+    private static final int  DEPTH_SHIFT          = 32;
+    private static final int  DEPTH_FIELD_MASK     = 0xFF;   // 8 bits (0-255)
+    private static final int  NODE_TYPE_SHIFT      = 40;
+    private static final int  NODE_TYPE_FIELD_MASK = 0x3;    // 2 bits (0-3)
+    private static final int  SCORE_SHIFT          = 42;
+    // Upper 22 bits - no explicit mask needed, arithmetic right-shift handles sign.
+
+    // -- Constructor bounds --
+    private static final int MIN_INDEX_BITS = 1;
+    private static final int MAX_INDEX_BITS = 30;
 
     /**
      * Initialises a new transposition table.
      *
-     * @param numBits number of index bits. Table size = 2^numBits entries × 16 bytes.
+     * @param numBits number of index bits. Table size = 2^numBits entries x 16 bytes.
      */
     public TranspositionTable(int numBits) {
-        if (numBits < 1 || numBits > 30) {
-            throw new IllegalArgumentException("Transposition table size must be greater than 0 and less than 30");
+        if (numBits < MIN_INDEX_BITS || numBits > MAX_INDEX_BITS) {
+            throw new IllegalArgumentException("numBits must be between " + MIN_INDEX_BITS + " and " + MAX_INDEX_BITS);
         }
 
         this.indexMask = (1L << numBits) - 1;
@@ -49,19 +53,19 @@ public class TranspositionTable {
         this.data = new long[size];
     }
 
-    // ── Index ──
+    // -- Index --
 
     public int getIndex(long zobristHash) {
         return (int) (indexMask & zobristHash);
     }
 
-    // ── Pack / unpack helpers ──
+    // -- Pack / unpack helpers --
 
     private static long packData(int bestMove, int depth, int nodeType, int score) {
         return (bestMove & BEST_MOVE_MASK)
-             | ((long)(depth    & 0xFF) << DEPTH_SHIFT)
-             | ((long)(nodeType & 0x3 ) << NODE_TYPE_SHIFT)
-             | ((long) score            << SCORE_SHIFT);
+             | ((long)(depth    & DEPTH_FIELD_MASK)     << DEPTH_SHIFT)
+             | ((long)(nodeType & NODE_TYPE_FIELD_MASK) << NODE_TYPE_SHIFT)
+             | ((long) score                            << SCORE_SHIFT);
     }
 
     /** Extracts bestMove from packed data. */
@@ -71,12 +75,12 @@ public class TranspositionTable {
 
     /** Extracts depth from packed data. */
     public static int unpackDepth(long packed) {
-        return (int)((packed >>> DEPTH_SHIFT) & 0xFF);
+        return (int)((packed >>> DEPTH_SHIFT) & DEPTH_FIELD_MASK);
     }
 
     /** Extracts nodeType from packed data. */
     public static int unpackNodeType(long packed) {
-        return (int)((packed >>> NODE_TYPE_SHIFT) & 0x3);
+        return (int)((packed >>> NODE_TYPE_SHIFT) & NODE_TYPE_FIELD_MASK);
     }
 
     /** Extracts score from packed data (arithmetic shift preserves sign). */
@@ -84,7 +88,7 @@ public class TranspositionTable {
         return (int)(packed >> SCORE_SHIFT);
     }
 
-    // ── Public read API ──
+    // -- Public read API --
 
     /**
      * Probes the table for a matching entry at sufficient depth.
@@ -104,7 +108,7 @@ public class TranspositionTable {
 
     /**
      * Returns the best move for the given position, or 0 on miss.
-     * Does NOT require a depth check — useful for move ordering.
+     * Does NOT require a depth check - useful for move ordering.
      */
     public int checkedGetBestMove(long zobristHash) {
         int index = getIndex(zobristHash);
@@ -113,7 +117,7 @@ public class TranspositionTable {
         return unpackBestMove(packed);
     }
 
-    // ── Write API ──
+    // -- Write API --
 
     /**
      * Stores an entry, replacing whatever was in the slot.
