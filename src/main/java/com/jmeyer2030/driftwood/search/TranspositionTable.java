@@ -15,15 +15,9 @@ package com.jmeyer2030.driftwood.search;
  *  42-63  score      (22 bits, signed via arithmetic shift)
  * </pre>
  *
- * <p>Total: 16 bytes per entry (down from 24), 2 array accesses per probe
- * (down from up to 5).</p>
+ * <p>Total: 16 bytes per entry, 2 array accesses per probe.</p>
  */
 public class TranspositionTable {
-    private final long indexMask;
-
-    private final long[] keys;
-    private final long[] data;
-
     // -- Bit layout constants --
     private static final long BEST_MOVE_MASK       = 0xFFFF_FFFFL;
     private static final int  DEPTH_SHIFT          = 32;
@@ -37,8 +31,13 @@ public class TranspositionTable {
     private static final int MIN_INDEX_BITS = 1;
     private static final int MAX_INDEX_BITS = 30;
 
+    private final long indexMask;
+
+    private final long[] keys;
+    private final long[] data;
+
     /**
-     * Initialises a new transposition table.
+     * Initializes a new transposition table.
      *
      * @param numBits number of index bits. Table size = 2^numBits entries x 16 bytes.
      */
@@ -53,14 +52,12 @@ public class TranspositionTable {
         this.data = new long[size];
     }
 
-    // -- Index --
-
+    /** Gets the table index from a zobristHash */
     public int getIndex(long zobristHash) {
         return (int) (indexMask & zobristHash);
     }
 
-    // -- Pack / unpack helpers --
-
+    /** Packs bestMove, depth, nodeType, and score into a long */
     private static long packData(int bestMove, int depth, int nodeType, int score) {
         return (bestMove & BEST_MOVE_MASK)
              | ((long)(depth    & DEPTH_FIELD_MASK)     << DEPTH_SHIFT)
@@ -93,8 +90,8 @@ public class TranspositionTable {
     /**
      * Probes the table for a matching entry at sufficient depth.
      *
-     * @param zobristHash  hash of the position to look up
-     * @param requiredDepth  minimum depth for the entry to be useful
+     * @param zobristHash   hash of the position to look up
+     * @param requiredDepth minimum depth for the entry to be useful
      * @return packed data word, or {@code 0} on miss
      */
     public long probe(long zobristHash, int requiredDepth) {
@@ -108,7 +105,7 @@ public class TranspositionTable {
 
     /**
      * Returns the best move for the given position, or 0 on miss.
-     * Does NOT require a depth check - useful for move ordering.
+     * Does NOT require a depth check — useful for move ordering.
      */
     public int checkedGetBestMove(long zobristHash) {
         int index = getIndex(zobristHash);
@@ -125,7 +122,7 @@ public class TranspositionTable {
     public void addElement(long zobristHash, int bestMove, int depth, int score, int nodeType) {
         int index = getIndex(zobristHash);
         long packed = packData(bestMove, depth, nodeType, score);
-        data[index]  = packed;
+        data[index] = packed;
         keys[index] = zobristHash ^ packed;
     }
 }

@@ -114,22 +114,22 @@ public class NNUE implements Evaluator {
 
     private void processAccumulatorChanges() {
         for (int i = 0; i < addIndex; i++) {
-            int whiteAdd = whiteAccumulatorAddIndices[i];
-            int blackAdd = blackAccumulatorAddIndices[i];
+            short[] whiteWeights = HIDDEN_LAYER_WEIGHTS[whiteAccumulatorAddIndices[i]];
+            short[] blackWeights = HIDDEN_LAYER_WEIGHTS[blackAccumulatorAddIndices[i]];
             for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
-                whiteAccumulator[weightIndex] += HIDDEN_LAYER_WEIGHTS[weightIndex][whiteAdd];
-                blackAccumulator[weightIndex] += HIDDEN_LAYER_WEIGHTS[weightIndex][blackAdd];
+                whiteAccumulator[weightIndex] += whiteWeights[weightIndex];
+                blackAccumulator[weightIndex] += blackWeights[weightIndex];
             }
         }
 
         addIndex = 0;
 
         for (int i = 0; i < removeIndex; i++) {
-            int whiteRemove = whiteAccumulatorRemoveIndices[i];
-            int blackRemove = blackAccumulatorRemoveIndices[i];
+            short[] whiteWeights = HIDDEN_LAYER_WEIGHTS[whiteAccumulatorRemoveIndices[i]];
+            short[] blackWeights = HIDDEN_LAYER_WEIGHTS[blackAccumulatorRemoveIndices[i]];
             for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
-                whiteAccumulator[weightIndex] -= HIDDEN_LAYER_WEIGHTS[weightIndex][whiteRemove];
-                blackAccumulator[weightIndex] -= HIDDEN_LAYER_WEIGHTS[weightIndex][blackRemove];
+                whiteAccumulator[weightIndex] -= whiteWeights[weightIndex];
+                blackAccumulator[weightIndex] -= blackWeights[weightIndex];
             }
         }
 
@@ -176,11 +176,14 @@ public class NNUE implements Evaluator {
 
         processAccumulatorChanges();
 
-        int outputActivation = 0;
+        long outputActivation = 0;
+
+        int whiteOffset = (activePlayer == 0) ? 0 : HIDDEN_LAYER_SIZE;
+        int blackOffset = HIDDEN_LAYER_SIZE - whiteOffset;
 
         for (int hiddenIndex = 0; hiddenIndex < HIDDEN_LAYER_SIZE; hiddenIndex++) {
-            outputActivation += screlu(whiteAccumulator[hiddenIndex]) * (int) OUTPUT_WEIGHTS[(activePlayer == 0 ? 0 : HIDDEN_LAYER_SIZE) + hiddenIndex];
-            outputActivation += screlu(blackAccumulator[hiddenIndex]) * (int) OUTPUT_WEIGHTS[(activePlayer == 0 ? HIDDEN_LAYER_SIZE : 0) + hiddenIndex];
+            outputActivation += screlu(whiteAccumulator[hiddenIndex]) * (long) OUTPUT_WEIGHTS[whiteOffset + hiddenIndex];
+            outputActivation += screlu(blackAccumulator[hiddenIndex]) * (long) OUTPUT_WEIGHTS[blackOffset + hiddenIndex];
         }
 
         outputActivation /= QA;
@@ -191,7 +194,7 @@ public class NNUE implements Evaluator {
 
         outputActivation /= QB * QA;
 
-        evaluation = outputActivation;
+        evaluation = (int) outputActivation;
         evaluationIsCurrent = true;
         precomputeActivePlayer = activePlayer;
 
@@ -245,17 +248,16 @@ public class NNUE implements Evaluator {
     private static NetworkData getNetworkData() {
         short[] nnShorts = getNetworkBytes();
 
-        short[][] hiddenWeights = new short[HIDDEN_LAYER_SIZE][INPUT_SIZE];
+        short[][] hiddenWeights = new short[INPUT_SIZE][HIDDEN_LAYER_SIZE];
         short[] hiddenBias = new short[HIDDEN_LAYER_SIZE];
         short[] outputWeights = new short[HIDDEN_LAYER_SIZE * 2];
         short outputBias;
 
-        // Get feature weights
-        for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {
-            for (int inputIndex = 0; inputIndex < INPUT_SIZE; inputIndex++) {
+        // Get feature weights — stored as [inputFeature][hiddenNeuron] for cache-friendly access
+        for (int inputIndex = 0; inputIndex < INPUT_SIZE; inputIndex++) {
+            for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {
                 int shortIndex = inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex;
-
-                hiddenWeights[hiddenLayerIndex][inputIndex] = nnShorts[shortIndex];
+                hiddenWeights[inputIndex][hiddenLayerIndex] = nnShorts[shortIndex];
             }
         }
 

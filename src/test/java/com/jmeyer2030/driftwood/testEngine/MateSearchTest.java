@@ -122,8 +122,7 @@ public class MateSearchTest {
     /**
      * M12 (23 ply)
      */
-    // @Test
-    //Excluded because too long
+    @Test
     public void testMatingPosition7() {
         SearchContext searchContext = new SearchContext();
         SharedTables sharedTables = new SharedTables(18);
@@ -161,7 +160,7 @@ public class MateSearchTest {
      * 2 bishop
      * M10 (19 ply)
      */
-    // @Test
+    @Test
     public void testMatingPosition9() {
         SearchContext searchContext = new SearchContext();
         SharedTables sharedTables = new SharedTables(18);

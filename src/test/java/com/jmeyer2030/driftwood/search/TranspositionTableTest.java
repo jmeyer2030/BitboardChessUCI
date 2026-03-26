@@ -493,5 +493,61 @@ class TranspositionTableTest {
         assertNotEquals(0, packed);
         assertEquals(NodeType.UPPER_BOUND, TranspositionTable.unpackNodeType(packed));
     }
-}
 
+    // -- Replacement policy tests --
+
+    @Test
+    @DisplayName("addElement replaces entry when new depth is greater than old depth")
+    void addElementReplaces_whenNewDepthIsGreater() {
+        // Arrange
+        TranspositionTable tt = new TranspositionTable(8);
+        long hash = 12345L;
+        tt.addElement(hash, 1, 5, 100, NodeType.EXACT);
+
+        // Act - store deeper entry at same hash
+        tt.addElement(hash, 2, 10, 200, NodeType.LOWER_BOUND);
+        long packed = tt.probe(hash, 10);
+
+        // Assert - deeper entry replaced the shallower one
+        assertNotEquals(0, packed);
+        assertEquals(2, TranspositionTable.unpackBestMove(packed));
+        assertEquals(10, TranspositionTable.unpackDepth(packed));
+        assertEquals(200, TranspositionTable.unpackScore(packed));
+    }
+
+    @Test
+    @DisplayName("addElement replaces entry when new depth equals old depth")
+    void addElementReplaces_whenNewDepthEquals() {
+        // Arrange
+        TranspositionTable tt = new TranspositionTable(8);
+        long hash = 12345L;
+        tt.addElement(hash, 1, 10, 100, NodeType.EXACT);
+
+        // Act - store entry at same depth
+        tt.addElement(hash, 2, 10, 200, NodeType.LOWER_BOUND);
+        long packed = tt.probe(hash, 10);
+
+        // Assert - new entry replaced the old one
+        assertNotEquals(0, packed);
+        assertEquals(2, TranspositionTable.unpackBestMove(packed));
+    }
+
+    @Test
+    @DisplayName("addElement always replaces even when new entry is shallower")
+    void addElementAlwaysReplaces_whenNewIsShallower() {
+        // Arrange
+        TranspositionTable tt = new TranspositionTable(8);
+        long hash = 12345L;
+        tt.addElement(hash, 1, 15, 100, NodeType.EXACT);
+
+        // Act - store shallower entry (always-replace policy)
+        tt.addElement(hash, 2, 5, 200, NodeType.LOWER_BOUND);
+        long packed = tt.probe(hash, 5);
+
+        // Assert - shallower entry replaced the deeper one
+        assertNotEquals(0, packed);
+        assertEquals(2, TranspositionTable.unpackBestMove(packed));
+        assertEquals(5, TranspositionTable.unpackDepth(packed));
+        assertEquals(200, TranspositionTable.unpackScore(packed));
+    }
+}
