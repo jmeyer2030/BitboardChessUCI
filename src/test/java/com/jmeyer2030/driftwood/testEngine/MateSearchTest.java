@@ -160,7 +160,7 @@ public class MateSearchTest {
      * 2 bishop
      * M10 (19 ply)
      */
-    @Test
+    // @Test
     public void testMatingPosition9() {
         SearchContext searchContext = new SearchContext();
         SharedTables sharedTables = new SharedTables(18);

@@ -24,11 +24,12 @@ public class NNUE implements Evaluator {
     // Stores added features for lazy updates
     private static final int ACCUMULATOR_LAZY_SIZE = 1024;
 
-    private static final short[][] HIDDEN_LAYER_WEIGHTS;
-    private static final short[] HIDDEN_LAYER_BIAS;
+    // Flat int[] for cache-friendly access and JVM auto-vectorization (avoids short→int widening)
+    private static final int[] HIDDEN_LAYER_WEIGHTS;  // flat [INPUT_SIZE * HIDDEN_LAYER_SIZE]
+    private static final int[] HIDDEN_LAYER_BIAS;
 
-    private static final short[] OUTPUT_WEIGHTS;
-    private static final short OUTPUT_BIAS;
+    private static final int[] OUTPUT_WEIGHTS;
+    private static final int OUTPUT_BIAS;
 
     private int evaluation;
     private boolean evaluationIsCurrent;
@@ -50,10 +51,10 @@ public class NNUE implements Evaluator {
     /* Initializes weights and biases from quantised.bin on class load */
     static {
         NetworkData networkData = getNetworkData();
-        HIDDEN_LAYER_WEIGHTS = networkData.hiddenWeights;
-        HIDDEN_LAYER_BIAS = networkData.hiddenBias;
-        OUTPUT_WEIGHTS =networkData.outputWeights;
-        OUTPUT_BIAS = networkData.outputBias;
+        HIDDEN_LAYER_WEIGHTS = networkData.hiddenWeights();
+        HIDDEN_LAYER_BIAS = networkData.hiddenBias();
+        OUTPUT_WEIGHTS = networkData.outputWeights();
+        OUTPUT_BIAS = networkData.outputBias();
     }
 
 
@@ -113,23 +114,29 @@ public class NNUE implements Evaluator {
     }
 
     private void processAccumulatorChanges() {
+        // Process additions — separate white/black loops for JVM auto-vectorization
         for (int i = 0; i < addIndex; i++) {
-            short[] whiteWeights = HIDDEN_LAYER_WEIGHTS[whiteAccumulatorAddIndices[i]];
-            short[] blackWeights = HIDDEN_LAYER_WEIGHTS[blackAccumulatorAddIndices[i]];
-            for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
-                whiteAccumulator[weightIndex] += whiteWeights[weightIndex];
-                blackAccumulator[weightIndex] += blackWeights[weightIndex];
+            int whiteBase = whiteAccumulatorAddIndices[i] * HIDDEN_LAYER_SIZE;
+            for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
+                whiteAccumulator[j] += HIDDEN_LAYER_WEIGHTS[whiteBase + j];
+            }
+            int blackBase = blackAccumulatorAddIndices[i] * HIDDEN_LAYER_SIZE;
+            for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
+                blackAccumulator[j] += HIDDEN_LAYER_WEIGHTS[blackBase + j];
             }
         }
 
         addIndex = 0;
 
+        // Process removals — separate white/black loops for JVM auto-vectorization
         for (int i = 0; i < removeIndex; i++) {
-            short[] whiteWeights = HIDDEN_LAYER_WEIGHTS[whiteAccumulatorRemoveIndices[i]];
-            short[] blackWeights = HIDDEN_LAYER_WEIGHTS[blackAccumulatorRemoveIndices[i]];
-            for (int weightIndex = 0; weightIndex < HIDDEN_LAYER_SIZE; weightIndex++) {
-                whiteAccumulator[weightIndex] -= whiteWeights[weightIndex];
-                blackAccumulator[weightIndex] -= blackWeights[weightIndex];
+            int whiteBase = whiteAccumulatorRemoveIndices[i] * HIDDEN_LAYER_SIZE;
+            for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
+                whiteAccumulator[j] -= HIDDEN_LAYER_WEIGHTS[whiteBase + j];
+            }
+            int blackBase = blackAccumulatorRemoveIndices[i] * HIDDEN_LAYER_SIZE;
+            for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
+                blackAccumulator[j] -= HIDDEN_LAYER_WEIGHTS[blackBase + j];
             }
         }
 
@@ -143,7 +150,7 @@ public class NNUE implements Evaluator {
      */
     private void fillAccumulators(Position position) {
         // First add biases
-        for (int i = 0; i < 128; i++) {
+        for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
             whiteAccumulator[i] = HIDDEN_LAYER_BIAS[i];
             blackAccumulator[i] = HIDDEN_LAYER_BIAS[i];
         }
@@ -181,9 +188,13 @@ public class NNUE implements Evaluator {
         int whiteOffset = (activePlayer == 0) ? 0 : HIDDEN_LAYER_SIZE;
         int blackOffset = HIDDEN_LAYER_SIZE - whiteOffset;
 
-        for (int hiddenIndex = 0; hiddenIndex < HIDDEN_LAYER_SIZE; hiddenIndex++) {
-            outputActivation += screlu(whiteAccumulator[hiddenIndex]) * (long) OUTPUT_WEIGHTS[whiteOffset + hiddenIndex];
-            outputActivation += screlu(blackAccumulator[hiddenIndex]) * (long) OUTPUT_WEIGHTS[blackOffset + hiddenIndex];
+        for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
+            int wClipped = Math.min(Math.max(whiteAccumulator[i], 0), QA);
+            outputActivation += (long) (wClipped * wClipped) * OUTPUT_WEIGHTS[whiteOffset + i];
+        }
+        for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
+            int bClipped = Math.min(Math.max(blackAccumulator[i], 0), QA);
+            outputActivation += (long) (bClipped * bClipped) * OUTPUT_WEIGHTS[blackOffset + i];
         }
 
         outputActivation /= QA;
@@ -201,15 +212,6 @@ public class NNUE implements Evaluator {
         return evaluation;
     }
 
-    /**
-     * squared clipped relu, binds a value between upper and lower bounds and squares it
-     *
-     * @param value input value
-     */
-    private int screlu(int value) {
-        int clipped = Math.min(Math.max(value, 0), QA);
-        return clipped * clipped;
-    }
 
     /**
      * Retrieves the binary network data and returns it as a short array
@@ -248,44 +250,40 @@ public class NNUE implements Evaluator {
     private static NetworkData getNetworkData() {
         short[] nnShorts = getNetworkBytes();
 
-        short[][] hiddenWeights = new short[INPUT_SIZE][HIDDEN_LAYER_SIZE];
-        short[] hiddenBias = new short[HIDDEN_LAYER_SIZE];
-        short[] outputWeights = new short[HIDDEN_LAYER_SIZE * 2];
-        short outputBias;
+        // Flat int[] for contiguous memory + vectorization (widen short→int during load)
+        int[] hiddenWeights = new int[INPUT_SIZE * HIDDEN_LAYER_SIZE];
+        int[] hiddenBias = new int[HIDDEN_LAYER_SIZE];
+        int[] outputWeights = new int[HIDDEN_LAYER_SIZE * 2];
+        int outputBias;
 
-        // Get feature weights — stored as [inputFeature][hiddenNeuron] for cache-friendly access
-        for (int inputIndex = 0; inputIndex < INPUT_SIZE; inputIndex++) {
-            for (int hiddenLayerIndex = 0; hiddenLayerIndex < HIDDEN_LAYER_SIZE; hiddenLayerIndex++) {
-                int shortIndex = inputIndex * HIDDEN_LAYER_SIZE + hiddenLayerIndex;
-                hiddenWeights[inputIndex][hiddenLayerIndex] = nnShorts[shortIndex];
-            }
+        // Get feature weights — stored flat as [inputFeature * HIDDEN_LAYER_SIZE + hiddenNeuron]
+        for (int i = 0; i < INPUT_SIZE * HIDDEN_LAYER_SIZE; i++) {
+            hiddenWeights[i] = nnShorts[i];
         }
 
         // Get feature biases
-        int startShort = 128 * 768;
-        for (int hlNeuron = 0; hlNeuron < 128; hlNeuron++) {
-            int byteIndex = startShort + hlNeuron;
-            hiddenBias[hlNeuron] = nnShorts[byteIndex];
+        int startShort = HIDDEN_LAYER_SIZE * INPUT_SIZE;
+        for (int hlNeuron = 0; hlNeuron < HIDDEN_LAYER_SIZE; hlNeuron++) {
+            hiddenBias[hlNeuron] = nnShorts[startShort + hlNeuron];
         }
 
         // Get output weights
-        startShort += 128;
-        for (int hlNeuron = 0; hlNeuron < 256; hlNeuron++) {
-            int byteIndex = startShort + hlNeuron;
-            outputWeights[hlNeuron] = nnShorts[byteIndex];
+        startShort += HIDDEN_LAYER_SIZE;
+        for (int hlNeuron = 0; hlNeuron < HIDDEN_LAYER_SIZE * 2; hlNeuron++) {
+            outputWeights[hlNeuron] = nnShorts[startShort + hlNeuron];
         }
 
         // Get output bias
-        startShort += 256;
+        startShort += HIDDEN_LAYER_SIZE * 2;
         outputBias = nnShorts[startShort];
 
         return new NetworkData(hiddenWeights, hiddenBias, outputWeights, outputBias);
     }
 
     private record NetworkData(
-        short[][] hiddenWeights,
-        short[] hiddenBias,
-        short[] outputWeights,
-        short outputBias
+        int[] hiddenWeights,
+        int[] hiddenBias,
+        int[] outputWeights,
+        int outputBias
     ) {}
 }
