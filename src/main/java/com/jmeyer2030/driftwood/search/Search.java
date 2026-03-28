@@ -142,7 +142,7 @@ public class Search {
     public static Callable<MoveValue> getSearchCallable(Position position, int depth, SearchContext searchContext, SharedTables sharedTables) {
         return () -> {
             try {
-                int score = negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchContext, sharedTables, true, 0, false);
+                int score = negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchContext, sharedTables, true, 0, true);
                 return new MoveValue(score, searchContext.bestMoves[0]);
             } catch (InterruptedException e) {
                 System.out.println("Negamax was interrupted.");
@@ -246,7 +246,7 @@ public class Search {
 
             eval = scoreFromTT(eval, ply);
 
-            if (nodeType == NodeType.EXACT) {
+            if (nodeType == NodeType.EXACT && !isPV) {
                 searchContext.firstNonMove = firstMove;
                 searchContext.bestMoves[ply] = bestMove;
                 return eval;
@@ -256,7 +256,7 @@ public class Search {
                 beta = Math.min(beta, eval);
             }
 
-            if (alpha >= beta) {
+            if (alpha >= beta && !isPV) {
                 searchContext.firstNonMove = firstMove;
                 searchContext.bestMoves[ply] = bestMove;
                 return eval;
