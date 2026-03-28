@@ -9,5 +9,8 @@ out/
 # Intellij specific
 .idea/
 *.iml
+
+# Other
 AGENTS.md
 ARCHITECTURE.md
+lichess_db_puzzle.csv
