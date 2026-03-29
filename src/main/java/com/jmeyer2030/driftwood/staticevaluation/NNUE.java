@@ -1,6 +1,7 @@
 package com.jmeyer2030.driftwood.staticevaluation;
 
 import com.jmeyer2030.driftwood.board.Position;
+import com.jmeyer2030.driftwood.config.GlobalConstants;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +12,16 @@ import java.nio.ByteOrder;
  * Represents an Efficiently Updatable Neural Network
  * - Trained using Stock Fish training data using Bullet Lib
  * - Contains and loads network weights and sizes statically
- * - Instantiations contain Accumulators, allow incremental updates, and output computation
+ * - Instantiations contain a ply-indexed accumulator stack for incremental updates
+ *
+ * <p>Uses a copy-on-make accumulator stack approach:
+ * <ul>
+ *   <li>{@link #pushAccumulator()} copies the current ply's accumulators to the next ply (called at start of makeMove)</li>
+ *   <li>{@link #addFeature}/{@link #removeFeature} eagerly apply weight deltas to the current ply's accumulators</li>
+ *   <li>{@link #popAccumulator()} restores the parent ply's accumulators instantly (called at end of unmakeMove)</li>
+ *   <li>{@link #computeOutput} reads from the current ply's accumulators — no deferred processing</li>
+ * </ul>
+ * This eliminates redundant undo+redo work that the previous lazy-batching approach performed.</p>
  */
 public class NNUE implements Evaluator {
     private static final int INPUT_SIZE = 768;
@@ -21,8 +31,8 @@ public class NNUE implements Evaluator {
     private static final int QB = 64;
     private static final int SCALE = 400;
 
-    // Stores added features for lazy updates
-    private static final int ACCUMULATOR_LAZY_SIZE = 1024;
+    // Maximum accumulator stack depth (game moves + search depth)
+    private static final int MAX_ACCUM_PLY = GlobalConstants.MAX_GAME_MOVES;
 
     // Flat int[] for cache-friendly access and JVM auto-vectorization (avoids short→int widening)
     private static final int[] HIDDEN_LAYER_WEIGHTS;  // flat [INPUT_SIZE * HIDDEN_LAYER_SIZE]
@@ -31,21 +41,14 @@ public class NNUE implements Evaluator {
     private static final int[] OUTPUT_WEIGHTS;
     private static final int OUTPUT_BIAS;
 
+    // Ply-indexed accumulator stack: each ply has its own white and black accumulator
+    private final int[][] whiteAccumulatorStack = new int[MAX_ACCUM_PLY][HIDDEN_LAYER_SIZE];
+    private final int[][] blackAccumulatorStack = new int[MAX_ACCUM_PLY][HIDDEN_LAYER_SIZE];
+    private int accumulatorPly = 0;
+
     private int evaluation;
     private boolean evaluationIsCurrent;
     private int precomputeActivePlayer;
-
-    private final int[] whiteAccumulator = new int[HIDDEN_LAYER_SIZE];
-    private final int[] blackAccumulator = new int[HIDDEN_LAYER_SIZE];
-
-
-    private int addIndex = 0;
-    private final int[] whiteAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
-    private final int[] blackAccumulatorAddIndices = new int[ACCUMULATOR_LAZY_SIZE];
-
-    private int removeIndex = 0;
-    private final int[] whiteAccumulatorRemoveIndices = new int[ACCUMULATOR_LAZY_SIZE];
-    private final int[] blackAccumulatorRemoveIndices = new int[ACCUMULATOR_LAZY_SIZE];
 
 
     /* Initializes weights and biases from quantised.bin on class load */
@@ -59,14 +62,37 @@ public class NNUE implements Evaluator {
 
 
     /**
-     * Creates the nn and fills it's accumulators
+     * Creates the nn and fills its accumulators at ply 0
      */
     public NNUE(Position position) {
         fillAccumulators(position);
     }
 
     /**
-     * Adds a feature to the accumulators
+     * Copies the current ply's accumulators to the next ply and increments the ply pointer.
+     * Called at the start of makeMove, before any addFeature/removeFeature calls.
+     */
+    @Override
+    public void pushAccumulator() {
+        int nextPly = accumulatorPly + 1;
+        System.arraycopy(whiteAccumulatorStack[accumulatorPly], 0, whiteAccumulatorStack[nextPly], 0, HIDDEN_LAYER_SIZE);
+        System.arraycopy(blackAccumulatorStack[accumulatorPly], 0, blackAccumulatorStack[nextPly], 0, HIDDEN_LAYER_SIZE);
+        accumulatorPly = nextPly;
+        evaluationIsCurrent = false;
+    }
+
+    /**
+     * Restores the parent ply's accumulator by decrementing the ply pointer.
+     * Called at the end of unmakeMove — no accumulator work needed.
+     */
+    @Override
+    public void popAccumulator() {
+        accumulatorPly--;
+        evaluationIsCurrent = false;
+    }
+
+    /**
+     * Eagerly adds a feature to the current ply's accumulators.
      *
      * @param piece  piece to add
      * @param color  color of the piece
@@ -79,18 +105,24 @@ public class NNUE implements Evaluator {
         int whitePerspectiveIndex = 64 * whitePerspectiveVal + square;
         int blackPerspectiveIndex = 64 * blackPerspectiveVal + (square ^ 0b111000);
 
-        whiteAccumulatorAddIndices[addIndex] = whitePerspectiveIndex;
-        blackAccumulatorAddIndices[addIndex] = blackPerspectiveIndex;
+        // Apply directly to current ply's accumulators — separate loops for JVM auto-vectorization
+        int whiteBase = whitePerspectiveIndex * HIDDEN_LAYER_SIZE;
+        int[] whiteAcc = whiteAccumulatorStack[accumulatorPly];
+        for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
+            whiteAcc[j] += HIDDEN_LAYER_WEIGHTS[whiteBase + j];
+        }
 
-        addIndex++;
-
-        // Extremely unlikely that addIndex would overflow, no need to check
+        int blackBase = blackPerspectiveIndex * HIDDEN_LAYER_SIZE;
+        int[] blackAcc = blackAccumulatorStack[accumulatorPly];
+        for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
+            blackAcc[j] += HIDDEN_LAYER_WEIGHTS[blackBase + j];
+        }
 
         evaluationIsCurrent = false;
     }
 
     /**
-     * Removes a feature to the accumulators
+     * Eagerly removes a feature from the current ply's accumulators.
      *
      * @param piece  piece to remove
      * @param color  color of the piece
@@ -103,59 +135,37 @@ public class NNUE implements Evaluator {
         int whitePerspectiveIndex = 64 * whitePieceVal + square;
         int blackPerspectiveIndex = 64 * blackPieceVal + (square ^ 0b111000);
 
-        whiteAccumulatorRemoveIndices[removeIndex] = whitePerspectiveIndex;
-        blackAccumulatorRemoveIndices[removeIndex] = blackPerspectiveIndex;
+        // Apply directly to current ply's accumulators — separate loops for JVM auto-vectorization
+        int whiteBase = whitePerspectiveIndex * HIDDEN_LAYER_SIZE;
+        int[] whiteAcc = whiteAccumulatorStack[accumulatorPly];
+        for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
+            whiteAcc[j] -= HIDDEN_LAYER_WEIGHTS[whiteBase + j];
+        }
 
-        removeIndex++;
-
-        // Very unlikely that removeIndex would overflow, no need to check
+        int blackBase = blackPerspectiveIndex * HIDDEN_LAYER_SIZE;
+        int[] blackAcc = blackAccumulatorStack[accumulatorPly];
+        for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
+            blackAcc[j] -= HIDDEN_LAYER_WEIGHTS[blackBase + j];
+        }
 
         evaluationIsCurrent = false;
     }
 
-    private void processAccumulatorChanges() {
-        // Process additions — separate white/black loops for JVM auto-vectorization
-        for (int i = 0; i < addIndex; i++) {
-            int whiteBase = whiteAccumulatorAddIndices[i] * HIDDEN_LAYER_SIZE;
-            for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
-                whiteAccumulator[j] += HIDDEN_LAYER_WEIGHTS[whiteBase + j];
-            }
-            int blackBase = blackAccumulatorAddIndices[i] * HIDDEN_LAYER_SIZE;
-            for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
-                blackAccumulator[j] += HIDDEN_LAYER_WEIGHTS[blackBase + j];
-            }
-        }
-
-        addIndex = 0;
-
-        // Process removals — separate white/black loops for JVM auto-vectorization
-        for (int i = 0; i < removeIndex; i++) {
-            int whiteBase = whiteAccumulatorRemoveIndices[i] * HIDDEN_LAYER_SIZE;
-            for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
-                whiteAccumulator[j] -= HIDDEN_LAYER_WEIGHTS[whiteBase + j];
-            }
-            int blackBase = blackAccumulatorRemoveIndices[i] * HIDDEN_LAYER_SIZE;
-            for (int j = 0; j < HIDDEN_LAYER_SIZE; j++) {
-                blackAccumulator[j] -= HIDDEN_LAYER_WEIGHTS[blackBase + j];
-            }
-        }
-
-        removeIndex = 0;
-    }
-
     /**
-     * Fills accumulators by iterating over pieces and adding them as features
+     * Fills accumulators at ply 0 by iterating over pieces and adding them as features
      *
      * @param position to fill accumulators from
      */
     private void fillAccumulators(Position position) {
-        // First add biases
+        // First add biases at ply 0
+        int[] whiteAcc = whiteAccumulatorStack[0];
+        int[] blackAcc = blackAccumulatorStack[0];
         for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
-            whiteAccumulator[i] = HIDDEN_LAYER_BIAS[i];
-            blackAccumulator[i] = HIDDEN_LAYER_BIAS[i];
+            whiteAcc[i] = HIDDEN_LAYER_BIAS[i];
+            blackAcc[i] = HIDDEN_LAYER_BIAS[i];
         }
 
-        // Add features to the accumulators
+        // Add features to the accumulators (applied eagerly at ply 0)
         for (int color = 0; color <= 1; color++) {
             for (int piece = 0; piece <= 5; piece++) {
                 // Get bitboard corresponding with a piece and color
@@ -170,18 +180,19 @@ public class NNUE implements Evaluator {
                 }
             }
         }
-        processAccumulatorChanges();
     }
 
     /**
-     * Computes the output GIVEN that the accumulator states are already accurate
+     * Computes the output from the current ply's accumulators.
+     * No deferred processing needed — accumulators are always up-to-date.
      */
     public int computeOutput(int activePlayer) {
         if (evaluationIsCurrent && activePlayer == precomputeActivePlayer) {
             return evaluation;
         }
 
-        processAccumulatorChanges();
+        int[] whiteAcc = whiteAccumulatorStack[accumulatorPly];
+        int[] blackAcc = blackAccumulatorStack[accumulatorPly];
 
         long outputActivation = 0;
 
@@ -189,11 +200,11 @@ public class NNUE implements Evaluator {
         int blackOffset = HIDDEN_LAYER_SIZE - whiteOffset;
 
         for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
-            int wClipped = Math.min(Math.max(whiteAccumulator[i], 0), QA);
+            int wClipped = Math.min(Math.max(whiteAcc[i], 0), QA);
             outputActivation += (long) (wClipped * wClipped) * OUTPUT_WEIGHTS[whiteOffset + i];
         }
         for (int i = 0; i < HIDDEN_LAYER_SIZE; i++) {
-            int bClipped = Math.min(Math.max(blackAccumulator[i], 0), QA);
+            int bClipped = Math.min(Math.max(blackAcc[i], 0), QA);
             outputActivation += (long) (bClipped * bClipped) * OUTPUT_WEIGHTS[blackOffset + i];
         }
 

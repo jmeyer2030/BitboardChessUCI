@@ -9,6 +9,7 @@ import com.jmeyer2030.driftwood.userfeatures.commands.uci.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 /*
 
@@ -53,7 +54,13 @@ public class CommandHandler {
 
         while (true) {
             // Read input and separate by spaces
-            String input = scanner.nextLine();
+            String input;
+            try {
+                input = scanner.nextLine();
+            } catch (NoSuchElementException e) {
+                // stdin was closed (e.g. parent process terminated) — exit gracefully
+                break;
+            }
             String[] parts = input.split("\\s+");
 
             String[] arguments;

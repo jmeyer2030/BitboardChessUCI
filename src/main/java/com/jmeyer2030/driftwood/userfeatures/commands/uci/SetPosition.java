@@ -8,7 +8,6 @@ import com.jmeyer2030.driftwood.userfeatures.ChessEngine;
 import com.jmeyer2030.driftwood.userfeatures.commands.Command;
 import com.jmeyer2030.driftwood.board.ThreeFoldTable;
 
-import java.util.logging.Level;
 
 public class SetPosition implements Command {
     public ChessEngine chessEngine;
@@ -75,6 +74,8 @@ public class SetPosition implements Command {
             }
         }
 
-        chessEngine.logger.log(Level.INFO, "Position set up:\n" + chessEngine.position.getDisplayBoard());
+        if (chessEngine.debugActive) {
+            System.err.println("info string Position set up:\n" + chessEngine.position.getDisplayBoard());
+        }
     }
 }

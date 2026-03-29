@@ -298,42 +298,58 @@ public final class Position {
      */
 
     /**
+     * Removes a piece updating board state only (Zobrist, bitboards, piece counts).
+     * Does NOT update the NNUE evaluator. Used by unmakeMove where popAccumulator
+     * restores the accumulator instead.
+     */
+    private void removePieceBoardOnly(int square, int pieceType, int color) {
+        this.zobristHash ^= Hashing.PIECE_SQUARE[square][color][pieceType];
+        this.occupancy &= ~(1L << square);
+        this.pieceColors[color] &= ~(1L << square);
+        this.pieces[pieceType] &= ~(1L << square);
+        this.pieceCounts[color][pieceType]--;
+    }
+
+    /**
+     * Adds a piece updating board state only (Zobrist, bitboards, piece counts).
+     * Does NOT update the NNUE evaluator. Used by unmakeMove where popAccumulator
+     * restores the accumulator instead.
+     */
+    private void addPieceBoardOnly(int square, int pieceType, int color) {
+        this.zobristHash ^= Hashing.PIECE_SQUARE[square][color][pieceType];
+        this.occupancy |= (1L << square);
+        this.pieceColors[color] |= (1L << square);
+        this.pieces[pieceType] |= (1L << square);
+        this.pieceCounts[color][pieceType]++;
+    }
+
+    /**
      * Removes a piece Updating:
      * - Zobrist Hash
      * - occupancy, piece colors, pieceCounts, and pieces
-     * - NNUE feature
+     * - NNUE feature (eagerly applied to current accumulator ply)
      *
      * @param square    to remove the piece
      * @param pieceType of the piece
      * @param color     of the removed piece
      */
     private void removePiece(int square, int pieceType, int color) {
-        this.zobristHash ^= Hashing.PIECE_SQUARE[square][color][pieceType];
-        this.occupancy &= ~(1L << square);
-        this.pieceColors[color] &= ~(1L << square);
-        this.pieces[pieceType] &= ~(1L << square);
-        this.pieceCounts[color][pieceType]--;
-
+        removePieceBoardOnly(square, pieceType, color);
         this.evaluator.removeFeature(pieceType, color, square);
     }
 
     /**
      * Adds a piece Updating:
-     * - main.java.zobrist has
+     * - Zobrist Hash
      * - occupancy, piece colors, pieceCounts, and pieces
-     * - NNUE feature
+     * - NNUE feature (eagerly applied to current accumulator ply)
      *
      * @param square    of the piece
      * @param pieceType of the piece
      * @param color     of the piece
      */
     private void addPiece(int square, int pieceType, int color) {
-        this.zobristHash ^= Hashing.PIECE_SQUARE[square][color][pieceType];
-        this.occupancy |= (1L << square);
-        this.pieceColors[color] |= (1L << square);
-        this.pieces[pieceType] |= (1L << square);
-        this.pieceCounts[color][pieceType]++;
-
+        addPieceBoardOnly(square, pieceType, color);
         evaluator.addFeature(pieceType, color, square);
     }
 
@@ -425,6 +441,9 @@ public final class Position {
         castleRightsStack.push(this.castleRights);
         checkersStack.push(this.checkers);
 
+        // Copy current accumulator to next ply before applying feature deltas
+        evaluator.pushAccumulator();
+
         zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
 
         if (enPassant != GlobalConstants.NO_EP) {
@@ -510,7 +529,9 @@ public final class Position {
     }
 
     /**
-     * Unmakes a move
+     * Unmakes a move.
+     * Uses board-only piece manipulation (no evaluator calls) because
+     * popAccumulator restores the parent ply's accumulator state.
      */
     public void unMakeMove(int move) {
         if (move == 0) {
@@ -537,28 +558,29 @@ public final class Position {
             zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
 
+        // Board-only piece manipulation — accumulator restored by popAccumulator below
         if (isPromotion) {
-            removePiece(destination, promotionType, activePlayer);
+            removePieceBoardOnly(destination, promotionType, activePlayer);
         } else {
-            removePiece(destination, movedPiece, activePlayer);
+            removePieceBoardOnly(destination, movedPiece, activePlayer);
         }
 
-        addPiece(start, movedPiece, activePlayer);
+        addPieceBoardOnly(start, movedPiece, activePlayer);
 
         if (isCapture) {
-            addPiece(destination, capturedPiece, 1 - activePlayer);
+            addPieceBoardOnly(destination, capturedPiece, 1 - activePlayer);
         }
 
         if (isEP) {
             int enPassantCaptureSquare = destination - 8 + 16 * activePlayer;
-            addPiece(enPassantCaptureSquare, Piece.PAWN, 1 - activePlayer);
+            addPieceBoardOnly(enPassantCaptureSquare, Piece.PAWN, 1 - activePlayer);
         }
 
         if (isCastle) {
             int rookStart = PositionConstants.CASTLE_ROOK_STARTS[activePlayer][castleSide];
             int rookDestination = PositionConstants.CASTLE_ROOK_DESTINATIONS[activePlayer][castleSide];
-            removePiece(rookDestination, Piece.ROOK, activePlayer);
-            addPiece(rookStart, Piece.ROOK, activePlayer);
+            removePieceBoardOnly(rookDestination, Piece.ROOK, activePlayer);
+            addPieceBoardOnly(rookStart, Piece.ROOK, activePlayer);
         }
 
         if (movedPiece == Piece.KING) {
@@ -581,6 +603,9 @@ public final class Position {
         if (enPassant != GlobalConstants.NO_EP) {
             zobristHash ^= Hashing.EN_PASSANT[enPassant % 8];
         }
+
+        // Restore parent ply's accumulator — no undo work needed
+        evaluator.popAccumulator();
     }
 
 

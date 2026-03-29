@@ -13,4 +13,12 @@ public class DummyNNUE implements Evaluator {
     public int computeOutput(int activePlayer) {
         return 0;
     }
+
+    @Override
+    public void pushAccumulator() {
+    }
+
+    @Override
+    public void popAccumulator() {
+    }
 }

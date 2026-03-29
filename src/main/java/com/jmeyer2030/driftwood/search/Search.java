@@ -84,7 +84,7 @@ public class Search {
                         searchContext.pvTable.getPVLine()
                         + " score cp " + searchResults.getLast().value);
 
-                // If mate found, only search with 3 higher depth
+                // If mate found, try to reduce moves until mate by requiring that the same score is found for 3 consecutive depths.
                 if (Math.abs(searchResults.getLast().value) >= (MATED_SCORE) && searchResults.size() >= 3) {
                     int size = searchResults.size();
                     int lastValue = searchResults.get(size - 1).value;
@@ -262,6 +262,13 @@ public class Search {
                 return eval;
             }
         }
+
+        //=============== Internal Iterative Reduction ===============
+        /*
+        if (ttPacked == 0 && depthLeft >= 5 && isPV) {
+            depthLeft--;
+        }
+        */
 
         //=============== Return based on search depth ===============
         // Check if search depth reached (consider check extensions?)

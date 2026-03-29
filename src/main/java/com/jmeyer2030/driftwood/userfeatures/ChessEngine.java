@@ -4,14 +4,11 @@ import com.jmeyer2030.driftwood.board.Position;
 import com.jmeyer2030.driftwood.board.SharedTables;
 import com.jmeyer2030.driftwood.search.SearchContext;
 
-import java.util.logging.Logger;
-
 /**
 * Main class for the chess engine.
 * Configures options, and starts accepting commands
 */
 public class ChessEngine {
-    public Logger logger = Logger.getLogger("ChessEngine");
 
     // Engine Information:
     public final String ENGINE_NAME = "DriftWood 5.0";

@@ -7,9 +7,6 @@
 - Improve unit testing
 - Remove code fragments at the bottom of files.
 - "Evaluator" interface for NNUE
-- Change print statements to log
-- Add logger options
- - Investigate performance costs
 
 ## Features:
 
