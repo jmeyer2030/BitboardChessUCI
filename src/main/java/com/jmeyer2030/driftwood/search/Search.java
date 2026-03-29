@@ -142,7 +142,7 @@ public class Search {
     public static Callable<MoveValue> getSearchCallable(Position position, int depth, SearchContext searchContext, SharedTables sharedTables) {
         return () -> {
             try {
-                int score = negamax(NEG_INFINITY, POS_INFINITY, depth, position, searchContext, sharedTables, true, 0, true);
+                int score = pvSearch(NEG_INFINITY, POS_INFINITY, depth, position, searchContext, sharedTables, true, 0, true);
                 return new MoveValue(score, searchContext.bestMoves[0]);
             } catch (InterruptedException e) {
                 System.out.println("Negamax was interrupted.");
@@ -197,7 +197,7 @@ public class Search {
      *
      * @return score the evaluation of the best line
      */
-    public static int negamax(int alpha, int beta, int depthLeft, Position position, SearchContext searchContext, SharedTables sharedTables, boolean isRoot, int ply, boolean isPV)
+    public static int pvSearch(int alpha, int beta, int depthLeft, Position position, SearchContext searchContext, SharedTables sharedTables, boolean isRoot, int ply, boolean isPV)
             throws InterruptedException {
 
         // Check for signal to interrupt the search
@@ -300,7 +300,7 @@ public class Search {
             position.makeNullMove();
             int score;
             try {
-                score = -negamax(-beta, -beta + 1, depthLeft - reduction, position, searchContext, sharedTables, false, ply + 1, false);
+                score = -pvSearch(-beta, -beta + 1, depthLeft - reduction, position, searchContext, sharedTables, false, ply + 1, false);
             } finally {
                 position.unMakeNullMove();
             }
@@ -363,24 +363,24 @@ public class Search {
             int score;
             try {
                 if (i == firstMove) {
-                    score = -negamax(-beta, -alpha, depthLeft - 1, position, searchContext, sharedTables, false, ply + 1, isPV);
+                    score = -pvSearch(-beta, -alpha, depthLeft - 1, position, searchContext, sharedTables, false, ply + 1, isPV);
                 } else {
                     // ===============Late Move Reduction===============
                     //  - Use late move reduction on non-pv moves with log formula
                     if (i >= firstMove + NUM_NON_PV_FULL_DEPTH_SEARCHES && depthLeft > 3) {
                         int reduction = (int) Math.round(.99 + (Math.log(depthLeft) * Math.log(i - firstMove)) / 3.14);
-                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1 - reduction, position, searchContext, sharedTables, false, ply + 1, false);
+                        score = -pvSearch(-alpha - 1, -alpha, depthLeft - 1 - reduction, position, searchContext, sharedTables, false, ply + 1, false);
 
                         if (score >= beta) { // If search fails high, research at full depth
-                            score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, searchContext, sharedTables, false, ply + 1, false);
+                            score = -pvSearch(-alpha - 1, -alpha, depthLeft - 1, position, searchContext, sharedTables, false, ply + 1, false);
                         }
                     } else {
-                        score = -negamax(-alpha - 1, -alpha, depthLeft - 1, position, searchContext, sharedTables, false, ply + 1, false);
+                        score = -pvSearch(-alpha - 1, -alpha, depthLeft - 1, position, searchContext, sharedTables, false, ply + 1, false);
                     }
 
                     // If disproven, and not already null window, run full search
                     if (score > alpha && (beta - alpha) > 1) {
-                        score = -negamax(-beta, -alpha, depthLeft - 1, position, searchContext, sharedTables, false, ply + 1, isPV); // It is now PV if parent is because it exceeded alpha
+                        score = -pvSearch(-beta, -alpha, depthLeft - 1, position, searchContext, sharedTables, false, ply + 1, isPV); // It is now PV if parent is because it exceeded alpha
                     }
                 }
             } finally {

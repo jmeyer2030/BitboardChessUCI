@@ -141,7 +141,7 @@ public class MateSearchTest {
      * 1 Q
      * M8 (15 ply)
      */
-    // @Test
+    @Test
     public void testMatingPosition8() {
         SearchContext searchContext = new SearchContext();
         SharedTables sharedTables = new SharedTables(18);
