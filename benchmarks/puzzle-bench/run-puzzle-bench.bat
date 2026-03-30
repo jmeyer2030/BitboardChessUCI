@@ -18,9 +18,9 @@ REM ============================================================================
 REM === Configuration ===
 SET PUZZLE_CSV=benchmarks\puzzle-bench\data\lichess_db_puzzle.csv
 SET COUNT=1000
-SET TIME_PER_PUZZLE=200
+SET TIME_PER_PUZZLE=3000
 SET SEED=42
-SET MIN_RATING=2000
+SET MIN_RATING=2400
 SET MAX_RATING=9999
 SET TT_SIZE=18
 

@@ -172,8 +172,8 @@ public class Search {
 
                 result = getSearchCallable(position, i, searchContext, sharedTables).call();
 
-                String moveLAN = MoveEncoding.getLAN(result.bestMove);
-                System.out.println("Depth: " + i + " | Move: " + moveLAN + " | Value: " + result.value);
+                // String moveLAN = MoveEncoding.getLAN(result.bestMove);
+                // System.out.println("Depth: " + i + " | Move: " + moveLAN + " | Value: " + result.value);
             } catch (Exception e) {
                 throw new RuntimeException("Unexpected exception from search");
             }
@@ -218,23 +218,8 @@ public class Search {
             }
         }
 
-        //=============== Move Gen ===============
-        int firstMove = searchContext.firstNonMove;
-        int firstNonMove = MoveGenerator.generateAllMoves(position, searchContext.moveBuffer, searchContext.firstNonMove);
-        searchContext.firstNonMove = firstNonMove;
-
-        //=============== No move game end (mate or stalemate) ===============
-        int numMoves = firstNonMove - firstMove;
-        if (!isRoot && numMoves == 0) {
-            searchContext.firstNonMove = firstMove;
-            if (position.inCheck) {
-                return -(MATED_VALUE - ply);
-            } else {
-                return 0;
-            }
-        }
-
-        //=============== Check transposition table===============
+        //=============== Check transposition table ===============
+        // Probed before move generation — on a cutoff we skip movegen entirely.
         int eval = 0;
         boolean foundTTScore = false;
         long ttPacked = (sharedTables.tt != null) ? sharedTables.tt.probe(position.zobristHash, depthLeft) : 0;
@@ -247,7 +232,6 @@ public class Search {
             eval = scoreFromTT(eval, ply);
 
             if (nodeType == NodeType.EXACT && !isPV) {
-                searchContext.firstNonMove = firstMove;
                 searchContext.bestMoves[ply] = bestMove;
                 return eval;
             } else if (nodeType == NodeType.LOWER_BOUND) {
@@ -257,7 +241,6 @@ public class Search {
             }
 
             if (alpha >= beta && !isPV) {
-                searchContext.firstNonMove = firstMove;
                 searchContext.bestMoves[ply] = bestMove;
                 return eval;
             }
@@ -271,9 +254,7 @@ public class Search {
         */
 
         //=============== Return based on search depth ===============
-        // Check if search depth reached (consider check extensions?)
         if (depthLeft <= 0) {
-            searchContext.firstNonMove = firstMove;
             return Quiesce.quiescenceSearch(alpha, beta, position, searchContext, sharedTables, ply + 1);
         }
 
@@ -289,12 +270,10 @@ public class Search {
         int margin = 150 * depthLeft;
 
         if (!isRoot && eval >= beta + margin && !position.inCheck && !isPV && beta > -MATED_SCORE) {
-            searchContext.firstNonMove = firstMove;
             return eval;
         }
 
         // ===============Null Move Pruning===============
-        //if (!isRoot && depthLeft >= 3 && eval >= beta && !position.inCheck && numMoves >= 7) {
         if (!isRoot && depthLeft >= 3 && eval >= beta && nmpConditionsMet(position)) {
             int reduction = NULL_MOVE_PRUNING_REDUCTION;
             position.makeNullMove();
@@ -306,8 +285,24 @@ public class Search {
             }
             // If a null move failed high over beta, then certainly the best move would as well, so we prune
             if (score >= beta) {
-                searchContext.firstNonMove = firstMove;
                 return score;
+            }
+        }
+
+        //=============== Move Gen ===============
+        // Deferred until after TT/RFP/NMP cutoffs to avoid wasting movegen work.
+        int firstMove = searchContext.firstNonMove;
+        int firstNonMove = MoveGenerator.generateAllMoves(position, searchContext.moveBuffer, searchContext.firstNonMove);
+        searchContext.firstNonMove = firstNonMove;
+
+        //=============== No move game end (mate or stalemate) ===============
+        int numMoves = firstNonMove - firstMove;
+        if (!isRoot && numMoves == 0) {
+            searchContext.firstNonMove = firstMove;
+            if (position.inCheck) {
+                return -(MATED_VALUE - ply);
+            } else {
+                return 0;
             }
         }
 
