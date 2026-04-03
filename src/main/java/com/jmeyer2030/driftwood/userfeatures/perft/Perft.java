@@ -25,12 +25,12 @@ public class Perft {
         for (int i = 0; i < firstNonMove; i++) {
             position.makeMove(moveBuffer[i]);
             long thisMove = perftRecursion(depth - 1, position, moveBuffer, firstNonMove);
-            System.out.println(MoveEncoding.getLAN(moveBuffer[i]) + ": " + thisMove);
+            // System.out.println(MoveEncoding.getLAN(moveBuffer[i]) + ": " + thisMove);
             position.unMakeMove(moveBuffer[i]);
 
             total += thisMove;
         }
-        System.out.println("Total: " + total);
+        // System.out.println("Total: " + total);
         return total;
     }
 

@@ -36,11 +36,10 @@ public class PerftSuiteTest {
         FEN fenP = new FEN(fen);
         Position position = Position.getPerftPosition(fenP);
 
-        long start = System.currentTimeMillis();
+        // long start = System.currentTimeMillis();
         long result = Perft.perft(depth, position);
-        long end = System.currentTimeMillis();
-
-        System.out.println("Total time: " + (end - start));
+        // long end = System.currentTimeMillis();
+        // System.out.println("Total time: " + (end - start));
         return result;
     }
 
