@@ -38,8 +38,13 @@ public final class Position {
     public int halfMoveCount;
     public int fullMoveCount;
 
-    // Each value either contains the square of the pinning piece, or -1 if the piece at that index is not pinned.
-    public int[] pinnedPieces;
+    // Bitboard of pinned pieces: bit set if the piece on that square is pinned.
+    // Pin ray is derived from pinRay[kingLoc][pinnedSquare] — no pinner square needed.
+    public long pinnedBB;
+
+    // Stack for saving/restoring pinnedBB across makeMove/unmakeMove.
+    // Eliminates the need to recompute pins after child searches corrupt position.pinnedBB.
+    public FixedSizeLongStack pinnedBBStack;
 
     public int[][] pieceCounts; // Indexed as: pieceCounts[color][piece], for use in NMP and draw eval
 
@@ -57,8 +62,8 @@ public final class Position {
      * Build starting position
      */
     public Position() {
-        pinnedPieces = new int[64];
-        Arrays.fill(pinnedPieces, -1);
+        pinnedBB = 0L;
+        pinnedBBStack = new FixedSizeLongStack();
 
         hmcStack = new FixedSizeIntStack();
         epStack = new FixedSizeIntStack();
@@ -119,7 +124,8 @@ public final class Position {
         this.inCheck = position.inCheck;
         this.zobristHash = position.zobristHash;
 
-        this.pinnedPieces = Arrays.copyOf(position.pinnedPieces, 64);
+        this.pinnedBB = position.pinnedBB;
+        this.pinnedBBStack = position.pinnedBBStack.copy();
 
         this.pieceCounts = new int[][]{Arrays.copyOf(position.pieceCounts[0], 6), Arrays.copyOf(position.pieceCounts[1], 6)};
         this.checkers = position.checkers;
@@ -133,8 +139,8 @@ public final class Position {
     public Position(FEN fen) {
         pieceCounts = new int[][]{new int[6], new int[6]};
 
-        pinnedPieces = new int[64];
-        Arrays.fill(pinnedPieces, -1);
+        pinnedBB = 0L;
+        pinnedBBStack = new FixedSizeLongStack();
 
         hmcStack = new FixedSizeIntStack();
         epStack = new FixedSizeIntStack();
@@ -257,6 +263,7 @@ public final class Position {
 
         //Game Status
         fullMoveCount = fen.fullMoves;
+        halfMoveCount = fen.halfMoves;
 
         //Piece Locations:
         this.occupancy = occupancy;
@@ -361,6 +368,7 @@ public final class Position {
         hmcStack.push(this.halfMoveCount);
         epStack.push(this.enPassant);
         castleRightsStack.push(this.castleRights);
+        pinnedBBStack.push(this.pinnedBB);
 
         // Undo ep hash
         if (enPassant != GlobalConstants.NO_EP) {
@@ -397,6 +405,7 @@ public final class Position {
         halfMoveCount = hmcStack.pop();
         enPassant = epStack.pop();
         castleRights = (byte) castleRightsStack.pop();
+        pinnedBB = pinnedBBStack.pop();
 
         // If black moving, increment FMC
         this.fullMoveCount -= activePlayer;
@@ -440,6 +449,7 @@ public final class Position {
         epStack.push(this.enPassant);
         castleRightsStack.push(this.castleRights);
         checkersStack.push(this.checkers);
+        pinnedBBStack.push(this.pinnedBB);
 
         // Copy current accumulator to next ply before applying feature deltas
         evaluator.pushAccumulator();
@@ -592,6 +602,7 @@ public final class Position {
         this.enPassant = epStack.pop();
         this.checkers = checkersStack.pop();
         this.inCheck = checkers != 0;
+        this.pinnedBB = pinnedBBStack.pop();
 
         fullMoveCount -= activePlayer; // if black moved, decrement
 

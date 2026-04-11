@@ -24,6 +24,14 @@ public class SearchContext {
     public final TriangularPVTable pvTable;
     public final SEE see;
 
+    // Per-ply pooled objects — avoids per-node heap allocation in the hot search loop
+    public final MovePicker[] movePickers;
+    public final QSearchMovePicker[] qSearchMovePickers;
+
+    // Per-ply pooled quietsSearched tracking — avoids per-node array allocation in pvSearch
+    public final int[][] quietsSearched;
+    public final int[] numQuietsSearched;
+
     public SearchContext() {
         this.moveBuffer = new int[2048];
         this.moveScores = new int[2048];
@@ -33,6 +41,16 @@ public class SearchContext {
         this.historyHeuristic = new HistoryHeuristic();
         this.pvTable = new TriangularPVTable();
         this.see = new SEE();
+
+        this.movePickers = new MovePicker[GlobalConstants.MAX_PLY];
+        this.qSearchMovePickers = new QSearchMovePicker[GlobalConstants.MAX_PLY];
+        for (int i = 0; i < GlobalConstants.MAX_PLY; i++) {
+            this.movePickers[i] = new MovePicker();
+            this.qSearchMovePickers[i] = new QSearchMovePicker();
+        }
+
+        this.quietsSearched = new int[GlobalConstants.MAX_PLY][128];
+        this.numQuietsSearched = new int[GlobalConstants.MAX_PLY];
     }
 }
 

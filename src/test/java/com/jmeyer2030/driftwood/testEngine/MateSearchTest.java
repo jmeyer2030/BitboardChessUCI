@@ -122,7 +122,7 @@ public class MateSearchTest {
     /**
      * M12 (23 ply)
      */
-    // @Test
+    @Test
     public void testMatingPosition7() {
         SearchContext searchContext = new SearchContext();
         SharedTables sharedTables = new SharedTables(18);

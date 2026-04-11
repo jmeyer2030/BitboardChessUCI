@@ -1,19 +1,21 @@
 package com.jmeyer2030.driftwood.search;
 
-import com.jmeyer2030.driftwood.board.MoveEncoding;
 import com.jmeyer2030.driftwood.board.Position;
 import com.jmeyer2030.driftwood.board.SharedTables;
-import com.jmeyer2030.driftwood.movegeneration.MoveGenerator;
 
 import static com.jmeyer2030.driftwood.search.Search.NEG_INFINITY;
 import static com.jmeyer2030.driftwood.search.Search.MATED_VALUE;
 
 public class Quiesce {
 
-    private static final int BIG_DELTA = 975;
-
     /**
-     * Performs a search of capture moves only to reduce the horizon effect
+     * Performs a search of capture moves only to reduce the horizon effect.
+     * Uses {@link QSearchMovePicker} for staged move generation:
+     * <ul>
+     *   <li>Not in check: TT move (if capture) → generate captures → yield captures</li>
+     *   <li>In check: TT move → generate all evasions → yield evasions</li>
+     * </ul>
+     * This avoids per-move TT probes and enables early cutoffs before full generation.
      *
      * @param alpha         max score guaranteed for the position's active player
      * @param beta          max score guaranteed for the position's active player
@@ -39,43 +41,15 @@ public class Quiesce {
             bestValue = NEG_INFINITY;
         }
 
-        // ===============Generate moves===============
-        //  - We generate only captures if not in check
-        //  - If in check, all moves are generated so we can detect mate
-        int initialFirstNonMove = searchContext.firstNonMove;
-        int newFirstNonMove = MoveGenerator.generateQSearchMoves(position, searchContext.moveBuffer, searchContext.firstNonMove);
-        searchContext.firstNonMove = newFirstNonMove;
+        // =============== Staged move generation via QSearchMovePicker ===============
+        // Probe TT once for move ordering (replaces N per-move TT probes in the old scoreMoves path)
+        int ttMove = (sharedTables.tt != null) ? sharedTables.tt.checkedGetBestMove(position.zobristHash) : 0;
 
-        // ===============See if Mated===============
-        //  - probably don't care about stalemates because these should be seen by main search.
-        int numMoves = newFirstNonMove - initialFirstNonMove;
-        if (numMoves == 0 && position.inCheck) {
-            searchContext.firstNonMove = initialFirstNonMove;
-            return -(MATED_VALUE - ply);
-        }
+        QSearchMovePicker picker = searchContext.qSearchMovePickers[ply];
+        picker.init(position, searchContext, ttMove, position.inCheck);
 
-        // ===============Move order===============
-        // TODO: Consider different move orderings if in check vs not in chceck
-        MoveOrder.scoreMoves(position, searchContext, sharedTables, initialFirstNonMove, newFirstNonMove, ply);
-
-
-        for (int i = initialFirstNonMove; i < newFirstNonMove; i++) {
-            MoveOrder.bestMoveFirst(searchContext, i, newFirstNonMove);
-            int move = searchContext.moveBuffer[i];
-            // Skip non-captures when not in check (only captures were generated anyway).
-            // When in check, all moves were generated and quiet evasions must be searched.
-            if (!position.inCheck && !MoveEncoding.getIsCapture(move)) {
-                continue;
-            }
-
-            // =============== SKIP LOSING CAPTURES ===============
-            //  - Skip all captures that aren't good
-            //  - Don't skip if in check to avoid skipping forced captures
-            /*
-            if (!position.inCheck && searchContext.see.see(move, position) < 0) {
-                continue;
-            }
-            */
+        int move;
+        while ((move = picker.nextMove()) != 0) {
 
             // "open" the position
             position.makeMove(move);
@@ -95,12 +69,19 @@ public class Quiesce {
             alpha = Math.max(alpha, score);
 
             if (alpha >= beta) {
-                searchContext.firstNonMove = initialFirstNonMove;
+                picker.restoreBuffer();
                 return bestValue;
             }
         }
 
-        searchContext.firstNonMove = initialFirstNonMove;
+        // =============== Mate detection ===============
+        // If in check and no legal moves were yielded, it's checkmate
+        if (position.inCheck && picker.moveCount() == 0) {
+            picker.restoreBuffer();
+            return -(MATED_VALUE - ply);
+        }
+
+        picker.restoreBuffer();
         return bestValue;
     }
 }

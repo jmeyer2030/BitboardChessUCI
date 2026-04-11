@@ -42,7 +42,33 @@ public class MoveOrder {
     public static void scoreLoudMoves(Position position, SearchContext searchContext, int firstMove, int firstNonMove) {
         // Iterate over moves in the window
         for (int i = firstMove; i < firstNonMove; i++) {
-            searchContext.moveScores[i] = quickEvaluateExchange(searchContext.moveBuffer[i], position, searchContext.see);
+            int move = searchContext.moveBuffer[i];
+            int score = quickEvaluateExchange(move, position, searchContext.see);
+            if (MoveEncoding.getIsPromotion(move)) {
+                score += PROMOTION_BONUS;
+            }
+            searchContext.moveScores[i] = score;
+        }
+    }
+
+    /**
+     * Scores quiet moves using history heuristic (and promotion bonus).
+     * Used by the staged move picker for the QUIETS stage.
+     *
+     * @param position      position for history color
+     * @param searchContext source of history heuristic and move buffer/scores
+     * @param firstMove     the start of the move-window in the table
+     * @param firstNonMove  the first non-move after the window
+     */
+    public static void scoreQuietMoves(Position position, SearchContext searchContext, int firstMove, int firstNonMove) {
+        for (int i = firstMove; i < firstNonMove; i++) {
+            int move = searchContext.moveBuffer[i];
+            int score = 0;
+            if (MoveEncoding.getIsPromotion(move)) {
+                score += PROMOTION_BONUS;
+            }
+            score += searchContext.historyHeuristic.getHeuristic(move, position.activePlayer);
+            searchContext.moveScores[i] = score;
         }
     }
 
@@ -145,16 +171,40 @@ public class MoveOrder {
 
 
     /**
-     * For winning captures, just return MVVLVA
-     * For losing captures, return SEE
+     * Scores evasion moves (used by QSearchMovePicker for the in-check path).
+     * Captures get SEE + CAPTURE_BONUS; quiets get history heuristic.
+     * No per-move TT probe — the TT move is handled by a separate stage.
+     *
+     * @param position      current position
+     * @param searchContext  source of SEE, history, move buffer/scores
+     * @param firstMove      the start of the move-window in the table
+     * @param firstNonMove   the first non-move after the window
+     */
+    public static void scoreEvasionMoves(Position position, SearchContext searchContext, int firstMove, int firstNonMove) {
+        for (int i = firstMove; i < firstNonMove; i++) {
+            int move = searchContext.moveBuffer[i];
+            int score = 0;
+            if (MoveEncoding.getIsPromotion(move)) {
+                score += PROMOTION_BONUS;
+            }
+            if (MoveEncoding.getIsCapture(move)) {
+                score += CAPTURE_BONUS + quickEvaluateExchange(move, position, searchContext.see);
+            } else {
+                score += searchContext.historyHeuristic.getHeuristic(move, position.activePlayer);
+            }
+            searchContext.moveScores[i] = score;
+        }
+    }
+
+    /**
+     * For winning captures, just return MVVLVA (skip expensive SEE).
+     * For losing/equal captures, return full SEE.
      *
      * @param move     to score
      * @param position the move is made on
      * @param see      SEE instance for exchange evaluation
      */
     private static int quickEvaluateExchange(int move, Position position, SEE see) {
-        return see.see(move, position);
-        /*
         int mvvlvaScore = mvvlva(move);
 
         if (mvvlvaScore > 0) {
@@ -162,7 +212,6 @@ public class MoveOrder {
         } else {
             return see.see(move, position);
         }
-        */
     }
 
 }

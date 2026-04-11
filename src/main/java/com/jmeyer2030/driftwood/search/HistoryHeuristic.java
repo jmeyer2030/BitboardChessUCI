@@ -33,15 +33,18 @@ public class HistoryHeuristic {
     }
 
     /**
-     * When we add a move to HH, we penalize other moves using this function
+     * When we add a move to HH, we penalize other moves using this function.
+     * Uses the same gravity formula as addMove to keep entries bounded within [-MAX_HISTORY, MAX_HISTORY].
      */
     public void penalizeMove(int color, int move, int depth) {
         int from = MoveEncoding.getStart(move);
         int to = MoveEncoding.getDestination(move);
 
-        // TODO: Try different values
-        int bonus = -Math.clamp(depth * depth, -MAX_HISTORY, MAX_HISTORY);
-        history[color][from][to] += bonus;
+        int bonus = -(depth * depth);
+        int clampedBonus = Math.clamp(bonus, -MAX_HISTORY, MAX_HISTORY);
+        int historyGravity = clampedBonus - history[color][from][to] * Math.abs(clampedBonus) / MAX_HISTORY;
+
+        history[color][from][to] += historyGravity;
     }
 
     public int getHeuristic(int move, int color) {

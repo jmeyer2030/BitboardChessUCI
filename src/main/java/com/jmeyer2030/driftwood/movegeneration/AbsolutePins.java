@@ -2,9 +2,20 @@ package com.jmeyer2030.driftwood.movegeneration;
 
 public class AbsolutePins {
 	public static final long[][] inBetween = new long[64][];
-	
+
+	/**
+	 * pinRay[king][pinnedSq] is the ray from king through pinnedSq to the board
+	 * edge, excluding the king square itself. For non-aligned squares the value is 0.
+	 *
+	 * <p>This is a superset of {@code inBetween[king][pinner] | (1L << pinner)}.
+	 * The extra squares beyond the pinner are harmless because the piece's move
+	 * board (magic bitboards) already stops at the first blocker (the pinner).</p>
+	 */
+	public static final long[][] pinRay = new long[64][];
+
 	static {
 		generateInBetween();
+		generatePinRays();
 	}
 
 	/**
@@ -17,6 +28,51 @@ public class AbsolutePins {
 				inBetween[i][j] = generateBetween(i, j);
 			}
 		}
+	}
+
+	/**
+	 * Populates pinRay[from][through] for all 64×64 pairs.
+	 * For aligned squares, the ray starts one step from 'from' in the direction
+	 * of 'through' and extends to the board edge.
+	 */
+	private static void generatePinRays() {
+		for (int from = 0; from < 64; from++) {
+			pinRay[from] = new long[64];
+			for (int through = 0; through < 64; through++) {
+				pinRay[from][through] = generateRay(from, through);
+			}
+		}
+	}
+
+	/**
+	 * Generates a ray starting at 'from', going through 'through', to the board edge.
+	 * Excludes 'from' itself. Returns 0 if the squares are not aligned on a rank,
+	 * file, or diagonal, or if they are the same square.
+	 */
+	private static long generateRay(int from, int through) {
+		if (from == through) return 0L;
+
+		int rankFrom = from / 8, fileFrom = from % 8;
+		int rankThrough = through / 8, fileThrough = through % 8;
+
+		int dRank = Integer.signum(rankThrough - rankFrom);
+		int dFile = Integer.signum(fileThrough - fileFrom);
+
+		// Must be aligned on rank, file, or diagonal
+		if (dRank != 0 && dFile != 0
+				&& Math.abs(rankThrough - rankFrom) != Math.abs(fileThrough - fileFrom)) {
+			return 0L;
+		}
+
+		long ray = 0L;
+		int r = rankFrom + dRank;
+		int f = fileFrom + dFile;
+		while (r >= 0 && r < 8 && f >= 0 && f < 8) {
+			ray |= 1L << (r * 8 + f);
+			r += dRank;
+			f += dFile;
+		}
+		return ray;
 	}
 
 	/**
