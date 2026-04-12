@@ -43,7 +43,7 @@ class TranspositionTableTest {
     }
 
     @Test
-    @DisplayName("Constructor throws IllegalArgumentException when numBits exceeds 30")
+    @DisplayName("Constructor throws IllegalArgumentException when numBits exceeds 29")
     void constructorThrows_whenNumBitsExceedsMax() {
         // Arrange
         int numBits = 31;
@@ -68,18 +68,19 @@ class TranspositionTableTest {
     // -- getIndex tests --
 
     @Test
-    @DisplayName("getIndex returns value within table bounds when given a large hash")
+    @DisplayName("getIndex returns even value within array bounds when given a large hash")
     void getIndexReturnsWithinBounds_whenGivenLargeHash() {
         // Arrange
-        int numBits = 4; // table size = 16, indices 0..15
+        int numBits = 4; // 16 buckets × 2 = 32 array slots, base indices 0,2,4,...,30
         TranspositionTable tt = new TranspositionTable(numBits);
         long hash = 0xDEAD_BEEF_CAFE_BABEL;
 
         // Act
         int index = tt.getIndex(hash);
 
-        // Assert
-        assertTrue(index >= 0 && index < 16);
+        // Assert - must be an even number in [0, 32)
+        assertTrue(index >= 0 && index < 32);
+        assertEquals(0, index % 2);
     }
 
     @Test
@@ -390,19 +391,19 @@ class TranspositionTableTest {
     }
 
     @Test
-    @DisplayName("addElement with colliding index invalidates previous entry's hash verification")
-    void addElementInvalidatesPrevious_whenIndexCollides() {
-        // Arrange - two hashes that map to the same index in a 2-entry table
-        TranspositionTable tt = new TranspositionTable(1); // 2 entries: indices 0 and 1
-        long hash1 = 0b00L; // index 0
-        long hash2 = 0b10L; // also index 0
+    @DisplayName("addElement stores both entries when two different hashes map to the same bucket")
+    void addElementStoresBoth_whenIndexCollides() {
+        // Arrange - two hashes that map to the same bucket in a 2-bucket table
+        TranspositionTable tt = new TranspositionTable(1); // 2 buckets × 2 entries = 4 slots
+        long hash1 = 0b00L; // bucket 0
+        long hash2 = 0b10L; // also bucket 0
         tt.addElement(hash1, 1, 10, 100, NodeType.EXACT);
 
-        // Act - overwrite same slot with different hash
+        // Act - store second entry in same bucket
         tt.addElement(hash2, 2, 10, 200, NodeType.EXACT);
 
-        // Assert - first entry is no longer retrievable
-        assertEquals(0, tt.probe(hash1, 1));
+        // Assert - both entries survive in the bucket
+        assertNotEquals(0, tt.probe(hash1, 1));
         assertNotEquals(0, tt.probe(hash2, 1));
     }
 
@@ -497,7 +498,7 @@ class TranspositionTableTest {
     // -- Replacement policy tests --
 
     @Test
-    @DisplayName("addElement replaces entry when new depth is greater than old depth")
+    @DisplayName("addElement replaces entry when new depth is greater than old depth for same hash")
     void addElementReplaces_whenNewDepthIsGreater() {
         // Arrange
         TranspositionTable tt = new TranspositionTable(8);
@@ -516,7 +517,7 @@ class TranspositionTableTest {
     }
 
     @Test
-    @DisplayName("addElement replaces entry when new depth equals old depth")
+    @DisplayName("addElement replaces entry when new depth equals old depth for same hash")
     void addElementReplaces_whenNewDepthEquals() {
         // Arrange
         TranspositionTable tt = new TranspositionTable(8);
@@ -533,21 +534,261 @@ class TranspositionTableTest {
     }
 
     @Test
-    @DisplayName("addElement always replaces even when new entry is shallower")
-    void addElementAlwaysReplaces_whenNewIsShallower() {
+    @DisplayName("addElement overwrites same-hash entry even when new depth is shallower")
+    void addElementOverwritesSameHash_whenNewIsShallower() {
         // Arrange
         TranspositionTable tt = new TranspositionTable(8);
         long hash = 12345L;
         tt.addElement(hash, 1, 15, 100, NodeType.EXACT);
 
-        // Act - store shallower entry (always-replace policy)
+        // Act - store shallower entry at same hash (same-position refresh)
         tt.addElement(hash, 2, 5, 200, NodeType.LOWER_BOUND);
         long packed = tt.probe(hash, 5);
 
-        // Assert - shallower entry replaced the deeper one
+        // Assert - new entry replaced the old one (same hash always refreshes)
         assertNotEquals(0, packed);
         assertEquals(2, TranspositionTable.unpackBestMove(packed));
         assertEquals(5, TranspositionTable.unpackDepth(packed));
         assertEquals(200, TranspositionTable.unpackScore(packed));
+    }
+
+    @Test
+    @DisplayName("addElement writes deeper entry to depth-preferred slot 0 when bucket is full in the same generation")
+    void addElementReplacesShallowest_whenBucketFull() {
+        // Arrange - fill both bucket slots with different hashes (all same generation)
+        TranspositionTable tt = new TranspositionTable(1); // 2 buckets × 2 entries
+        long hash1 = 0b00L; // bucket 0, depth 5 (shallowest)
+        long hash2 = 0b10L; // bucket 0, depth 15
+        long hash3 = 0b100L; // bucket 0
+        tt.addElement(hash1, 1, 5, 100, NodeType.EXACT);
+        tt.addElement(hash2, 2, 15, 200, NodeType.EXACT);
+
+        // Act - third entry evicts the shallowest
+        tt.addElement(hash3, 3, 10, 300, NodeType.LOWER_BOUND);
+
+        // Assert - hash1 (depth 5) was evicted; hash2 (depth 15) and hash3 survive
+        assertEquals(0, tt.probe(hash1, 1));
+        assertNotEquals(0, tt.probe(hash2, 1));
+        assertNotEquals(0, tt.probe(hash3, 1));
+    }
+
+    @Test
+    @DisplayName("addElement sends shallow entry to always-replace slot 1 when slot 0 is deeper in the same generation")
+    void addElementPreservesDeeper_whenBucketFull() {
+        // Arrange - fill bucket: slot 0 = deep, slot 1 = shallow (all same generation)
+        TranspositionTable tt = new TranspositionTable(1);
+        long hash1 = 0b00L; // bucket 0, depth 20 (deepest)
+        long hash2 = 0b10L; // bucket 0, depth 3 (shallowest)
+        tt.addElement(hash1, 1, 20, 100, NodeType.EXACT);
+        tt.addElement(hash2, 2, 3, 200, NodeType.EXACT);
+
+        // Act - third entry evicts the shallowest (hash2)
+        long hash3 = 0b100L;
+        tt.addElement(hash3, 3, 8, 300, NodeType.LOWER_BOUND);
+
+        // Assert - hash1 (depth 20) survives, hash2 (depth 3) was evicted
+        assertNotEquals(0, tt.probe(hash1, 1));
+        assertEquals(0, tt.probe(hash2, 1));
+        assertNotEquals(0, tt.probe(hash3, 1));
+    }
+
+    @Test
+    @DisplayName("checkedGetBestMove returns move from second bucket slot when first slot holds different hash")
+    void checkedGetBestMoveReturnsMove_whenEntryInSecondSlot() {
+        // Arrange - place two entries in the same bucket
+        TranspositionTable tt = new TranspositionTable(1);
+        long hash1 = 0b00L;
+        long hash2 = 0b10L;
+        tt.addElement(hash1, 11, 5, 100, NodeType.EXACT);
+        tt.addElement(hash2, 22, 5, 200, NodeType.EXACT);
+
+        // Act
+        int bestMove1 = tt.checkedGetBestMove(hash1);
+        int bestMove2 = tt.checkedGetBestMove(hash2);
+
+        // Assert - both best moves are retrievable
+        assertEquals(11, bestMove1);
+        assertEquals(22, bestMove2);
+    }
+
+    // -- Aging tests --
+
+    @Test
+    @DisplayName("newSearch advances the generation counter by one")
+    void newSearchAdvancesGeneration_whenCalled() {
+        // Arrange
+        TranspositionTable tt = new TranspositionTable(4);
+        byte genBefore = tt.getCurrentGeneration();
+
+        // Act
+        tt.newSearch();
+
+        // Assert
+        assertEquals((byte)(genBefore + 1), tt.getCurrentGeneration());
+    }
+
+    @Test
+    @DisplayName("newSearch wraps generation counter from max byte value back to min")
+    void newSearchWrapsGeneration_whenByteOverflows() {
+        // Arrange - advance to Byte.MAX_VALUE
+        TranspositionTable tt = new TranspositionTable(4);
+        for (int i = 0; i < 127; i++) {
+            tt.newSearch();
+        }
+        assertEquals(Byte.MAX_VALUE, tt.getCurrentGeneration());
+
+        // Act - one more increment wraps around
+        tt.newSearch();
+
+        // Assert - wraps to Byte.MIN_VALUE
+        assertEquals(Byte.MIN_VALUE, tt.getCurrentGeneration());
+    }
+
+    @Test
+    @DisplayName("addElement evicts stale entry in depth-preferred slot when incoming depth overcomes age penalty")
+    void addElementEvictsStaleFromSlot0_whenIncomingDepthExceedsAgedDepth() {
+        // Arrange - store entry at gen 0, advance, store entry at gen 1
+        TranspositionTable tt = new TranspositionTable(1);
+        long hashStale   = 0b00L;  // bucket 0, slot 0, depth 5, gen 0 → adjusted depth = 5 - AGE_BONUS = -3
+        long hashCurrent = 0b10L;  // bucket 0, slot 1, depth 5, gen 1
+        tt.addElement(hashStale, 1, 5, 100, NodeType.EXACT);
+        tt.newSearch(); // advance generation
+        tt.addElement(hashCurrent, 2, 5, 200, NodeType.EXACT);
+
+        // Act - new entry (depth 4, gen 1): 4 >= -3, so it replaces stale slot 0
+        long hashNew = 0b100L;
+        tt.addElement(hashNew, 3, 4, 300, NodeType.LOWER_BOUND);
+
+        // Assert - stale entry evicted from slot 0, current entry in slot 1 untouched
+        assertEquals(0, tt.probe(hashStale, 1));
+        assertNotEquals(0, tt.probe(hashCurrent, 1));
+        assertNotEquals(0, tt.probe(hashNew, 1));
+    }
+
+    @Test
+    @DisplayName("addElement evicts stale deep entry from slot 0 when depth difference is within AGE_BONUS")
+    void addElementEvictsStaleDeepFromSlot0_whenDepthDiffWithinBonus() {
+        // Arrange - stale entry in slot 0 with depth 10 (adjusted = 10 - 8 = 2),
+        //           current entry in slot 1 with depth 5
+        TranspositionTable tt = new TranspositionTable(1);
+        long hashStale   = 0b00L;
+        long hashCurrent = 0b10L;
+        tt.addElement(hashStale, 1, 10, 100, NodeType.EXACT);
+        tt.newSearch();
+        tt.addElement(hashCurrent, 2, 5, 200, NodeType.EXACT);
+
+        // Act - new entry depth 4 >= adjusted 2 → replaces slot 0
+        long hashNew = 0b100L;
+        tt.addElement(hashNew, 3, 4, 300, NodeType.LOWER_BOUND);
+
+        // Assert - stale depth-10 evicted; current depth-5 in slot 1 untouched
+        assertEquals(0, tt.probe(hashStale, 1));
+        assertNotEquals(0, tt.probe(hashCurrent, 1));
+        assertNotEquals(0, tt.probe(hashNew, 1));
+    }
+
+    @Test
+    @DisplayName("addElement sends entry to always-replace slot 1 when stale slot 0 depth exceeds AGE_BONUS advantage")
+    void addElementWritesToSlot1_whenStaleSlot0TooDeep() {
+        // Arrange - stale entry in slot 0 with depth 20 (adjusted = 20 - 8 = 12),
+        //           current entry in slot 1 with depth 5
+        TranspositionTable tt = new TranspositionTable(1);
+        long hashStale   = 0b00L;
+        long hashCurrent = 0b10L;
+        tt.addElement(hashStale, 1, 20, 100, NodeType.EXACT);
+        tt.newSearch();
+        tt.addElement(hashCurrent, 2, 5, 200, NodeType.EXACT);
+
+        // Act - new entry depth 4 < adjusted 12 → goes to always-replace slot 1
+        long hashNew = 0b100L;
+        tt.addElement(hashNew, 3, 4, 300, NodeType.LOWER_BOUND);
+
+        // Assert - stale depth-20 preserved in slot 0; current depth-5 evicted from slot 1
+        assertNotEquals(0, tt.probe(hashStale, 1));
+        assertEquals(0, tt.probe(hashCurrent, 1));
+        assertNotEquals(0, tt.probe(hashNew, 1));
+    }
+
+    @Test
+    @DisplayName("Slot 1 always accepts a new entry even when slot 0 has a deep current entry")
+    void slot1AlwaysAcceptsNewEntry_whenSlot0HasDeepCurrentEntry() {
+        // Arrange - slot 0: current depth 20, slot 1: current depth 15
+        TranspositionTable tt = new TranspositionTable(1);
+        long hash1 = 0b00L;  // slot 0, depth 20
+        long hash2 = 0b10L;  // slot 1, depth 15
+        tt.addElement(hash1, 1, 20, 100, NodeType.EXACT);
+        tt.addElement(hash2, 2, 15, 200, NodeType.EXACT);
+
+        // Act - very shallow entry (depth 1): 1 < 20, so rejected by slot 0 → always-replace slot 1
+        long hashShallow = 0b100L;
+        tt.addElement(hashShallow, 3, 1, 50, NodeType.UPPER_BOUND);
+
+        // Assert - shallow entry stored (slot 1), deep entry preserved (slot 0)
+        assertNotEquals(0, tt.probe(hash1, 1));       // deep entry survived in slot 0
+        assertEquals(0, tt.probe(hash2, 1));            // evicted from slot 1
+        assertNotEquals(0, tt.probe(hashShallow, 1));   // shallow entry got in via slot 1
+    }
+
+    @Test
+    @DisplayName("Deeper incoming entry displaces slot 0 and preserves slot 1 entry")
+    void deeperIncomingDisplacesSlot0_preservesSlot1() {
+        // Arrange - slot 0: current depth 5, slot 1: current depth 10
+        TranspositionTable tt = new TranspositionTable(1);
+        long hash1 = 0b00L;  // slot 0, depth 5
+        long hash2 = 0b10L;  // slot 1, depth 10
+        tt.addElement(hash1, 1, 5, 100, NodeType.EXACT);
+        tt.addElement(hash2, 2, 10, 200, NodeType.EXACT);
+
+        // Act - deep entry (depth 15): 15 >= 5, so it replaces slot 0
+        long hashDeep = 0b100L;
+        tt.addElement(hashDeep, 3, 15, 300, NodeType.LOWER_BOUND);
+
+        // Assert - new deep entry in slot 0, slot 1 preserved
+        assertNotEquals(0, tt.probe(hashDeep, 1));  // new deep entry in slot 0
+        assertNotEquals(0, tt.probe(hash2, 1));     // slot 1 preserved
+        assertEquals(0, tt.probe(hash1, 1));        // old slot 0 entry evicted
+    }
+
+    @Test
+    @DisplayName("Stale entries remain probe-able after generation advances")
+    void staleEntriesRemainProbeable_afterNewSearch() {
+        // Arrange
+        TranspositionTable tt = new TranspositionTable(8);
+        long hash = 12345L;
+        tt.addElement(hash, 42, 10, 500, NodeType.EXACT);
+
+        // Act - advance generation (entry becomes stale)
+        tt.newSearch();
+        long packed = tt.probe(hash, 10);
+
+        // Assert - stale entry is still returned by probe
+        assertNotEquals(0, packed);
+        assertEquals(42, TranspositionTable.unpackBestMove(packed));
+        assertEquals(500, TranspositionTable.unpackScore(packed));
+    }
+
+    @Test
+    @DisplayName("Same-position overwrite refreshes generation to current")
+    void samePositionOverwrite_refreshesGeneration() {
+        // Arrange - store entry at gen 0, advance to gen 1
+        TranspositionTable tt = new TranspositionTable(1);
+        long hashEntry   = 0b00L;
+        long hashOther   = 0b10L;
+        tt.addElement(hashEntry, 1, 5, 100, NodeType.EXACT);
+        tt.newSearch();
+        // Overwrite same-position (refreshes to gen 1)
+        tt.addElement(hashEntry, 1, 5, 100, NodeType.EXACT);
+        // Fill other slot at gen 1
+        tt.addElement(hashOther, 2, 5, 200, NodeType.EXACT);
+
+        // Act - advance again to gen 2. Both entries are now stale (gen 1).
+        //       Store a new entry that must evict one of them.
+        tt.newSearch();
+        long hashNew = 0b100L;
+        tt.addElement(hashNew, 3, 5, 300, NodeType.LOWER_BOUND);
+
+        // Assert - both were same generation (stale). Slot 0 (hashEntry) has adjusted depth 5-8=-3;
+        //          new depth 5 >= -3, so slot 0 is overwritten. hashOther in slot 1 and hashNew in slot 0 survive.
+        assertNotEquals(0, tt.probe(hashNew, 1));
     }
 }

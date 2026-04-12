@@ -54,6 +54,11 @@ public class Search {
      */
     public static MoveValue iterativeDeepening(Position position, long limitMillis, SearchContext searchContext, SharedTables sharedTables) {
 
+        // Advance the TT generation so entries from the previous search become stale
+        if (sharedTables.tt != null) {
+            sharedTables.tt.newSearch();
+        }
+
         // Create a list representing the best moves generated at each depth
         List<MoveValue> searchResults = new ArrayList<>();
 
@@ -166,6 +171,12 @@ public class Search {
     public static void iterativeDeepeningFixedDepth(Position position, int depth) {
         SearchContext searchContext = new SearchContext();
         SharedTables sharedTables = new SharedTables(18);
+
+        // Advance the TT generation so entries from the previous search become stale
+        if (sharedTables.tt != null) {
+            sharedTables.tt.newSearch();
+        }
+
         for (int i = 1; i <= depth; i++) {
             try {
                 MoveValue result;

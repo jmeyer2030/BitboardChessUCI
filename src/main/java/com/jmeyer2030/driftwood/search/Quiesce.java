@@ -5,6 +5,7 @@ import com.jmeyer2030.driftwood.board.SharedTables;
 
 import static com.jmeyer2030.driftwood.search.Search.NEG_INFINITY;
 import static com.jmeyer2030.driftwood.search.Search.MATED_VALUE;
+import static com.jmeyer2030.driftwood.search.Search.scoreFromTT;
 
 public class Quiesce {
 
@@ -17,6 +18,10 @@ public class Quiesce {
      * </ul>
      * This avoids per-move TT probes and enables early cutoffs before full generation.
      *
+     * <p>Probes the transposition table before stand-pat evaluation. A TT hit can
+     * produce an early cutoff that skips NNUE evaluation and move generation entirely.
+     * Results are <b>not</b> stored back into the TT from qsearch.</p>
+     *
      * @param alpha         max score guaranteed for the position's active player
      * @param beta          max score guaranteed for the position's active player
      * @param position      position to search
@@ -26,6 +31,34 @@ public class Quiesce {
      * @return score
      */
     public static int quiescenceSearch(int alpha, int beta, Position position, SearchContext searchContext, SharedTables sharedTables, int ply) {
+
+        //=============== Check transposition table ===============
+        // Probe with requiredDepth = 0 so any entry for this position qualifies.
+        // Since qsearch does not store into the TT, hits come from main-search entries
+        // (depth >= 1) that already incorporate a full qsearch result.
+        int ttMove = 0;
+        long ttPacked = (sharedTables.tt != null) ? sharedTables.tt.probe(position.zobristHash, 0) : 0;
+        if (ttPacked != 0) {
+            int ttScore = TranspositionTable.unpackScore(ttPacked);
+            int nodeType = TranspositionTable.unpackNodeType(ttPacked);
+            ttMove = TranspositionTable.unpackBestMove(ttPacked);
+
+            ttScore = scoreFromTT(ttScore, ply);
+
+            if (nodeType == NodeType.EXACT) {
+                return ttScore;
+            } else if (nodeType == NodeType.LOWER_BOUND) {
+                alpha = Math.max(alpha, ttScore);
+            } else { // UPPER_BOUND
+                beta = Math.min(beta, ttScore);
+            }
+
+            if (alpha >= beta) {
+                return ttScore;
+            }
+        }
+
+        //=============== Stand-pat evaluation ===============
         int standPat = position.evaluator.computeOutput(position.activePlayer);
 
         int bestValue = standPat;
@@ -41,9 +74,6 @@ public class Quiesce {
             bestValue = NEG_INFINITY;
         }
 
-        // =============== Staged move generation via QSearchMovePicker ===============
-        // Probe TT once for move ordering (replaces N per-move TT probes in the old scoreMoves path)
-        int ttMove = (sharedTables.tt != null) ? sharedTables.tt.checkedGetBestMove(position.zobristHash) : 0;
 
         QSearchMovePicker picker = searchContext.qSearchMovePickers[ply];
         picker.init(position, searchContext, ttMove, position.inCheck);

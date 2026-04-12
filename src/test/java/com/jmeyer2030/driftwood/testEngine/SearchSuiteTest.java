@@ -33,7 +33,7 @@ public class SearchSuiteTest {
 
                 Position position = new Position(fen);
 
-                System.out.println("TESTING FEN: " + fenString + " TEST PROGRESS: " + lineNumber + "/" + 126);
+                // System.out.println("TESTING FEN: " + fenString + " TEST PROGRESS: " + lineNumber + "/" + 126);
                 try {
                     Search.iterativeDeepeningFixedDepth(position, depth);
                 } catch (Exception e) {
