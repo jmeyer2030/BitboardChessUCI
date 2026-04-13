@@ -91,7 +91,7 @@ public class QSearchMovePicker {
                     stage = STAGE_GEN_CAPTURES;
                     // Only yield TT move if it's a capture (qsearch not-in-check only searches captures)
                     if (ttMove != 0
-                            && MoveEncoding.getIsCapture(ttMove) || MoveEncoding.getIsEP(ttMove)
+                            && (MoveEncoding.getIsCapture(ttMove) || MoveEncoding.getIsEP(ttMove))
                             && MoveGenerator.isMoveLegal(position, ttMove)) {
                         moveCount++;
                         return ttMove;

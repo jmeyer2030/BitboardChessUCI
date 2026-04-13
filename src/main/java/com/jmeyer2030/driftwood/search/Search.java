@@ -326,6 +326,10 @@ public class Search {
         int[] quietsSearched = searchContext.quietsSearched[ply];
         searchContext.numQuietsSearched[ply] = 0;
 
+        // Track captures searched for capture history penalization on beta cutoff (pooled per-ply)
+        int[] capturesSearched = searchContext.capturesSearched[ply];
+        searchContext.numCapturesSearched[ply] = 0;
+
         int moveIndex = 0;
         int move;
 
@@ -389,6 +393,11 @@ public class Search {
                 quietsSearched[searchContext.numQuietsSearched[ply]++] = move;
             }
 
+            // Track capture for capture history penalization
+            if (!isQuietMove && searchContext.numCapturesSearched[ply] < capturesSearched.length) {
+                capturesSearched[searchContext.numCapturesSearched[ply]++] = move;
+            }
+
             if (score > bestScore) {
                 bestScore = score;
                 searchContext.bestMoves[ply] = move;
@@ -409,6 +418,13 @@ public class Search {
 
                         for (int j = 0; j < searchContext.numQuietsSearched[ply] - 1; j++) {
                             searchContext.historyHeuristic.penalizeMove(position.activePlayer, quietsSearched[j], depthLeft);
+                        }
+                    } else {
+                        // Capture caused beta cutoff — update capture history
+                        searchContext.captureHistory.addBonus(position.activePlayer, move, depthLeft);
+
+                        for (int j = 0; j < searchContext.numCapturesSearched[ply] - 1; j++) {
+                            searchContext.captureHistory.addMalus(position.activePlayer, capturesSearched[j], depthLeft);
                         }
                     }
                     break;

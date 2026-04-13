@@ -6,8 +6,18 @@ import com.jmeyer2030.driftwood.board.SharedTables;
 
 public class MoveOrder {
 
-    // Rough piece values used for MVV-LVA
+    // Rough piece values used for MVV and SEE
     public static final int[] PIECE_VALUES = new int[]{100, 300, 330, 500, 900, 1_000};
+
+    // Multiplier on victim value so MVV is the primary capture sort key.
+    // With values 100–1000 this gives base scores 700–7000.
+    public static final int MVV_MULTIPLIER = 7;
+
+    // Capture history (±16_384) is divided by this so it acts as a tiebreaker
+    // within MVV-based ordering.  256 → effective range ±64, well under the
+    // smallest MVV gap (210 between knight and bishop at ×7).
+    public static final int CAPTURE_HISTORY_DIVISOR = 256;
+
     public static final int PV_BONUS = 2_000_000;
     public static final int TT_BONUS = 1_000_000;
     public static final int PROMOTION_BONUS = 500_000;
@@ -33,17 +43,21 @@ public class MoveOrder {
     }
 
     /**
-     * Quicker move scoring, that only evaluates captures
+     * Scores captures using MVV (Most Valuable Victim) as the primary key and
+     * capture history as a scaled tiebreaker.  Capture history is divided by
+     * {@link #CAPTURE_HISTORY_DIVISOR} so it cannot override the MVV ordering.
      *
-     * @param searchContext source of move tables
+     * @param position      position for active player color
+     * @param searchContext source of capture history and move buffer/scores
      * @param firstMove     the start of the move-window in the table
      * @param firstNonMove  the first non-move after the window
      */
     public static void scoreLoudMoves(Position position, SearchContext searchContext, int firstMove, int firstNonMove) {
-        // Iterate over moves in the window
+        int color = position.activePlayer;
         for (int i = firstMove; i < firstNonMove; i++) {
             int move = searchContext.moveBuffer[i];
-            int score = quickEvaluateExchange(move, position, searchContext.see);
+            int score = PIECE_VALUES[MoveEncoding.getCapturedPiece(move)] * MVV_MULTIPLIER
+                      + searchContext.captureHistory.getScore(color, move) / CAPTURE_HISTORY_DIVISOR;
             if (MoveEncoding.getIsPromotion(move)) {
                 score += PROMOTION_BONUS;
             }
@@ -110,15 +124,12 @@ public class MoveOrder {
      * Returns the score of a move. Prioritizing in order:
      * - PV / hash move
      * - Promotions
-     * - Captures: If (MVV-LVA > 0 use that, else SEE)
-     * - Winning captures
-     * - Neutral captures
-     * - Losing captures
+     * - Captures: MVV + scaled capture history
      * - KILLER MOVES
      * - Quiet moves (History Heuristic)
      *
-     * @param position      used just for the hash
-     * @param searchContext  used for pv/History/killers
+     * @param position      used for the hash
+     * @param searchContext  used for pv/History/killers/captureHistory
      * @param sharedTables   used for the tt
      * @param move          move to evaluate
      * @param ply           current ply in the search
@@ -145,7 +156,9 @@ public class MoveOrder {
         }
 
         if (MoveEncoding.getIsCapture(move)) {
-            value += CAPTURE_BONUS + quickEvaluateExchange(move, position, searchContext.see);
+            value += CAPTURE_BONUS
+                   + PIECE_VALUES[MoveEncoding.getCapturedPiece(move)] * MVV_MULTIPLIER
+                   + searchContext.captureHistory.getScore(position.activePlayer, move) / CAPTURE_HISTORY_DIVISOR;
         } else {
             if (move == searchContext.killerMoves.killerMoves[0][ply]) {
                 value += FIRST_KILLER_BONUS;
@@ -172,15 +185,16 @@ public class MoveOrder {
 
     /**
      * Scores evasion moves (used by QSearchMovePicker for the in-check path).
-     * Captures get SEE + CAPTURE_BONUS; quiets get history heuristic.
+     * Captures use MVV + scaled capture history + CAPTURE_BONUS; quiets use history heuristic.
      * No per-move TT probe — the TT move is handled by a separate stage.
      *
      * @param position      current position
-     * @param searchContext  source of SEE, history, move buffer/scores
+     * @param searchContext  source of capture history, quiet history, move buffer/scores
      * @param firstMove      the start of the move-window in the table
      * @param firstNonMove   the first non-move after the window
      */
     public static void scoreEvasionMoves(Position position, SearchContext searchContext, int firstMove, int firstNonMove) {
+        int color = position.activePlayer;
         for (int i = firstMove; i < firstNonMove; i++) {
             int move = searchContext.moveBuffer[i];
             int score = 0;
@@ -188,7 +202,9 @@ public class MoveOrder {
                 score += PROMOTION_BONUS;
             }
             if (MoveEncoding.getIsCapture(move)) {
-                score += CAPTURE_BONUS + quickEvaluateExchange(move, position, searchContext.see);
+                score += CAPTURE_BONUS
+                       + PIECE_VALUES[MoveEncoding.getCapturedPiece(move)] * MVV_MULTIPLIER
+                       + searchContext.captureHistory.getScore(color, move) / CAPTURE_HISTORY_DIVISOR;
             } else {
                 score += searchContext.historyHeuristic.getHeuristic(move, position.activePlayer);
             }

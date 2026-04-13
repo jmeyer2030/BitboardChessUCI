@@ -21,6 +21,7 @@ public class SearchContext {
     public int firstNonMove;
     public final KillerMoves killerMoves;
     public final HistoryHeuristic historyHeuristic;
+    public final CaptureHistory captureHistory;
     public final TriangularPVTable pvTable;
     public final SEE see;
 
@@ -32,6 +33,10 @@ public class SearchContext {
     public final int[][] quietsSearched;
     public final int[] numQuietsSearched;
 
+    // Per-ply pooled capturesSearched tracking — for capture history penalization on beta cutoff
+    public final int[][] capturesSearched;
+    public final int[] numCapturesSearched;
+
     public SearchContext() {
         this.moveBuffer = new int[2048];
         this.moveScores = new int[2048];
@@ -39,6 +44,7 @@ public class SearchContext {
         this.firstNonMove = 0;
         this.killerMoves = new KillerMoves();
         this.historyHeuristic = new HistoryHeuristic();
+        this.captureHistory = new CaptureHistory();
         this.pvTable = new TriangularPVTable();
         this.see = new SEE();
 
@@ -51,6 +57,9 @@ public class SearchContext {
 
         this.quietsSearched = new int[GlobalConstants.MAX_PLY][128];
         this.numQuietsSearched = new int[GlobalConstants.MAX_PLY];
+
+        this.capturesSearched = new int[GlobalConstants.MAX_PLY][64];
+        this.numCapturesSearched = new int[GlobalConstants.MAX_PLY];
     }
 }
 
