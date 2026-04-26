@@ -1,7 +1,7 @@
 package com.jmeyer2030.driftwood.board;
 
-/*
-A table of searched positions for the purpose of determining if a position has been reached three times, leading to a draw
+/**
+* A table of searched positions for the purpose of determining if a position has been reached three times, leading to a draw
 */
 public class ThreeFoldTable {
 

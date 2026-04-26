@@ -39,7 +39,7 @@ public final class Position {
     public int fullMoveCount;
 
     // Bitboard of pinned pieces: bit set if the piece on that square is pinned.
-    // Pin ray is derived from pinRay[kingLoc][pinnedSquare] — no pinner square needed.
+    // Pin ray is derived from pinRay[kingLoc][pinnedSquare], no pinner square needed.
     public long pinnedBB;
 
     // Stack for saving/restoring pinnedBB across makeMove/unmakeMove.

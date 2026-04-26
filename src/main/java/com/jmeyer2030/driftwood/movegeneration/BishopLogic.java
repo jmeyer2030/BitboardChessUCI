@@ -1,6 +1,8 @@
 package com.jmeyer2030.driftwood.movegeneration;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import com.jmeyer2030.driftwood.board.Position;
 

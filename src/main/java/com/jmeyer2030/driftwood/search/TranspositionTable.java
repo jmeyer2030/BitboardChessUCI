@@ -87,7 +87,7 @@ public class TranspositionTable {
 
     /**
      * Advances the generation counter. Call once at the start of each new
-     * search (UCI {@code go} command) so that entries from previous searches
+     * search (Iterative deepening) so that entries from previous searches
      * become "stale" and are easier to evict during replacement.
      */
     public void newSearch() {
@@ -131,8 +131,6 @@ public class TranspositionTable {
     public static int unpackScore(long packed) {
         return (int)(packed >> SCORE_SHIFT);
     }
-
-    // -- Public read API --
 
     /**
      * Probes the table for a matching entry at sufficient depth.
@@ -181,8 +179,6 @@ public class TranspositionTable {
 
         return 0;
     }
-
-    // -- Write API --
 
     /**
      * Stores an entry using the two-entry bucket replacement policy with aging.

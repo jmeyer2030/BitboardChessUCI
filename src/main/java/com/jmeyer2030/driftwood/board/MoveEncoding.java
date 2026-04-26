@@ -298,30 +298,4 @@ public final class MoveEncoding {
 
         return builder.toString();
     }
-
-    /**
-     * Prints all details of a move to console
-     * Only used for debugging
-     *
-     * @param move to print the details of
-     */
-    public static void getDetails(int move) {
-        System.out.println("start :" + getStart(move));
-        System.out.println("destination :" + getDestination(move));
-        System.out.println("movedPiece :" + getMovedPiece(move));
-        System.out.println("capturedPiece :" + getCapturedPiece(move));
-        System.out.println("promotionType :" + getPromotionType(move));
-        System.out.println("isQuiet :" + getIsQuiet(move));
-        System.out.println("isCapture :" + getIsCapture(move));
-        System.out.println("isEP :" + getIsEP(move));
-        System.out.println("isPromotion :" + getIsPromotion(move));
-        System.out.println("isCastle :" + getIsCastle(move));
-        System.out.println("isCheck :" + getIsCheck(move));
-        System.out.println("isDoublePush :" + getIsDoublePush(move));
-        System.out.println("isReversible :" + getIsReversible(move));
-        System.out.println("wasInCheck :" + getWasInCheck(move));
-        System.out.println("captureColor :" + getCaptureColor(move));
-        System.out.println("castleSide :" + getCastleSide(move));
-        System.out.println("activePlayer: " + getActivePlayer(move));
-    }
 }

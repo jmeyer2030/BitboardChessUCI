@@ -1,16 +1,21 @@
 package com.jmeyer2030.driftwood.search;
 
 import java.util.ArrayList;
-import java.util.concurrent.*;
 
 import com.jmeyer2030.driftwood.board.MoveEncoding;
 import com.jmeyer2030.driftwood.board.Position;
 import com.jmeyer2030.driftwood.board.SharedTables;
 import com.jmeyer2030.driftwood.board.InvalidPositionException;
-import com.jmeyer2030.driftwood.movegeneration.MoveGenerator;
 import com.jmeyer2030.driftwood.board.ThreeFoldTable;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ExecutionException;
 
 
 public class Search {
@@ -53,7 +58,6 @@ public class Search {
      * @return moveValue associated with the deepest search of the position
      */
     public static MoveValue iterativeDeepening(Position position, long limitMillis, SearchContext searchContext, SharedTables sharedTables) {
-
         // Advance the TT generation so entries from the previous search become stale
         if (sharedTables.tt != null) {
             sharedTables.tt.newSearch();

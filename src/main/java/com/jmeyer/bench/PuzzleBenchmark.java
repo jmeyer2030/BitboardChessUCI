@@ -8,8 +8,15 @@ import com.jmeyer2030.driftwood.movegeneration.MoveGenerator;
 import com.jmeyer2030.driftwood.search.Search;
 import com.jmeyer2030.driftwood.search.SearchContext;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Standalone puzzle benchmark harness for the DriftWood chess engine.
@@ -17,7 +24,7 @@ import java.util.*;
  * <p>Reads puzzles from the Lichess puzzle CSV, samples a configurable number using a seeded RNG,
  * searches each position, and reports whether the engine found the expected first move.
  *
- * <p>This is NOT a JUnit test — it is run via {@code java -cp} (see {@code run-puzzle-bench.bat}).
+ * <p>This is NOT a JUnit test - it is run via {@code java -cp} (see {@code run-puzzle-bench.bat}).
  */
 public class PuzzleBenchmark {
 

@@ -22,7 +22,7 @@ public class Puzzle {
     public final String openingTags;
 
     public Puzzle(String csvLine) {
-        // Split on commas — the CSV has no quoted fields with embedded commas
+        // Split on commas, the CSV has no quoted fields with embedded commas
         String[] fields = csvLine.split(",", -1);
         if (fields.length < 10) {
             throw new IllegalArgumentException("Malformed puzzle CSV line (expected 10 fields, got "

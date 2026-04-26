@@ -1,8 +1,10 @@
 package com.jmeyer2030.driftwood.movegeneration;
 
-import java.util.*;
-
 import com.jmeyer2030.driftwood.board.Position;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Comparator;
 
 /**
 * Static magic bitboard based rook attacks generator:
