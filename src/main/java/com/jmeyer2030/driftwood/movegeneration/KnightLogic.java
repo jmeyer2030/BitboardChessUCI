@@ -3,7 +3,7 @@ package com.jmeyer2030.driftwood.movegeneration;
 import com.jmeyer2030.driftwood.board.Position;
 
 public class KnightLogic {
-	private static long[] knightMoves = new long[64];
+	private static final long[] knightMoves = new long[64];
 	
 	static {
 		generateAllKnightMoves();

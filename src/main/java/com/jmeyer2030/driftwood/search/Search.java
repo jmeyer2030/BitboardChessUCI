@@ -6,7 +6,6 @@ import com.jmeyer2030.driftwood.board.MoveEncoding;
 import com.jmeyer2030.driftwood.board.Position;
 import com.jmeyer2030.driftwood.board.SharedTables;
 import com.jmeyer2030.driftwood.board.InvalidPositionException;
-import com.jmeyer2030.driftwood.board.ThreeFoldTable;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -104,7 +103,7 @@ public class Search {
                 }
 
             } catch (TimeoutException te) {
-                System.out.println("Function timed out!");
+                System.out.println("Time limit reached");
 
                 future.cancel(true); // Tells the thread that it was interrupted
                 executor.shutdown();
@@ -122,8 +121,6 @@ public class Search {
 
                 break; //Exit the search loop
             } catch (ExecutionException e) { // This should never happen so we throw an exception
-                System.out.println(e.getCause());
-                System.out.println(e.getMessage());
                 e.printStackTrace();
                 throw new RuntimeException("Unexpected execution exception caught");
             } catch (InterruptedException e) {
@@ -183,12 +180,7 @@ public class Search {
 
         for (int i = 1; i <= depth; i++) {
             try {
-                MoveValue result;
-
-                result = getSearchCallable(position, i, searchContext, sharedTables).call();
-
-                // String moveLAN = MoveEncoding.getLAN(result.bestMove);
-                // System.out.println("Depth: " + i + " | Move: " + moveLAN + " | Value: " + result.value);
+                getSearchCallable(position, i, searchContext, sharedTables).call();
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException("Unexpected exception from search", e);
@@ -314,10 +306,10 @@ public class Search {
         }
 
         // Check if we can use futility pruning
-        boolean useFutilityPruning = false;
-        if (depthLeft <= 3 && !isPV && !position.inCheck && Math.abs(alpha) < MATED_SCORE && eval + futilityMargin[depthLeft] <= alpha) {
-            useFutilityPruning = true;
-        }
+        boolean useFutilityPruning = depthLeft <= 3 && !isPV
+                && !position.inCheck
+                && Math.abs(alpha) < MATED_SCORE
+                && eval + futilityMargin[depthLeft] <= alpha;
 
         //=============== Staged Move Generation ===============
         MovePicker picker = searchContext.movePickers[ply];
@@ -341,7 +333,6 @@ public class Search {
             moveIndex++;
 
             if (Thread.currentThread().isInterrupted()) {
-                System.out.println("interrupted in negamax!");
                 picker.restoreBuffer();
                 throw new InterruptedException("Negamax was interrupted by iterative deepening");
             }
@@ -465,51 +456,6 @@ public class Search {
         }
 
         return bestScore;
-    }
-
-    /**
-     * Returns true if the game has ended.
-     * NOTE: This does not indicate HOW it ended. This is left to the search
-     * - If there are legal moves, then score = 0
-     * - Else: score = inCheck ? -inf : 0
-     *
-     * @param moveListSize   number of legal moves
-     * @param position       position
-     * @param threeFoldTable threeFoldTable
-     * @return if the game has ended
-     */
-    public static boolean gameOver(int moveListSize, Position position, ThreeFoldTable threeFoldTable) {
-        if (moveListSize == 0 || position.halfMoveCount >= 100 || threeFoldTable.positionDrawn(position.zobristHash)) {
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean moveBasedGameOver(int moveListSize) {
-        return moveListSize == 0;
-    }
-
-    public static boolean stateBasedDraw(Position position, ThreeFoldTable threeFoldTable) {
-        if (position.halfMoveCount >= 100 || threeFoldTable.positionDrawn(position.zobristHash)) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Futility Pruning conditions NOT met if any apply:
-     * - Position is in check
-     * - TT move doesn't exist
-     * - PV node
-     *
-     * @param position position
-     * @return if we can do FP
-     */
-    public static boolean fpConditionsMet(Position position, boolean isPV) {
-        if (position.inCheck ||
-                isPV)
-            return false;
-        return true;
     }
 
     /**

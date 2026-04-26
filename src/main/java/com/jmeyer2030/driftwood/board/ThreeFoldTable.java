@@ -5,9 +5,9 @@ package com.jmeyer2030.driftwood.board;
 */
 public class ThreeFoldTable {
 
-    private long[] zobristHashes = new long[1024];
-    private int[] moves = new int[1024];
-    private boolean[] isReversible = new boolean[1024];
+    private final long[] zobristHashes = new long[1024];
+    private final int[] moves = new int[1024];
+    private final boolean[] isReversible = new boolean[1024];
     private int firstEmptySpace;
 
     public ThreeFoldTable() {

@@ -4,7 +4,7 @@ import com.jmeyer2030.driftwood.board.MoveEncoding;
 
 public class HistoryHeuristic {
     private static final int MAX_HISTORY = 16_384; // TODO: Tune this. Probably is essentially infinite when maybe we want more churn
-    private int[][][] history; // history[color][from][to]
+    private final int[][][] history; // history[color][from][to]
 
     public HistoryHeuristic() {
         history = new int[2][64][64];

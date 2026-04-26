@@ -75,8 +75,6 @@ public class Hashing {
     * @return long main.java.zobrist hash
     */
     public static long computeZobrist(Position position) {
-        assert PIECE_SQUARE != null;
-
         long zobrist = 0;
 
         // Pieces

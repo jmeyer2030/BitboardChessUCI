@@ -123,10 +123,8 @@ public class BishopLogic {
 
         long occupancyWithoutFriendlyBlockers = position.occupancy ^ activePlayerBlockers;
 
-        long attacksWithoutBlockers = getAttackBoard(square, occupancyWithoutFriendlyBlockers);
-
         // Equivalent to (attacksWithoutBlockers ^ attacks) | (attacks & attacksWithoutBlockers)
-        return attacksWithoutBlockers;
+        return getAttackBoard(square, occupancyWithoutFriendlyBlockers);
     }
 
     /*
@@ -227,8 +225,8 @@ public class BishopLogic {
      * Pair class to hold the moveBoard and its associated index
      */
     private static class Pair {
-        long moveBoard;
-        int index;
+        final long moveBoard;
+        final int index;
 
         Pair(long moveBoard, int index) {
             this.moveBoard = moveBoard;

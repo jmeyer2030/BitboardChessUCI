@@ -1,6 +1,5 @@
 package com.jmeyer2030.driftwood.userfeatures.perft;
 
-import com.jmeyer2030.driftwood.board.MoveEncoding;
 import com.jmeyer2030.driftwood.board.Position;
 import com.jmeyer2030.driftwood.board.InvalidPositionException;
 import com.jmeyer2030.driftwood.movegeneration.MoveGenerator;

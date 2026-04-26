@@ -9,7 +9,7 @@ public final class PositionConstants {
     // Castle rights bits — indexed within Position.castleRights byte: 0b0000(WQ)(WK)(BQ)(BK)
     public static final int CASTLE_RIGHT_WK = 1 << 2;  // white king-side
     public static final int CASTLE_RIGHT_WQ = 1 << 3;  // white queen-side
-    public static final int CASTLE_RIGHT_BK = 1 << 0;  // black king-side
+    public static final int CASTLE_RIGHT_BK = 1;       // black king-side
     public static final int CASTLE_RIGHT_BQ = 1 << 1;  // black queen-side
 
     // Castle king destination squares

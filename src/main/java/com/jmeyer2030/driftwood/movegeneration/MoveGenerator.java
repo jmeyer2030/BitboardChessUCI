@@ -222,12 +222,9 @@ public class MoveGenerator {
         }
 
         // fail if checker is non-slider AND it isn't captured
-        if (Long.bitCount(checkHandleMask) == 1 && Long.numberOfTrailingZeros(checkHandleMask) != epCaptureSquare) {
-            return false;
-        }
+        return Long.bitCount(checkHandleMask) != 1 || Long.numberOfTrailingZeros(checkHandleMask) == epCaptureSquare;
 
         // resultant isn't attacked by a slider, or the attacker was stopped by
-        return true;
     }
 
 

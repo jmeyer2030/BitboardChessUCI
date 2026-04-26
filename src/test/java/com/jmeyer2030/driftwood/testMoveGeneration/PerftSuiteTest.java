@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class PerftSuiteTest {
     @Test
@@ -28,19 +29,14 @@ public class PerftSuiteTest {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            fail();
         }
     }
 
     public static long perftFromFen(String fen, int depth) {
         FEN fenP = new FEN(fen);
         Position position = Position.getPerftPosition(fenP);
-
-        // long start = System.currentTimeMillis();
-        long result = Perft.perft(depth, position);
-        // long end = System.currentTimeMillis();
-        // System.out.println("Total time: " + (end - start));
-        return result;
+        return Perft.perft(depth, position);
     }
 
     /**

@@ -22,7 +22,7 @@ public class Debug implements Command {
         }
 
 
-        if (argument.equals("on")) {
+        if ("on".equals(argument)) {
             chessEngine.debugActive = true;
         } else if (argument.equals("off")) {
             chessEngine.debugActive = false;

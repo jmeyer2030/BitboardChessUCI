@@ -535,7 +535,7 @@ public final class Position {
         this.zobristHash ^= Hashing.CASTLE_RIGHTS[castleRights];
 
         this.checkers = MoveGenerator.computeCheckers(this);
-        this.inCheck = Long.numberOfTrailingZeros(checkers) == 64 ? false : true;
+        this.inCheck = Long.numberOfTrailingZeros(checkers) != 64;
     }
 
     /**

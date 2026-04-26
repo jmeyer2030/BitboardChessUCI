@@ -52,11 +52,7 @@ public class PawnLogic {
         if (position.enPassant == GlobalConstants.NO_EP ||
                 (((1L << position.enPassant) & (position.activePlayer == 0 ? whitePawnAttacks[square] :
                         blackPawnAttacks[square])) == 0))// ||//If square doesn't attack the enPassant square//(position.enPassant + 1 != square && position.enPassant - 1 != square) ||
-            //(square / 8 != 3 || square / 8 != 4)) // enpassant doesn't exist or isn't next to the piece
             return 0L;
-        //if (position.whiteToPlay) {//if its a white pawn to be taken
-        //	return (1L << (position.enPassant));
-        //}
         return (1L << (position.enPassant));
     }
 

@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.Scanner;
 
 import static com.jmeyer2030.driftwood.testMoveGeneration.PerftSuiteTest.getFEN;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
 * Serves as a way to benchmark search speed.
 *  - Searches over a suite of positions to depth 9, printing results and time
@@ -21,19 +23,12 @@ public class SearchSuiteTest {
     @Test
     void testSearchOnTestPositions() {
         int depth = 13;
-        long startTime = System.currentTimeMillis();
         try (Scanner scanner = new Scanner(new File("src/test/resources/perftSuite.txt"))) {
-            int lineNumber = 0;
             while (scanner.hasNextLine()) {
-                lineNumber++;
                 String line = scanner.nextLine(); // Reads one line
                 String fenString = getFEN(line);
-
                 FEN fen = new FEN(fenString);
-
                 Position position = new Position(fen);
-
-                // System.out.println("TESTING FEN: " + fenString + " TEST PROGRESS: " + lineNumber + "/" + 126);
                 try {
                     Search.iterativeDeepeningFixedDepth(position, depth);
                 } catch (Exception e) {
@@ -41,11 +36,7 @@ public class SearchSuiteTest {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            fail();
         }
-
-        long endTime = System.currentTimeMillis();
-        System.out.println("Elapsed time: " + (endTime - startTime));
-        //System.out.println("Total searched depth: " + Search.searchedDepth);
     }
 }

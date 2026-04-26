@@ -251,7 +251,6 @@ public class PuzzleBenchmark {
             }
         } catch (IOException e) {
             System.err.println("Failed to read puzzle CSV: " + csvPath);
-            e.printStackTrace();
             System.exit(1);
         }
 

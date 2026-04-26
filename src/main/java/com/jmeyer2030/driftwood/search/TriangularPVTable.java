@@ -15,8 +15,8 @@ import static com.jmeyer2030.driftwood.search.Search.MAX_SEARCH_DEPTH;
 * if search depth is n, triangularPV[n] stores nothing
 */
 public class TriangularPVTable {
-    private int[][] triangularPV;
-    private int[] pvLength;
+    private final int[][] triangularPV;
+    private final int[] pvLength;
 
     /**
      * Creates an empty PV table sized for the engine's maximum ply.

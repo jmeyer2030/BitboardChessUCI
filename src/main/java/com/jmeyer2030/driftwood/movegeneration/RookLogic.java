@@ -125,10 +125,8 @@ public class RookLogic {
 
         long occupancyWithoutFriendlyBlockers = position.occupancy ^ activePlayerBlockers;
 
-        long attacksWithoutBlockers = getAttackBoard(square, occupancyWithoutFriendlyBlockers);
-
         // Equivalent to (attacksWithoutBlockers ^ attacks) | (attacks & attacksWithoutBlockers)
-        return attacksWithoutBlockers;
+        return getAttackBoard(square, occupancyWithoutFriendlyBlockers);
     }
 
     /**

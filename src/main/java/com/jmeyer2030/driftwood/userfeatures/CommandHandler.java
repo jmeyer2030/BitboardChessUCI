@@ -17,8 +17,7 @@ import java.util.Scanner;
 public class CommandHandler {
     private final Map<String, Command> initialCommands;
     private final Map<String, Command> uciCommands;
-    private Map<String, Command> currentCommands;
-
+    private final Map<String, Command> currentCommands;
 
     /**
     * Initializes lists of commands

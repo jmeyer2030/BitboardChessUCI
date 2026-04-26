@@ -138,26 +138,4 @@ public class Go implements Command {
             chessEngine.sharedTables.applyMove(move, position);
         }
     }
-
-
-    /*public void getBestMove() {
-        Position position = chessEngine.positionState.position;
-        Position copy = new Position(position);
-
-        TTElement bestElement = chessEngine.positionState.tt.getElement(position.zobristHash);
-        if (bestElement == null) {
-            System.out.println("Best element not found in the transposition table!");
-        }
-
-        Move bestMove = null;
-        Move refutationMove = null;
-
-        if (bestElement != null && bestElement.bestMove() != null) {
-            bestMove = bestElement.bestMove();
-
-        }
-        copy.makeMove(bestMove);
-
-        Move bestResponse = chessEngine.positionState.tt.getElement(copy.zobristHash).bestMove();
-    }*/
 }
